@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Palette. Accent options (swap --accent-1 / --accent-2):
+   A  Sunset (default)  255 61 139  →  255 159 67
+   B  Hot magenta       255 43 214  →  255 110 199
+   C  Electric coral    255 90 95   →  255 170 110
+   D  Acid orange       255 122 24  →  255 196 61
+*/
+:root {
+  --bg: 7 6 10;
+  --surface: 14 12 19;
+  --line: 255 255 255;
+  --fg: 244 241 247;
+  --muted: 139 135 150;
+  --accent-1: 255 61 139;
+  --accent-2: 255 159 67;
+  --good: 74 222 128;
+  color-scheme: dark;
+}
+
+html {
+  background: rgb(var(--bg));
+  scroll-behavior: smooth;
+}
+
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--fg));
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgb(var(--accent-1) / 0.35);
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-line/[0.08] bg-surface/80 backdrop-blur-sm;
+  }
+  .label {
+    @apply font-mono text-[11px] uppercase tracking-[0.14em] text-muted;
+  }
+  .accent-text {
+    @apply bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-accent to-accent2 text-black hover:brightness-110;
+  }
+  .btn-ghost {
+    @apply btn border border-line/15 text-fg hover:border-line/30 hover:bg-line/[0.04];
+  }
+  .section {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+  .link {
+    @apply text-accent2 underline-offset-4 hover:underline;
+  }
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rolling digit columns */
+.roll-col {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  line-height: 1;
+  vertical-align: bottom;
+}
+.roll-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.roll-strip > span {
+  height: 1em;
+}
+
+.mask-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+/* Wallet adapter theming */
+.wallet-adapter-button {
+  font-family: var(--font-sans) !important;
+  border-radius: 9999px !important;
+  height: 42px !important;
+  font-size: 14px !important;
+  background: rgb(var(--line) / 0.06) !important;
+  border: 1px solid rgb(var(--line) / 0.15) !important;
+}
+.wallet-adapter-button:not([disabled]):hover {
+  background: rgb(var(--line) / 0.1) !important;
+}
+.wallet-adapter-modal-wrapper {
+  background: rgb(var(--surface)) !important;
+  border: 1px solid rgb(var(--line) / 0.1);
+  border-radius: 20px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none !important;
+  }
+  .roll-strip {
+    transition: none !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
