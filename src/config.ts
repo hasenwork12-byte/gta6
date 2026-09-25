@@ -55,8 +55,10 @@ export const points = {
   redeemCost: 1000,
   /** USD price of one copy — used for the treasury progress bar. */
   gamePriceUsd: 70,
-  /** A wallet can redeem at most once per this many days. */
+  /** A wallet can redeem a copy for itself at most once per this many days. */
   cooldownDays: 30,
+  /** On top of that, gifts + team donations allowed per wallet in the same window. */
+  maxDonationsPerWindow: 5,
   /** New redemptions pause while this many are still waiting to be fulfilled. */
   maxPendingRedemptions: 25,
   /** Keep in sync with the schedule in vercel.json. */

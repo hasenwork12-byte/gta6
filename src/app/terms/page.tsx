@@ -31,8 +31,20 @@ export default function Terms() {
         <h2>Redeeming</h2>
         <p>
           {fmtNum(points.redeemCost)} points can be redeemed for one digital copy of GTA 6 for PlayStation 5 or Xbox
-          Series X|S. You must prove wallet ownership by signing a message. Each wallet may redeem once every{" "}
-          {points.cooldownDays} days. Points are reserved when you submit a request.
+          Series X|S. You must prove wallet ownership by signing a message. Each wallet may redeem one copy for itself
+          every {points.cooldownDays} days. Points are reserved when you submit a request.
+        </p>
+      </section>
+      <section>
+        <h2>Gifts and team donations</h2>
+        <p>
+          Instead of redeeming for yourself, you can spend {fmtNum(points.redeemCost)} points to gift a copy to another
+          wallet, or donate it to the {site.name} team. Each wallet may make up to {points.maxDonationsPerWindow} gifts or
+          donations every {points.cooldownDays} days. A gift can only be claimed by the recipient wallet, which chooses
+          the platform and delivery email; unclaimed gifts may be cancelled after 30 days and the points returned to the
+          sender. Team donations are used only for community giveaways and content, are never resold, and appear in the
+          public feed. Gifts and donations are voluntary and give the sender nothing in return. Points themselves still
+          cannot be transferred.
         </p>
       </section>
       <section>

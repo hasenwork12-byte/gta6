@@ -9,7 +9,8 @@ const rules: [string, string][] = [
   ["price", "min(prev, now)"],
   ["redeem", `${fmtNum(points.redeemCost)} pts → 1 copy`],
   ["platforms", "PS5 · Xbox Series X|S"],
-  ["cooldown", `${points.cooldownDays} days / wallet`],
+  ["for self", `1 per ${points.cooldownDays} days`],
+  ["gift/donate", `${points.maxDonationsPerWindow} per ${points.cooldownDays} days`],
   ["queue cap", `${points.maxPendingRedemptions} pending`],
 ];
 

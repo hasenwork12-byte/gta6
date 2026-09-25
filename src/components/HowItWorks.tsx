@@ -57,14 +57,16 @@ export default function HowItWorks() {
             <dd className="mt-1.5 leading-relaxed text-muted">
               Spend {fmtNum(points.redeemCost)} points on the <Link href="/redeem" className="link">redeem page</Link>.
               Pick PlayStation 5 or Xbox Series X|S, sign a free message with your wallet, and get a digital code by
-              email once the treasury buys it.
+              email once the treasury buys it. Got more points than you need? Gift a copy to another wallet, or donate
+              it to the team for community giveaways and videos.
             </dd>
           </div>
           <div>
             <dt className="font-medium">Limits</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">
-              One redemption per wallet every {points.cooldownDays} days. Requests are filled in order as the treasury
-              can afford them; if one can&apos;t be filled, the points are returned. Points have no cash value.
+              One copy for yourself every {points.cooldownDays} days, plus up to {points.maxDonationsPerWindow} gifts or
+              team donations in the same window. Requests are filled in order as the treasury can afford them; if one
+              can&apos;t be filled, the points are returned. Points have no cash value.
             </dd>
           </div>
         </dl>

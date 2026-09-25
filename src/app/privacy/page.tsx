@@ -20,7 +20,8 @@ export default function Privacy() {
         <p>
           When you redeem, we store your wallet address, chosen platform, store region and email address. The email is
           used only to deliver your game code and is never shown publicly. The public feed shows a shortened wallet
-          address, the platform, the date and the on-chain purchase receipt. You can ask us to delete your email after
+          address, the platform, the date and the on-chain purchase receipt. For gifts, the recipient&apos;s wallet
+          address is also shown (shortened); the recipient&apos;s email is collected only when they claim. You can ask us to delete your email after
           delivery.
         </p>
       </section>

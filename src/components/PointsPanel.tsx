@@ -46,7 +46,8 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
           : daysLeft !== null
             ? `At today's value, about ${fmtNum(daysLeft)} more ${daysLeft === 1 ? "day" : "days"} to reach ${fmtNum(info.cost)} points. Earnings change with the token price.`
             : `Hold $${site.ticker} to start earning points at the next daily snapshot.`}
-        {info.cooldownUntil && ` This wallet redeemed recently — next redemption from ${fmtDate(info.cooldownUntil / 1000)}.`}
+        {info.cooldownUntil &&
+          ` This wallet redeemed for itself recently — next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting and donating still work).`}
         {info.demo && " Demo mode: these numbers are placeholders, not read from the chain."}
       </p>
     </div>

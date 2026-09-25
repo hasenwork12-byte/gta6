@@ -6,6 +6,7 @@ import { fmtDateTime, shortAddr } from "@/lib/format";
 import type { Redemption } from "@/lib/types";
 
 const KEY = "pig-admin-token";
+const KIND_LABEL = { self: "for self", gift: "gift", team: "team donation" } as const;
 
 export default function AdminPanel() {
   const [token, setToken] = useState("");
@@ -89,14 +90,15 @@ export default function AdminPanel() {
     );
   }
 
-  const shown = filter === "pending" ? rows.filter((r) => r.status === "pending") : rows;
+  const isOpen = (r: Redemption) => r.status === "pending" || r.status === "unclaimed";
+  const shown = filter === "pending" ? rows.filter(isOpen) : rows;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         {(["pending", "all"] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)} className={filter === f ? "btn-primary !py-1.5 text-xs" : "btn-ghost !py-1.5 text-xs"}>
-            {f === "pending" ? `Pending (${rows.filter((r) => r.status === "pending").length})` : `All (${rows.length})`}
+            {f === "pending" ? `Open (${rows.filter(isOpen).length})` : `All (${rows.length})`}
           </button>
         ))}
         <button onClick={() => refresh()} className="btn-ghost !py-1.5 text-xs">
@@ -114,18 +116,43 @@ export default function AdminPanel() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="font-mono">
                   #{r.id} · <a className="link" href={site.explorerAccount(r.wallet)} target="_blank" rel="noreferrer">{shortAddr(r.wallet, 6)}</a>
+                  <span className="ml-2 rounded-full border border-line/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-muted">
+                    {KIND_LABEL[r.kind ?? "self"]}
+                  </span>
                   {r.demo && <span className="ml-2 text-amber-300">demo</span>}
                 </span>
                 <span className="font-mono text-xs text-muted">{fmtDateTime(r.createdAt / 1000)}</span>
               </div>
+              {r.kind === "gift" && (
+                <p className="mt-2 font-mono text-xs text-muted">
+                  Recipient:{" "}
+                  {r.recipient ? (
+                    <a className="link" href={site.explorerAccount(r.recipient)} target="_blank" rel="noreferrer">
+                      {shortAddr(r.recipient, 6)}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </p>
+              )}
               <div className="mt-2 grid gap-1 text-muted sm:grid-cols-4">
                 <span>
-                  <span className="text-fg">{platformLabel(r.platform)}</span>
+                  <span className="text-fg">
+                    {r.platform ? platformLabel(r.platform) : r.kind === "team" ? "Team's choice" : "Not claimed yet"}
+                  </span>
                 </span>
-                <span>{r.region}</span>
+                <span>{r.region || "—"}</span>
                 <span className="break-all text-fg">{r.email || "—"}</span>
                 <span className="capitalize">{r.status}</span>
               </div>
+              {r.status === "unclaimed" && (
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted">Waiting for the recipient to claim.</span>
+                  <button onClick={() => act(r.id, "reject")} className="btn-ghost !py-1.5 text-xs">
+                    Cancel gift + refund
+                  </button>
+                </div>
+              )}
               {r.tx && (
                 <a className="link mt-2 inline-block font-mono text-xs" href={site.explorerTx(r.tx)} target="_blank" rel="noreferrer">
                   Receipt {shortAddr(r.tx, 6)} ↗

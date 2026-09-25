@@ -31,19 +31,29 @@ export const DEMO_TOKEN_USD = 0.0004;
 
 export function demoRedemptions(): Redemption[] {
   const r = rng(7);
-  return Array.from({ length: 11 }, (_, i) => ({
-    id: `demo-${11 - i}`,
-    wallet: fakeAddr(r),
-    platform: r() > 0.5 ? "ps5" : "xbox",
-    region: "Other",
-    email: "",
-    cost: points.redeemCost,
-    createdAt: (DEMO_NOW - i * 3.2 * 86400) * 1000,
-    status: i < 2 ? "pending" : "fulfilled",
-    tx: null,
-    note: null,
-    demo: true,
-  }));
+  return Array.from({ length: 11 }, (_, i): Redemption => {
+    const wallet = fakeAddr(r);
+    const platform = r() > 0.5 ? "ps5" : "xbox";
+    // A few gifts and team donations so every card type is visible in demo mode.
+    const kind = i === 1 || i === 5 ? "gift" : i === 3 || i === 8 ? "team" : "self";
+    const recipient = kind === "gift" ? fakeAddr(r) : null;
+    return {
+      id: `demo-${11 - i}`,
+      wallet,
+      kind,
+      recipient,
+      platform: kind === "team" || (kind === "gift" && i === 1) ? "" : platform,
+      region: "Other",
+      email: "",
+      cost: points.redeemCost,
+      createdAt: (DEMO_NOW - i * 3.2 * 86400) * 1000,
+      claimedAt: null,
+      status: i === 1 ? "unclaimed" : i < 3 ? "pending" : "fulfilled",
+      tx: null,
+      note: null,
+      demo: true,
+    };
+  });
 }
 
 export function demoTopHolders(n = 20): { wallet: string; points: number }[] {

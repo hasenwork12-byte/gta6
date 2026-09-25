@@ -17,16 +17,30 @@ export const POINTS_LIVE = STORE_LIVE && TOKEN_LIVE;
 
 export type SnapMeta = { at: number; price: number };
 export type SnapDay = { at: number; price: number; holders: number; awarded: number; pointsIssued: number };
-export type RedeemOutcome = "ok" | "insufficient" | "cooldown" | "queue_full";
+export type RedeemOutcome = "ok" | "insufficient" | "cooldown" | "donation_limit" | "queue_full";
+export type ClaimOutcome = "ok" | "not_found" | "not_claimable" | "not_yours";
+export type RedeemLimits = { windowMs: number; maxPending: number; maxDonations: number };
+
+const kindOf = (r: Redemption) => r.kind ?? "self";
 
 export interface Store {
   getPoints(wallet: string): Promise<{ centi: number; lastDayCenti: number; lastRedeemAt: number | null }>;
-  redeem(r: Redemption, costCenti: number, cooldownMs: number, maxPending: number): Promise<RedeemOutcome>;
+  /**
+   * Atomically checks balance + limits and reserves the points.
+   * kind "self" uses the one-per-window cooldown; "gift"/"team" use the separate donation allowance.
+   * Every open request (unclaimed or pending) counts toward the queue cap.
+   */
+  redeem(r: Redemption, costCenti: number, limits: RedeemLimits): Promise<RedeemOutcome>;
+  /** Recipient claims a gift: fills in delivery details and moves it into the queue. */
+  claimGift(id: string, wallet: string, d: { platform: string; region: string; email: string; claimedAt: number }): Promise<ClaimOutcome>;
   listRedemptions(): Promise<Redemption[]>;
   /** Wallets with the most points, highest first. */
   topPoints(limit: number): Promise<{ wallet: string; centi: number }[]>;
   getRedemption(id: string): Promise<Redemption | null>;
-  /** Moves a pending redemption to fulfilled/rejected; rejection refunds the points. */
+  /**
+   * Fulfils a pending redemption, or rejects a pending/unclaimed one.
+   * Rejection refunds the points and gives back the cooldown / donation slot.
+   */
   resolveRedemption(id: string, status: "fulfilled" | "rejected", tx: string | null, note: string | null): Promise<Redemption | null>;
   /** Returns false if the nonce was already used. */
   useNonce(nonce: string, ttlSec: number): Promise<boolean>;
@@ -44,6 +58,7 @@ const K = {
   points: "points",
   lastDay: "points:lastday",
   lastRedeem: "redeem:last",
+  donateTimes: "redeem:donations",
   redemptions: "redemptions",
   pending: "redemptions:pending",
   snapBalances: "snap:balances",
@@ -52,25 +67,64 @@ const K = {
 };
 
 // Atomic check-and-deduct so two requests can't spend the same points.
+// KEYS: points, lastRedeem, redemptions, pending, donateTimes
+// ARGV: wallet, costCenti, now, windowMs, maxPending, id, json, isDonation, maxDonations
 const REDEEM_LUA = `
 local pts = tonumber(redis.call('HGET', KEYS[1], ARGV[1]) or '0')
 if pts < tonumber(ARGV[2]) then return 'insufficient' end
-local last = tonumber(redis.call('HGET', KEYS[2], ARGV[1]) or '0')
-if last > 0 and tonumber(ARGV[3]) - last < tonumber(ARGV[4]) then return 'cooldown' end
+local now = tonumber(ARGV[3])
+local win = tonumber(ARGV[4])
+local times = {}
+if ARGV[8] == '1' then
+  local raw = redis.call('HGET', KEYS[5], ARGV[1])
+  if raw then
+    for _, t in ipairs(cjson.decode(raw)) do
+      if now - t < win then table.insert(times, t) end
+    end
+  end
+  if #times >= tonumber(ARGV[9]) then return 'donation_limit' end
+else
+  local last = tonumber(redis.call('HGET', KEYS[2], ARGV[1]) or '0')
+  if last > 0 and now - last < win then return 'cooldown' end
+end
 local pending = tonumber(redis.call('GET', KEYS[4]) or '0')
 if pending >= tonumber(ARGV[5]) then return 'queue_full' end
 redis.call('HINCRBY', KEYS[1], ARGV[1], -tonumber(ARGV[2]))
-redis.call('HSET', KEYS[2], ARGV[1], ARGV[3])
+if ARGV[8] == '1' then
+  table.insert(times, now)
+  redis.call('HSET', KEYS[5], ARGV[1], cjson.encode(times))
+else
+  redis.call('HSET', KEYS[2], ARGV[1], ARGV[3])
+end
 redis.call('HSET', KEYS[3], ARGV[6], ARGV[7])
 redis.call('INCR', KEYS[4])
 return 'ok'
 `;
 
+// KEYS: redemptions   ARGV: id, wallet, platform, region, email, claimedAt
+const CLAIM_LUA = `
+local raw = redis.call('HGET', KEYS[1], ARGV[1])
+if not raw then return 'not_found' end
+local r = cjson.decode(raw)
+if r.kind ~= 'gift' or r.status ~= 'unclaimed' then return 'not_claimable' end
+if r.recipient ~= ARGV[2] then return 'not_yours' end
+r.platform = ARGV[3]
+r.region = ARGV[4]
+r.email = ARGV[5]
+r.claimedAt = tonumber(ARGV[6])
+r.status = 'pending'
+redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(r))
+return 'ok'
+`;
+
+// KEYS: redemptions, pending, points, lastRedeem, donateTimes
+// ARGV: id, status, tx, note, refundCenti
 const RESOLVE_LUA = `
 local raw = redis.call('HGET', KEYS[1], ARGV[1])
 if not raw then return nil end
 local r = cjson.decode(raw)
-if r.status ~= 'pending' then return raw end
+if r.status ~= 'pending' and r.status ~= 'unclaimed' then return raw end
+if ARGV[2] == 'fulfilled' and r.status ~= 'pending' then return raw end
 r.status = ARGV[2]
 if ARGV[3] ~= '' then r.tx = ARGV[3] end
 if ARGV[4] ~= '' then r.note = ARGV[4] end
@@ -79,7 +133,21 @@ redis.call('HSET', KEYS[1], ARGV[1], out)
 redis.call('DECR', KEYS[2])
 if ARGV[2] == 'rejected' then
   redis.call('HINCRBY', KEYS[3], r.wallet, tonumber(ARGV[5]))
-  redis.call('HDEL', KEYS[4], r.wallet)
+  local kind = r.kind
+  if kind == nil or kind == cjson.null then kind = 'self' end
+  if kind == 'self' then
+    redis.call('HDEL', KEYS[4], r.wallet)
+  else
+    local tr = redis.call('HGET', KEYS[5], r.wallet)
+    if tr then
+      local keep = {}
+      local removed = false
+      for _, t in ipairs(cjson.decode(tr)) do
+        if not removed and t == r.createdAt then removed = true else table.insert(keep, t) end
+      end
+      if #keep == 0 then redis.call('HDEL', KEYS[5], r.wallet) else redis.call('HSET', KEYS[5], r.wallet, cjson.encode(keep)) end
+    end
+  end
 end
 return out
 `;
@@ -96,13 +164,28 @@ class RedisStore implements Store {
     return { centi: Number(c ?? 0), lastDayCenti: Number(d ?? 0), lastRedeemAt: l ? Number(l) : null };
   }
 
-  async redeem(rec: Redemption, costCenti: number, cooldownMs: number, maxPending: number) {
+  async redeem(rec: Redemption, costCenti: number, l: RedeemLimits) {
     const res = await this.r.eval(
       REDEEM_LUA,
-      [K.points, K.lastRedeem, K.redemptions, K.pending],
-      [rec.wallet, String(costCenti), String(rec.createdAt), String(cooldownMs), String(maxPending), rec.id, JSON.stringify(rec)],
+      [K.points, K.lastRedeem, K.redemptions, K.pending, K.donateTimes],
+      [
+        rec.wallet,
+        String(costCenti),
+        String(rec.createdAt),
+        String(l.windowMs),
+        String(l.maxPending),
+        rec.id,
+        JSON.stringify(rec),
+        kindOf(rec) === "self" ? "0" : "1",
+        String(l.maxDonations),
+      ],
     );
     return String(res) as RedeemOutcome;
+  }
+
+  async claimGift(id: string, wallet: string, d: { platform: string; region: string; email: string; claimedAt: number }) {
+    const res = await this.r.eval(CLAIM_LUA, [K.redemptions], [id, wallet, d.platform, d.region, d.email, String(d.claimedAt)]);
+    return String(res) as ClaimOutcome;
   }
 
   async listRedemptions() {
@@ -132,7 +215,7 @@ class RedisStore implements Store {
     if (!existing) return null;
     const res = await this.r.eval(
       RESOLVE_LUA,
-      [K.redemptions, K.pending, K.points, K.lastRedeem],
+      [K.redemptions, K.pending, K.points, K.lastRedeem, K.donateTimes],
       [id, status, tx ?? "", note ?? "", String(existing.cost * 100)],
     );
     return res ? (JSON.parse(String(res)) as Redemption) : null;
@@ -172,6 +255,7 @@ type Mem = {
   points: Map<string, number>;
   lastDay: Map<string, number>;
   lastRedeem: Map<string, number>;
+  donateTimes: Map<string, number[]>;
   redemptions: Map<string, Redemption>;
   nonces: Set<string>;
   snapMeta: SnapMeta | null;
@@ -186,21 +270,36 @@ class MemoryStore implements Store {
     return this.m.points.get(w)!;
   }
   private pending() {
-    return [...this.m.redemptions.values()].filter((r) => r.status === "pending").length;
+    return [...this.m.redemptions.values()].filter((r) => r.status === "pending" || r.status === "unclaimed").length;
   }
 
   async getPoints(w: string) {
     const centi = this.pts(w);
     return { centi, lastDayCenti: this.m.lastDay.get(w) ?? Math.round(centi / 40), lastRedeemAt: this.m.lastRedeem.get(w) ?? null };
   }
-  async redeem(rec: Redemption, costCenti: number, cooldownMs: number, maxPending: number): Promise<RedeemOutcome> {
+  async redeem(rec: Redemption, costCenti: number, l: RedeemLimits): Promise<RedeemOutcome> {
     if (this.pts(rec.wallet) < costCenti) return "insufficient";
-    const last = this.m.lastRedeem.get(rec.wallet);
-    if (last && rec.createdAt - last < cooldownMs) return "cooldown";
-    if (this.pending() >= maxPending) return "queue_full";
+    const donation = kindOf(rec) !== "self";
+    const times = (this.m.donateTimes.get(rec.wallet) ?? []).filter((t) => rec.createdAt - t < l.windowMs);
+    if (donation) {
+      if (times.length >= l.maxDonations) return "donation_limit";
+    } else {
+      const last = this.m.lastRedeem.get(rec.wallet);
+      if (last && rec.createdAt - last < l.windowMs) return "cooldown";
+    }
+    if (this.pending() >= l.maxPending) return "queue_full";
     this.m.points.set(rec.wallet, this.pts(rec.wallet) - costCenti);
-    this.m.lastRedeem.set(rec.wallet, rec.createdAt);
+    if (donation) this.m.donateTimes.set(rec.wallet, [...times, rec.createdAt]);
+    else this.m.lastRedeem.set(rec.wallet, rec.createdAt);
     this.m.redemptions.set(rec.id, rec);
+    return "ok";
+  }
+  async claimGift(id: string, wallet: string, d: { platform: string; region: string; email: string; claimedAt: number }): Promise<ClaimOutcome> {
+    const r = this.m.redemptions.get(id);
+    if (!r) return "not_found";
+    if (r.kind !== "gift" || r.status !== "unclaimed") return "not_claimable";
+    if (r.recipient !== wallet) return "not_yours";
+    this.m.redemptions.set(id, { ...r, ...d, status: "pending" });
     return "ok";
   }
   async listRedemptions() {
@@ -219,12 +318,19 @@ class MemoryStore implements Store {
   async resolveRedemption(id: string, status: "fulfilled" | "rejected", tx: string | null, note: string | null) {
     const r = this.m.redemptions.get(id);
     if (!r) return null;
-    if (r.status !== "pending") return r;
+    if (r.status !== "pending" && r.status !== "unclaimed") return r;
+    if (status === "fulfilled" && r.status !== "pending") return r;
     const next = { ...r, status, tx: tx ?? r.tx, note: note ?? r.note };
     this.m.redemptions.set(id, next);
     if (status === "rejected") {
       this.m.points.set(r.wallet, this.pts(r.wallet) + r.cost * 100);
-      this.m.lastRedeem.delete(r.wallet);
+      if (kindOf(r) === "self") this.m.lastRedeem.delete(r.wallet);
+      else {
+        const times = [...(this.m.donateTimes.get(r.wallet) ?? [])];
+        const i = times.indexOf(r.createdAt);
+        if (i >= 0) times.splice(i, 1);
+        this.m.donateTimes.set(r.wallet, times);
+      }
     }
     return next;
   }
@@ -259,6 +365,7 @@ export function getStore(seedPoints: (w: string) => number, seedRedemptions: () 
       points: new Map(),
       lastDay: new Map(),
       lastRedeem: new Map(),
+      donateTimes: new Map(),
       redemptions: new Map(seedRedemptions().map((r) => [r.id, r])),
       nonces: new Set(),
       snapMeta: null,

@@ -18,6 +18,8 @@ export async function POST(req: NextRequest) {
   try {
     const res = await redeem({
       wallet,
+      kind: str("kind") as "self" | "gift" | "team",
+      recipient: str("recipient"),
       platform: str("platform"),
       region: str("region"),
       email: str("email"),

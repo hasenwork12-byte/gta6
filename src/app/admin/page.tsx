@@ -10,7 +10,8 @@ export default function AdminPage() {
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">Redemption queue</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
         Buy the code from a retailer, pay from the treasury wallet, paste that transaction signature here and mark it
-        fulfilled — then email the code. Rejecting returns the points to the wallet.
+        fulfilled — then email the code. Rejecting returns the points to the wallet. Team donations have no email: keep
+        the code for a community giveaway or video. Gifts can only be fulfilled after the recipient claims them.
       </p>
       <div className="mt-8">
         <AdminPanel />

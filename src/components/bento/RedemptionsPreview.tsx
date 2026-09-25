@@ -13,7 +13,19 @@ export default function RedemptionsPreview({ rows, demo, now }: { rows: PublicRe
       <span className="flex min-w-0 items-center gap-2">
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${r.status === "fulfilled" ? "bg-good" : "bg-amber-300"}`} />
         <span className="truncate">
-          {shortPlatform(r.platform)} copy <span className="text-muted">→</span> {shortAddr(r.wallet)}
+          {r.kind === "team" ? (
+            <>
+              Donation <span className="text-muted">→</span> team
+            </>
+          ) : r.kind === "gift" ? (
+            <>
+              Gift <span className="text-muted">→</span> {r.recipient ? shortAddr(r.recipient) : "—"}
+            </>
+          ) : (
+            <>
+              {shortPlatform(r.platform)} copy <span className="text-muted">→</span> {shortAddr(r.wallet)}
+            </>
+          )}
         </span>
       </span>
       <span className="shrink-0 text-muted">{timeAgo(r.createdAt, now)}</span>

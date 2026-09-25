@@ -1,70 +1,97 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { points, platformLabel } from "@/config";
-import { fmtNum } from "@/lib/format";
+import { points, platformLabel, site } from "@/config";
+import { fmtNum, shortAddr } from "@/lib/format";
 import { buildRedeemMessage } from "@/lib/redeem-message";
+import type { RedemptionKind } from "@/lib/types";
 import PointsPanel from "./PointsPanel";
+import ClaimGift from "./redeem/ClaimGift";
+import DeliveryFields from "./redeem/DeliveryFields";
+import { signAndPost } from "./redeem/signAndPost";
 import { usePoints } from "./usePoints";
 import WalletButton from "./WalletButton";
 
-function toBase64(bytes: Uint8Array) {
-  let s = "";
-  bytes.forEach((b) => (s += String.fromCharCode(b)));
-  return btoa(s);
-}
+const KINDS: { id: RedemptionKind; label: string; hint: string }[] = [
+  { id: "self", label: "For me", hint: "Get a code for your own PS5 or Xbox." },
+  { id: "gift", label: "Gift a wallet", hint: "Send a copy to someone else’s wallet. They claim it here and pick their platform." },
+  {
+    id: "team",
+    label: "Donate to the team",
+    hint: `Give the copy to the ${site.name} team for community giveaways and videos. It shows in the public feed with its receipt.`,
+  },
+];
+
+const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
 export default function RedeemFlow() {
   const { publicKey, signMessage } = useWallet();
   const { info, error: loadError, loading, load } = usePoints();
-  const [platform, setPlatform] = useState<string>("");
+  const [kind, setKind] = useState<RedemptionKind>("self");
+  const [platform, setPlatform] = useState("");
   const [region, setRegion] = useState("");
   const [email, setEmail] = useState("");
+  const [recipient, setRecipient] = useState("");
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [doneId, setDoneId] = useState<string | null>(null);
+  const [done, setDone] = useState<{ id: string; kind: RedemptionKind } | null>(null);
 
   const wallet = publicKey?.toBase58() ?? null;
   useEffect(() => {
-    setDoneId(null);
+    setDone(null);
     setError(null);
     if (wallet) load(wallet);
   }, [wallet, load]);
 
-  const canRedeem = !!info && info.points >= info.cost && !info.cooldownUntil;
+  const enoughPoints = !!info && info.points >= info.cost;
+  const donationsLeft = info ? Math.max(0, info.donationsMax - info.donationsUsed) : 0;
+  const allowed = kind === "self" ? !info?.cooldownUntil : donationsLeft > 0;
+  const canRedeem = enoughPoints && allowed;
+
+  const fieldsReady =
+    kind === "self" ? !!platform && !!region && !!email : kind === "gift" ? B58.test(recipient.trim()) && recipient.trim() !== wallet : true;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!wallet || !signMessage) {
-      setError("Your wallet doesn't support message signing. Try Phantom, Solflare or Backpack.");
-      return;
-    }
+    if (!wallet) return;
     setBusy(true);
     setError(null);
     try {
       const issuedAt = new Date().toISOString();
-      const message = buildRedeemMessage({ wallet, platform, region, issuedAt });
-      const sig = await signMessage(new TextEncoder().encode(message));
-      const r = await fetch("/api/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet, platform, region, email, issuedAt, signature: toBase64(sig) }),
+      const to = recipient.trim();
+      const message = buildRedeemMessage({ wallet, kind, recipient: to, platform, region, issuedAt });
+      const j = await signAndPost(signMessage, "/api/redeem", message, {
+        wallet,
+        kind,
+        recipient: to,
+        platform,
+        region,
+        email,
+        issuedAt,
       });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error ?? "Redemption failed");
-      setDoneId(j.id);
+      setDone({ id: j.id, kind });
       load(wallet);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Redemption failed";
-      setError(/reject|denied|cancel/i.test(msg) ? "Signature cancelled — nothing was spent." : msg);
+      setError(err instanceof Error ? err.message : "Redemption failed");
     } finally {
       setBusy(false);
     }
   };
+
+  const blocker = !wallet
+    ? "Connect your wallet to redeem."
+    : !info
+      ? null
+      : !enoughPoints
+        ? `You need ${fmtNum(points.redeemCost)} points to redeem.`
+        : kind === "self" && info.cooldownUntil
+          ? `You've redeemed for yourself in the last ${points.cooldownDays} days — you can still gift or donate.`
+          : kind !== "self" && donationsLeft === 0
+            ? `You've used all ${info.donationsMax} gifts/donations for this ${points.cooldownDays}-day window.`
+            : null;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
@@ -74,7 +101,7 @@ export default function RedeemFlow() {
           <p className="label">Your points</p>
           <WalletButton />
         </div>
-        <div className="mt-6" aria-live="polite">
+        <div className="mt-6 space-y-6" aria-live="polite">
           {!wallet && (
             <p className="text-sm leading-relaxed text-muted">
               Connect the wallet that holds your tokens. You&apos;ll sign a free message to prove it&apos;s yours — no
@@ -83,7 +110,15 @@ export default function RedeemFlow() {
           )}
           {wallet && loading && !info && <p className="text-sm text-muted">Loading points…</p>}
           {loadError && <p className="text-sm text-accent">{loadError}</p>}
+          {info?.giftsToClaim.map((g) => (
+            <ClaimGift key={g.id} gift={g} onClaimed={() => wallet && load(wallet)} />
+          ))}
           {info && <PointsPanel info={info} />}
+          {info && (
+            <p className="font-mono text-xs text-muted">
+              Gifts/donations left this window: <span className="text-fg">{donationsLeft}</span> / {info.donationsMax}
+            </p>
+          )}
         </div>
       </div>
 
@@ -91,130 +126,135 @@ export default function RedeemFlow() {
       <div className="card p-5 sm:p-7">
         <p className="label">Redeem · {fmtNum(points.redeemCost)} points</p>
 
-        {doneId ? (
+        {done ? (
           <div className="mt-6 space-y-4">
-            <p className="text-2xl font-medium text-good">Request received ✓</p>
-            <p className="text-sm leading-relaxed text-muted">
-              Reference <span className="font-mono text-fg">{doneId}</span>. {fmtNum(points.redeemCost)} points were
-              reserved. Your {platformLabel(platform)} code will be emailed to <span className="text-fg">{email}</span> once
-              the treasury buys it. Requests are filled in order, and the purchase receipt will appear in the public
-              feed. If we can&apos;t fill it, your points are returned.
+            <p className="text-2xl font-medium text-good">
+              {done.kind === "self" ? "Request received ✓" : done.kind === "gift" ? "Gift sent ✓" : "Thank you ✓"}
             </p>
-            <Link href="/redemptions" className="btn-ghost">
-              View the redemption feed
-            </Link>
+            <p className="text-sm leading-relaxed text-muted">
+              Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} points were
+              reserved.{" "}
+              {done.kind === "self" && (
+                <>
+                  Your {platformLabel(platform)} code will be emailed to <span className="text-fg">{email}</span> once the
+                  treasury buys it.
+                </>
+              )}
+              {done.kind === "gift" && (
+                <>
+                  <span className="font-mono text-fg">{shortAddr(recipient.trim(), 5)}</span> can claim it by connecting
+                  that wallet on this page. Share the link with them: <span className="text-fg">/redeem</span>. If it&apos;s
+                  never claimed, the team can cancel it and return your points.
+                </>
+              )}
+              {done.kind === "team" && <>The team will use this copy for a community giveaway or video.</>}{" "}
+              Requests are filled in order, and the purchase receipt will appear in the public feed.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/redemptions" className="btn-ghost">
+                View the redemption feed
+              </Link>
+              <button onClick={() => setDone(null)} className="btn-ghost">
+                Redeem another
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={submit} className="mt-6 space-y-5">
+            <div>
+              <p className="mb-2 text-sm font-medium">Who is it for?</p>
+              <div role="radiogroup" aria-label="Who is it for?" className="grid grid-cols-3 gap-1 rounded-xl border border-line/10 p-1">
+                {KINDS.map((k) => (
+                  <button
+                    key={k.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={kind === k.id}
+                    onClick={() => {
+                      setKind(k.id);
+                      setError(null);
+                    }}
+                    className={`rounded-lg px-2 py-2 text-xs transition sm:text-sm ${
+                      kind === k.id ? "bg-line/[0.1] font-semibold text-fg" : "text-muted hover:text-fg"
+                    }`}
+                  >
+                    {k.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-muted">{KINDS.find((k) => k.id === kind)!.hint}</p>
+            </div>
+
             <fieldset disabled={!canRedeem || busy} className="space-y-5 disabled:opacity-60">
-              <div>
-                <p className="mb-2 text-sm font-medium">Platform</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {points.platforms.map((p) => {
-                    const selected = platform === p.id;
-                    return (
-                      <label
-                        key={p.id}
-                        style={{ borderColor: selected ? p.color : undefined, boxShadow: selected ? `0 0 0 1px ${p.color}, 0 8px 30px -12px ${p.color}` : undefined }}
-                        className={`group relative cursor-pointer overflow-hidden rounded-xl border text-sm transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent/70 ${
-                          selected ? "" : "border-line/15 hover:border-line/30"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="platform"
-                          value={p.id}
-                          className="sr-only"
-                          checked={selected}
-                          onChange={() => setPlatform(p.id)}
-                          required
-                        />
-                        <div className="relative aspect-[16/10] overflow-hidden bg-bg">
-                          <Image
-                            src="/images/gta6-cover.jpg"
-                            alt={`Grand Theft Auto VI cover art — ${p.label}`}
-                            fill
-                            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 40vw, 240px"
-                            className={`object-cover transition duration-300 ${selected ? "scale-105" : "opacity-80 group-hover:opacity-100"}`}
-                          />
-                          {selected && (
-                            <span
-                              className="absolute right-2 top-2 grid h-6 w-6 place-items-center rounded-full text-xs font-bold text-white"
-                              style={{ background: p.color }}
-                              aria-hidden
-                            >
-                              ✓
-                            </span>
-                          )}
-                        </div>
-                        <div className="px-3 py-2.5 text-center text-white" style={{ background: p.color }}>
-                          <span className="block text-[11px] font-medium uppercase tracking-wider opacity-80">GTA 6</span>
-                          <span className="block font-semibold">{p.label}</span>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-                <p className="mt-2 text-[11px] text-muted">Game artwork © Rockstar Games. Shown to identify the product.</p>
-              </div>
-
-              <div>
-                <label htmlFor="region" className="mb-2 block text-sm font-medium">
-                  Store region
-                </label>
-                <select
-                  id="region"
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  required
-                  className="h-[42px] w-full rounded-full border border-line/15 bg-bg/60 px-4 text-sm outline-none focus:border-accent/60"
-                >
-                  <option value="">Select…</option>
-                  {points.regions.map((r) => (
-                    <option key={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                  Email for code delivery
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="h-[42px] w-full rounded-full border border-line/15 bg-bg/60 px-5 text-sm outline-none placeholder:text-muted focus:border-accent/60"
+              {kind === "self" && (
+                <DeliveryFields
+                  idPrefix="self"
+                  platform={platform}
+                  setPlatform={setPlatform}
+                  region={region}
+                  setRegion={setRegion}
+                  email={email}
+                  setEmail={setEmail}
                 />
-                <p className="mt-1.5 text-xs text-muted">Kept private. Used only to send your code.</p>
-              </div>
+              )}
+
+              {kind === "gift" && (
+                <div>
+                  <label htmlFor="recipient" className="mb-2 block text-sm font-medium">
+                    Recipient wallet
+                  </label>
+                  <input
+                    id="recipient"
+                    value={recipient}
+                    onChange={(e) => setRecipient(e.target.value)}
+                    required
+                    spellCheck={false}
+                    autoComplete="off"
+                    placeholder="Solana wallet address"
+                    className="h-[42px] w-full rounded-full border border-line/15 bg-bg/60 px-5 font-mono text-sm outline-none placeholder:text-muted focus:border-accent/60"
+                  />
+                  <p className="mt-1.5 text-xs text-muted">
+                    Double-check the address — only that wallet can claim the gift.
+                  </p>
+                </div>
+              )}
+
+              {kind === "team" && (
+                <div className="rounded-xl border border-line/[0.08] bg-bg/40 p-4 text-sm leading-relaxed text-muted">
+                  The copy goes to the {site.name} team and is used only for community giveaways and videos — never
+                  resold. It&apos;s listed in the public feed as a team donation from your wallet, with the purchase
+                  receipt once bought.
+                </div>
+              )}
 
               <label className="flex items-start gap-3 text-xs leading-relaxed text-muted">
-                <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} required className="mt-0.5 accent-[rgb(var(--accent-1))]" />
+                <input
+                  type="checkbox"
+                  checked={agree}
+                  onChange={(e) => setAgree(e.target.checked)}
+                  required
+                  className="mt-0.5 accent-[rgb(var(--accent-1))]"
+                />
                 <span>
                   I&apos;ve read the <Link href="/terms" className="link">redemption terms</Link> and{" "}
-                  <Link href="/disclosures" className="link">disclosures</Link>, and redeeming a game is allowed where I
-                  live. I understand fulfilment depends on the treasury balance.
+                  <Link href="/disclosures" className="link">disclosures</Link>
+                  {kind === "self" ? ", and redeeming a game is allowed where I live" : ""}. I understand fulfilment
+                  depends on the treasury balance{kind !== "self" ? " and that spent points aren't returned once the copy is claimed or used" : ""}.
                 </span>
               </label>
 
-              <button className="btn-primary w-full" disabled={!platform || !region || !email || !agree}>
-                {busy ? "Waiting for signature…" : "Sign & redeem"}
+              <button className="btn-primary w-full" disabled={!fieldsReady || !agree}>
+                {busy
+                  ? "Waiting for signature…"
+                  : kind === "self"
+                    ? "Sign & redeem"
+                    : kind === "gift"
+                      ? "Sign & send gift"
+                      : "Sign & donate"}
               </button>
             </fieldset>
 
-            {!canRedeem && (
-              <p className="text-xs text-muted">
-                {!wallet
-                  ? "Connect your wallet to redeem."
-                  : info?.cooldownUntil
-                    ? `This wallet can redeem again after its ${points.cooldownDays}-day cooldown.`
-                    : `You need ${fmtNum(points.redeemCost)} points to redeem.`}
-              </p>
-            )}
+            {blocker && <p className="text-xs text-muted">{blocker}</p>}
             {error && <p className="text-sm text-accent">{error}</p>}
           </form>
         )}

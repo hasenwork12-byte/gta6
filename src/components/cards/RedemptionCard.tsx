@@ -6,21 +6,44 @@ import { fmtDateTime, fmtNum, shortAddr, timeAgo } from "@/lib/format";
 import type { PublicRedemption } from "@/lib/types";
 import StatusPill from "./StatusPill";
 
+const shortPlatform = (p: string) => (p === "ps5" ? "PS5" : p === "xbox" ? "Xbox" : "");
+
+export function redemptionTitle(r: PublicRedemption) {
+  if (r.kind === "team") return "Team donation";
+  if (r.kind === "gift") return `Gift · ${shortPlatform(r.platform) || "awaiting claim"}`;
+  return `GTA 6 · ${shortPlatform(r.platform)}`;
+}
+
+const statusInfo = (s: PublicRedemption["status"]) =>
+  s === "fulfilled"
+    ? { label: "Delivered", tone: "good" as const }
+    : s === "pending"
+      ? { label: "Pending", tone: "warn" as const }
+      : s === "unclaimed"
+        ? { label: "Unclaimed", tone: "warn" as const }
+        : { label: "Rejected", tone: "muted" as const };
+
 /** Redemption card that expands into a receipt. */
 export default function RedemptionCard({ r, now, paidSol }: { r: PublicRedemption; now: number; paidSol?: number }) {
   const [open, setOpen] = useState(false);
-  const status = r.status === "fulfilled" ? "Delivered" : r.status === "pending" ? "Pending" : "Rejected";
+  const status = statusInfo(r.status);
 
   return (
     <div className="card card-hover p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-lg font-medium">GTA 6 · {r.platform === "ps5" ? "PS5" : "Xbox"}</p>
+          <p className="text-lg font-medium">{redemptionTitle(r)}</p>
           <p className="mt-1 truncate font-mono text-xs text-muted">
-            → {shortAddr(r.wallet, 5)} · {timeAgo(r.createdAt, now)}
+            {r.kind === "self" && <>→ {shortAddr(r.wallet, 5)}</>}
+            {r.kind === "gift" && (
+              <>
+                {shortAddr(r.wallet, 4)} → {r.recipient ? shortAddr(r.recipient, 4) : "—"}
+              </>
+            )}
+            {r.kind === "team" && <>from {shortAddr(r.wallet, 5)}</>} · {timeAgo(r.createdAt, now)}
           </p>
         </div>
-        <StatusPill tone={r.status === "fulfilled" ? "good" : r.status === "pending" ? "warn" : "muted"}>{status}</StatusPill>
+        <StatusPill tone={status.tone}>{status.label}</StatusPill>
       </div>
 
       <button
@@ -34,11 +57,13 @@ export default function RedemptionCard({ r, now, paidSol }: { r: PublicRedemptio
 
       {open && (
         <dl className="mt-3 space-y-2 font-mono text-xs">
-          <Row k="Points spent" v={fmtNum(points.redeemCost)} />
+          <Row k="Type" v={r.kind === "self" ? "For themselves" : r.kind === "gift" ? "Gift to a wallet" : "Donated to the team"} />
+          <Row k="Points spent" v={`${fmtNum(points.redeemCost)} by ${shortAddr(r.wallet, 4)}`} />
+          {r.kind === "gift" && <Row k="Recipient" v={r.recipient ? shortAddr(r.recipient, 5) : "—"} />}
           <Row k="Paid by treasury" v={paidSol ? `${fmtNum(paidSol, 4)} SOL` : "—"} />
-          <Row k="Platform" v={platformLabel(r.platform)} />
+          <Row k="Platform" v={r.platform ? platformLabel(r.platform) : r.kind === "team" ? "Chosen by team" : "Chosen when claimed"} />
           <Row k="Requested" v={fmtDateTime(r.createdAt / 1000)} />
-          <Row k="Status" v={status} />
+          <Row k="Status" v={status.label} />
           <div className="pt-1">
             {r.tx ? (
               <a className="link" href={site.explorerTx(r.tx)} target="_blank" rel="noreferrer">

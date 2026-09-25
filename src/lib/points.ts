@@ -2,10 +2,10 @@ import { createHash, createPublicKey, randomUUID, verify } from "crypto";
 import { PublicKey } from "@solana/web3.js";
 import { points, TREASURY_WALLET } from "@/config";
 import { demoPoints, demoRedemptions, demoTopHolders } from "./demo";
-import { buildRedeemMessage } from "./redeem-message";
-import { holderBalances, tokenPriceUsd, walletTokenBalance } from "./solana";
+import { buildClaimMessage, buildRedeemMessage } from "./redeem-message";
+import { holderBalances, isValidAddress, tokenPriceUsd, walletTokenBalance } from "./solana";
 import { getStore, POINTS_LIVE } from "./store";
-import type { PointsInfo, PublicRedemption, Redemption } from "./types";
+import type { PointsInfo, PublicRedemption, Redemption, RedemptionKind } from "./types";
 
 const DAY_MS = 86_400_000;
 const store = () => getStore(demoPoints, demoRedemptions);
@@ -19,9 +19,11 @@ export async function listRedemptions(): Promise<Redemption[]> {
 export async function listPublicRedemptions(): Promise<{ rows: PublicRedemption[]; demo: boolean }> {
   const rows = (await listRedemptions())
     .filter((r) => r.status !== "rejected")
-    .map(({ id, wallet, platform, createdAt, status, tx, demo }) => ({
+    .map(({ id, wallet, kind, recipient, platform, createdAt, status, tx, demo }) => ({
       id,
       wallet,
+      kind: kind ?? "self",
+      recipient: recipient ?? null,
       platform,
       createdAt,
       status,
@@ -38,17 +40,23 @@ export async function getTopHolders(limit = 20): Promise<{ rows: { wallet: strin
 }
 
 export async function getPointsInfo(wallet: string): Promise<PointsInfo> {
-  const [bal, price, p, meta] = await Promise.all([
+  const [bal, price, p, meta, all] = await Promise.all([
     walletTokenBalance(wallet),
     tokenPriceUsd(),
     store().getPoints(wallet),
     store().getSnapMeta(),
+    store().listRedemptions(),
   ]);
+  const now = Date.now();
+  const windowMs = points.cooldownDays * DAY_MS;
   const usdValue = bal * price;
-  const cooldownUntil =
-    p.lastRedeemAt && Date.now() - p.lastRedeemAt < points.cooldownDays * DAY_MS
-      ? p.lastRedeemAt + points.cooldownDays * DAY_MS
-      : null;
+  const cooldownUntil = p.lastRedeemAt && now - p.lastRedeemAt < windowMs ? p.lastRedeemAt + windowMs : null;
+  const donationsUsed = all.filter(
+    (r) => r.wallet === wallet && (r.kind ?? "self") !== "self" && r.status !== "rejected" && now - r.createdAt < windowMs,
+  ).length;
+  const giftsToClaim = all
+    .filter((r) => r.kind === "gift" && r.status === "unclaimed" && r.recipient === wallet)
+    .map((r) => ({ id: r.id, from: r.wallet, createdAt: r.createdAt }));
   return {
     demo: !POINTS_LIVE,
     wallet,
@@ -59,6 +67,9 @@ export async function getPointsInfo(wallet: string): Promise<PointsInfo> {
     perDay: isExcluded(wallet) ? 0 : usdValue / points.usdPerPointDay,
     cost: points.redeemCost,
     cooldownUntil,
+    donationsUsed,
+    donationsMax: points.maxDonationsPerWindow,
+    giftsToClaim,
     lastSnapshotAt: meta?.at ?? null,
   };
 }
@@ -124,8 +135,29 @@ function verifySignature(wallet: string, message: string, signatureB64: string) 
   }
 }
 
+type Result = { ok: true; id: string } | { ok: false; error: string; status: number };
+const bad = (error: string, status = 400) => ({ ok: false as const, error, status });
+
+function checkDelivery(platform: string, region: string, email: string) {
+  if (!points.platforms.some((p) => p.id === platform)) return bad("Choose PlayStation 5 or Xbox Series X|S.");
+  if (!points.regions.includes(region)) return bad("Choose your region.");
+  if (!EMAIL_RE.test(email) || email.length > 200) return bad("Enter a valid email for code delivery.");
+  return null;
+}
+
+async function checkSignature(wallet: string, message: string, issuedAt: string, signature: string) {
+  const issued = Date.parse(issuedAt);
+  if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > 10 * 60_000) return bad("Signature expired — please sign again.");
+  if (!verifySignature(wallet, message, signature)) return bad("Signature check failed.", 401);
+  const nonce = createHash("sha256").update(signature).digest("hex");
+  if (!(await store().useNonce(nonce, 3600))) return bad("This signature was already used.", 409);
+  return null;
+}
+
 export type RedeemRequest = {
   wallet: string;
+  kind: RedemptionKind;
+  recipient: string;
   platform: string;
   region: string;
   email: string;
@@ -133,47 +165,88 @@ export type RedeemRequest = {
   signature: string; // base64
 };
 
-export async function redeem(req: RedeemRequest): Promise<{ ok: true; id: string } | { ok: false; error: string; status: number }> {
-  const bad = (error: string, status = 400) => ({ ok: false as const, error, status });
-
-  if (!points.platforms.some((p) => p.id === req.platform)) return bad("Choose PlayStation 5 or Xbox Series X|S.");
-  if (!points.regions.includes(req.region)) return bad("Choose your region.");
-  if (!EMAIL_RE.test(req.email) || req.email.length > 200) return bad("Enter a valid email for code delivery.");
+export async function redeem(req: RedeemRequest): Promise<Result> {
+  const kind = req.kind;
+  if (kind !== "self" && kind !== "gift" && kind !== "team") return bad("Choose who the copy is for.");
   if (isExcluded(req.wallet)) return bad("This wallet can't redeem.", 403);
-
-  const issued = Date.parse(req.issuedAt);
-  if (!Number.isFinite(issued) || Math.abs(Date.now() - issued) > 10 * 60_000) {
-    return bad("Signature expired — please sign again.");
+  if (kind === "self") {
+    const err = checkDelivery(req.platform, req.region, req.email);
+    if (err) return err;
   }
-  const message = buildRedeemMessage(req);
-  if (!verifySignature(req.wallet, message, req.signature)) return bad("Signature check failed.", 401);
+  if (kind === "gift") {
+    if (!isValidAddress(req.recipient)) return bad("Enter a valid recipient wallet address.");
+    if (req.recipient === req.wallet) return bad("To redeem for yourself, choose “For me”.");
+    if (isExcluded(req.recipient)) return bad("That wallet can't receive gifts.");
+  }
 
-  const nonce = createHash("sha256").update(req.signature).digest("hex");
-  if (!(await store().useNonce(nonce, 3600))) return bad("This signature was already used.", 409);
+  const message = buildRedeemMessage({ ...req, kind });
+  const sigErr = await checkSignature(req.wallet, message, req.issuedAt, req.signature);
+  if (sigErr) return sigErr;
 
   const rec: Redemption = {
     id: randomUUID().slice(0, 8),
     wallet: req.wallet,
-    platform: req.platform,
-    region: req.region,
-    email: req.email.trim(),
+    kind,
+    recipient: kind === "gift" ? req.recipient : null,
+    platform: kind === "self" ? req.platform : "",
+    region: kind === "self" ? req.region : "",
+    email: kind === "self" ? req.email.trim() : "",
     cost: points.redeemCost,
     createdAt: Date.now(),
-    status: "pending",
+    claimedAt: null,
+    status: kind === "gift" ? "unclaimed" : "pending",
     tx: null,
     note: null,
     ...(POINTS_LIVE ? {} : { demo: true }),
   };
-  const outcome = await store().redeem(rec, points.redeemCost * 100, points.cooldownDays * DAY_MS, points.maxPendingRedemptions);
+  const outcome = await store().redeem(rec, points.redeemCost * 100, {
+    windowMs: points.cooldownDays * DAY_MS,
+    maxPending: points.maxPendingRedemptions,
+    maxDonations: points.maxDonationsPerWindow,
+  });
   switch (outcome) {
     case "ok":
       return { ok: true, id: rec.id };
     case "insufficient":
       return bad(`You need ${points.redeemCost.toLocaleString()} points to redeem.`, 402);
     case "cooldown":
-      return bad(`Each wallet can redeem once every ${points.cooldownDays} days.`, 429);
+      return bad(`You can redeem a copy for yourself once every ${points.cooldownDays} days — you can still gift or donate.`, 429);
+    case "donation_limit":
+      return bad(`Each wallet can gift or donate up to ${points.maxDonationsPerWindow} copies every ${points.cooldownDays} days.`, 429);
     case "queue_full":
       return bad("The redemption queue is full while the treasury catches up. Your points are safe — try again soon.", 503);
+  }
+}
+
+export type ClaimRequest = { id: string; wallet: string; platform: string; region: string; email: string; issuedAt: string; signature: string };
+
+/** The gift's recipient chooses platform/region/email; the gift then joins the queue. */
+export async function claimGift(req: ClaimRequest): Promise<Result> {
+  const err = checkDelivery(req.platform, req.region, req.email);
+  if (err) return err;
+  const gift = await store().getRedemption(req.id);
+  if (!gift || gift.kind !== "gift") return bad("Gift not found.", 404);
+  if (gift.recipient !== req.wallet) return bad("This gift was sent to a different wallet.", 403);
+  if (gift.status !== "unclaimed") return bad("This gift has already been claimed.", 409);
+
+  const sigErr = await checkSignature(req.wallet, buildClaimMessage(req), req.issuedAt, req.signature);
+  if (sigErr) return sigErr;
+
+  const outcome = await store().claimGift(req.id, req.wallet, {
+    platform: req.platform,
+    region: req.region,
+    email: req.email.trim(),
+    claimedAt: Date.now(),
+  });
+  switch (outcome) {
+    case "ok":
+      return { ok: true, id: req.id };
+    case "not_found":
+      return bad("Gift not found.", 404);
+    case "not_yours":
+      return bad("This gift was sent to a different wallet.", 403);
+    case "not_claimable":
+      return bad("This gift has already been claimed.", 409);
   }
 }
 

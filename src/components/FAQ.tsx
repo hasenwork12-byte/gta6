@@ -26,8 +26,20 @@ const faqs: { q: string; a: React.ReactNode }[] = [
     ),
   },
   {
+    q: "I have more points than I need. Can I give copies away?",
+    a: (
+      <>
+        Yes. On the <Link href="/redeem" className="link">redeem page</Link>, choose <em>Gift a wallet</em> to send a copy to
+        someone else&apos;s wallet — they connect that wallet on the same page, pick PS5 or Xbox and claim it. Or choose{" "}
+        <em>Donate to the team</em> and the copy is used for community giveaways and videos. Both are listed in the public
+        feed. You can gift or donate up to {points.maxDonationsPerWindow} copies every {points.cooldownDays} days, on top of
+        one copy for yourself.
+      </>
+    ),
+  },
+  {
     q: "Is a game guaranteed?",
-    a: `No. Redemptions are filled in order while the treasury can pay for them. If trading volume drops, fees drop and redemptions slow down. If we can't fill a request, your points are returned. Each wallet can redeem once every ${points.cooldownDays} days.`,
+    a: `No. Redemptions are filled in order while the treasury can pay for them. If trading volume drops, fees drop and redemptions slow down. If we can't fill a request, your points are returned. Each wallet can redeem one copy for itself every ${points.cooldownDays} days.`,
   },
   {
     q: "Can I sell or transfer points?",
