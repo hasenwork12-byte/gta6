@@ -6,13 +6,13 @@ export function LogoMark({ className = "h-9 w-9" }: { className?: string }) {
   return <img src="/logo.svg" alt="" aria-hidden className={className} width={36} height={36} />;
 }
 
-export default function Logo() {
+export default function Logo({ showTicker = true }: { showTicker?: boolean }) {
   return (
     <span className="flex items-center gap-2">
       <LogoMark />
       <span className="text-[15px] font-semibold tracking-tight">
         {site.name}
-        <span className="ml-1.5 font-mono text-xs text-muted">${site.ticker}</span>
+        {showTicker && <span className="ml-1.5 font-mono text-xs text-muted">${site.ticker}</span>}
       </span>
     </span>
   );

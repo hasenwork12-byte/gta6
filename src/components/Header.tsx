@@ -19,7 +19,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 border-b border-line/[0.06] bg-bg/80 backdrop-blur-md">
       <div className="section flex h-16 items-center justify-between">
         <Link href="/" aria-label="Home" onClick={() => setOpen(false)}>
-          <Logo />
+          <Logo showTicker={false} />
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-muted md:flex">
           {nav.map((n) => (
