@@ -1,120 +1,59 @@
 import type { Metadata } from "next";
-import { TREASURY_WALLET, site } from "@/config";
-import { getLedger } from "@/lib/solana";
-import { listRedemptions } from "@/lib/points";
-import { fmtDateTime, fmtNum, shortAddr } from "@/lib/format";
-import DemoBadge, { LiveBadge } from "@/components/DemoBadge";
+import Link from "next/link";
+import BigStats from "@/components/BigStats";
+import Carousel from "@/components/Carousel";
+import { DashboardProvider } from "@/components/DashboardContext";
 import SectionHeading from "@/components/SectionHeading";
+import TreasuryPreview from "@/components/bento/TreasuryPreview";
+import ActivityCard from "@/components/cards/ActivityCard";
+import { TREASURY_LIVE, TREASURY_WALLET, site } from "@/config";
+import { DEMO_SOL_USD } from "@/lib/demo";
+import { shortAddr } from "@/lib/format";
+import { getDashboard, getLedger } from "@/lib/solana";
 
-export const metadata: Metadata = { title: `Treasury ledger — ${site.name}` };
-export const revalidate = 45;
+export const metadata: Metadata = { title: `Treasury — ${site.name}` };
+export const revalidate = 30;
 
 export default async function TreasuryPage() {
-  const [ledger, redemptions] = await Promise.all([getLedger().catch(() => null), listRedemptions().catch(() => [])]);
-  const delivered = redemptions.filter((r) => r.status === "fulfilled").length;
-
-  const totalIn = ledger?.entries.filter((e) => e.direction === "in").reduce((a, e) => a + e.sol, 0) ?? 0;
-  const totalOut = ledger?.entries.filter((e) => e.direction === "out").reduce((a, e) => a + e.sol, 0) ?? 0;
+  const [dashboard, ledger] = await Promise.all([getDashboard().catch(() => null), getLedger().catch(() => null)]);
+  const entries = ledger?.entries ?? [];
+  const demo = ledger?.demo ?? true;
+  const refTime = dashboard?.snapshot.updatedAt ?? Math.floor(Date.now() / 1000);
+  const fees = entries.filter((e) => e.direction === "in").map((e) => ({ time: e.time, sol: e.sol }));
 
   return (
-    <div className="section pt-14">
-      <SectionHeading
-        eyebrow="Transparency"
-        title="Public treasury ledger"
-        sub="Every SOL that enters or leaves the treasury wallet, with a link to the transaction on Solscan. Game purchases are matched against fulfilled redemptions."
-      />
-
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        {ledger?.demo ? <DemoBadge /> : ledger ? <LiveBadge /> : null}
-        {TREASURY_WALLET && !ledger?.demo && (
-          <a className="btn-ghost !py-1.5 font-mono text-xs" href={site.explorerAccount(TREASURY_WALLET)} target="_blank" rel="noreferrer">
-            {shortAddr(TREASURY_WALLET, 6)} ↗
-          </a>
-        )}
-        {ledger?.partial && (
-          <span className="text-xs text-muted">Showing the most recent {ledger.entries.length} transactions.</span>
-        )}
-      </div>
-
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <Summary label="In (fees)" value={`+${fmtNum(totalIn, 3)} SOL`} tone="text-good" />
-        <Summary label="Out (purchases)" value={`−${fmtNum(totalOut, 3)} SOL`} tone="text-accent" />
-        <Summary label="Games delivered" value={String(delivered)} />
-      </div>
-
-      {!ledger ? (
-        <div className="card p-10 text-center text-sm text-muted">Couldn&apos;t reach the Solana RPC. Refresh in a moment.</div>
-      ) : ledger.entries.length === 0 ? (
-        <div className="card p-10 text-center text-sm text-muted">No transactions yet.</div>
-      ) : (
-        <div className="card overflow-hidden">
-          {/* Desktop table */}
-          <table className="hidden w-full text-sm md:table">
-            <thead>
-              <tr className="border-b border-line/[0.07] text-left">
-                {["Time", "Type", "Amount", "Counterparty", "Transaction"].map((h) => (
-                  <th key={h} className="label px-5 py-3.5 font-normal">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line/[0.05]">
-              {ledger.entries.map((e) => (
-                <tr key={e.signature} className="hover:bg-line/[0.02]">
-                  <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-muted">{fmtDateTime(e.time)}</td>
-                  <td className="px-5 py-3">{e.label}</td>
-                  <td className={`whitespace-nowrap px-5 py-3 font-mono ${e.direction === "in" ? "text-good" : "text-accent"}`}>
-                    {e.direction === "in" ? "+" : "−"}
-                    {fmtNum(e.sol, 4)} SOL
-                  </td>
-                  <td className="px-5 py-3 font-mono text-xs text-muted">{e.counterparty ? shortAddr(e.counterparty, 5) : "—"}</td>
-                  <td className="px-5 py-3">
-                    <TxLink sig={e.signature} demo={ledger.demo} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Mobile list */}
-          <ul className="divide-y divide-line/[0.05] md:hidden">
-            {ledger.entries.map((e) => (
-              <li key={e.signature} className="flex items-center justify-between gap-3 px-4 py-3.5">
-                <div className="min-w-0">
-                  <p className="text-sm">{e.label}</p>
-                  <p className="mt-0.5 font-mono text-[11px] text-muted">{fmtDateTime(e.time)}</p>
-                </div>
-                <div className="text-right">
-                  <p className={`font-mono text-sm ${e.direction === "in" ? "text-good" : "text-accent"}`}>
-                    {e.direction === "in" ? "+" : "−"}
-                    {fmtNum(e.sol, 3)}
-                  </p>
-                  <TxLink sig={e.signature} demo={ledger.demo} />
-                </div>
-              </li>
-            ))}
-          </ul>
+    <DashboardProvider initial={dashboard}>
+      <div className="section pt-14">
+        <SectionHeading
+          eyebrow="Treasury"
+          title="Where the fees are right now"
+          sub="Read directly from the treasury wallet on Solana. This is what pays for redeemed games."
+        />
+        <div className="mb-6 flex flex-wrap items-center gap-3">
+          {TREASURY_LIVE && (
+            <a className="btn-ghost !py-1.5 font-mono text-xs" href={site.explorerAccount(TREASURY_WALLET)} target="_blank" rel="noreferrer">
+              Wallet {shortAddr(TREASURY_WALLET, 6)} ↗
+            </a>
+          )}
+          <Link href="/ledger" className="btn-ghost !py-1.5 text-xs">
+            Full ledger →
+          </Link>
         </div>
-      )}
-    </div>
-  );
-}
 
-function Summary({ label, value, tone = "" }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="card p-4 sm:p-5">
-      <p className="label">{label}</p>
-      <p className={`mt-3 font-mono text-lg sm:text-2xl ${tone}`}>{value}</p>
-    </div>
-  );
-}
+        <TreasuryPreview fees={fees} refTime={refTime} href="/ledger" />
 
-function TxLink({ sig, demo }: { sig: string; demo: boolean }) {
-  if (demo) return <span className="font-mono text-xs text-muted">demo · no tx</span>;
-  return (
-    <a className="link font-mono text-xs" href={site.explorerTx(sig)} target="_blank" rel="noreferrer">
-      {shortAddr(sig, 5)} ↗
-    </a>
+        <div className="mt-16">
+          <BigStats />
+        </div>
+
+        <div className="mt-16">
+          <Carousel title="Treasury activity" href="/ledger" demo={demo}>
+            {entries.slice(0, 15).map((e) => (
+              <ActivityCard key={e.signature} e={e} demo={demo} solUsd={dashboard?.snapshot.solUsd ?? DEMO_SOL_USD} />
+            ))}
+          </Carousel>
+        </div>
+      </div>
+    </DashboardProvider>
   );
 }

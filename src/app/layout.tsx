@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { site } from "@/config";
-import Header from "@/components/Header";
+import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
 import WalletProviders from "@/components/WalletProviders";
 
@@ -29,9 +29,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen font-sans">
         <WalletProviders>
-          <Header />
-          <main>{children}</main>
-          <Footer />
+          <div className="md:flex">
+            <Sidebar />
+            <div className="min-w-0 flex-1">
+              <main>{children}</main>
+              <Footer />
+            </div>
+          </div>
         </WalletProviders>
       </body>
     </html>

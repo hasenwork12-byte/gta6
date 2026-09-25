@@ -63,7 +63,7 @@ export default async function Home() {
           ))}
         </Carousel>
 
-        <Carousel title="Treasury activity" href="/treasury" demo={ledgerDemo}>
+        <Carousel title="Treasury activity" href="/ledger" demo={ledgerDemo}>
           {entries.slice(0, 15).map((e) => (
             <ActivityCard key={e.signature} e={e} demo={ledgerDemo} solUsd={solUsd} />
           ))}

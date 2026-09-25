@@ -5,7 +5,7 @@ import BentoCard from "./BentoCard";
 export default function LedgerPreview({ entries, demo, now }: { entries: LedgerEntry[]; demo: boolean; now: number }) {
   const rows = entries.slice(0, 6);
   return (
-    <BentoCard label="Ledger" href="/treasury" demo={demo}>
+    <BentoCard label="Ledger" href="/ledger" demo={demo}>
       {rows.length === 0 ? (
         <p className="py-10 text-center text-sm text-muted">No transactions yet.</p>
       ) : (

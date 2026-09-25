@@ -7,7 +7,17 @@ import RollingNumber from "../RollingNumber";
 import BentoCard from "./BentoCard";
 import FeesChart, { type FeePoint } from "./FeesChart";
 
-export default function TreasuryPreview({ fees, refTime, className = "" }: { fees: FeePoint[]; refTime: number; className?: string }) {
+export default function TreasuryPreview({
+  fees,
+  refTime,
+  className = "",
+  href = "/treasury",
+}: {
+  fees: FeePoint[];
+  refTime: number;
+  className?: string;
+  href?: string;
+}) {
   const { data } = useDashboard();
   const s = data?.snapshot;
   const usd = s ? s.balanceSol * s.solUsd : 0;
@@ -16,7 +26,7 @@ export default function TreasuryPreview({ fees, refTime, className = "" }: { fee
   const remainder = usd - funded * price;
 
   return (
-    <BentoCard label="Treasury" href="/treasury" demo={s?.demo} className={className}>
+    <BentoCard label="Treasury" href={href} demo={s?.demo} className={className}>
       <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
         <RollingNumber value={s?.balanceSol ?? 0} format={(n) => fmtNum(n, 3)} className="text-4xl font-medium tracking-tight" />
         <span className="pb-0.5 font-mono text-sm text-muted">SOL · ≈ {fmtUsd(usd)}</span>
