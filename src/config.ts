@@ -61,9 +61,10 @@ export const points = {
   maxPendingRedemptions: 25,
   /** Keep in sync with the schedule in vercel.json. */
   snapshotTime: "00:00 UTC",
+  /** `color` is the platform's brand-ish colour, used on the redeem cards. */
   platforms: [
-    { id: "ps5", label: "PlayStation 5" },
-    { id: "xbox", label: "Xbox Series X|S" },
+    { id: "ps5", label: "PlayStation 5", color: "#0070D1" },
+    { id: "xbox", label: "Xbox Series X|S", color: "#107C10" },
   ],
   regions: ["United States", "Canada", "United Kingdom", "European Union", "Australia / New Zealand", "Other"],
   /** Wallets that never earn points (treasury, LP pools, team, exchanges). */
