@@ -9,9 +9,10 @@ export default function AdminPage() {
       <p className="label">Admin</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight">Redemption queue</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
-        Buy the code from a retailer, pay from the treasury wallet, paste that transaction signature here and mark it
-        fulfilled — then email the code. Rejecting returns the points to the wallet. Team donations have no email: keep
-        the code for a community giveaway or video. Gifts can only be fulfilled after the recipient claims them.
+        Buy codes from a retailer, paying from the treasury wallet, then add them under Code stock with that purchase
+        transaction. Codes are encrypted and delivered automatically: instantly to new requests, and oldest-first to
+        anyone waiting. For team donations, take a code from stock below. &quot;Mark fulfilled&quot; is only for copies you
+        delivered outside the site. Rejecting returns the points to the wallet.
       </p>
       <div className="mt-8">
         <AdminPanel />

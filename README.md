@@ -32,8 +32,15 @@ npm run dev                  # http://localhost:3000
   prices. The first snapshot only records balances.
 - Holders redeem at `/redeem` by signing a message (no transaction). Points are
   deducted atomically and the request joins the queue.
-- Fulfil at `/admin`: buy the code, pay from the treasury, paste the tx
-  signature, mark fulfilled, email the code. "Reject" refunds the points.
+- Codes are delivered automatically from an encrypted stock. Buy codes (paying
+  from the treasury), then add them at `/admin` → Code stock with the purchase
+  tx. New requests get a code instantly; waiting requests are served
+  oldest-first when you restock. Owners reveal their code on `/redeem` by
+  signing with their wallet.
+- Set `KEYS_ENCRYPTION_KEY` (32 random bytes, base64) before adding real codes,
+  and never change it afterwards. Codes are never stored in plain text.
+- Holders can also gift a copy to another wallet or donate it to the team;
+  take team codes from stock in `/admin`. "Reject" refunds the points.
 
 Demo data is shown per source: treasury sections go live once the treasury
 wallet is set, token sections (holders, eligibility) once the mint is set. Every

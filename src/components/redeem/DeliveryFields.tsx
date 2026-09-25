@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { points } from "@/config";
+import { points, stockKey } from "@/config";
 
 /** Platform cards (cover art, platform colour), store region and delivery email. */
 export default function DeliveryFields({
@@ -12,7 +12,9 @@ export default function DeliveryFields({
   setRegion,
   email,
   setEmail,
+  stock,
 }: {
+  stock: Record<string, number>;
   idPrefix: string;
   platform: string;
   setPlatform: (v: string) => void;
@@ -93,22 +95,31 @@ export default function DeliveryFields({
             <option key={r}>{r}</option>
           ))}
         </select>
+        {platform && region && (
+          <p className={`mt-2 text-xs ${(stock[stockKey(platform, region)] ?? 0) > 0 ? "text-good" : "text-amber-300"}`}>
+            {(stock[stockKey(platform, region)] ?? 0) > 0
+              ? `⚡ In stock — your code is delivered instantly on this page.`
+              : "Out of stock right now — you'll join the queue and get a code automatically when stock arrives."}
+          </p>
+        )}
       </div>
 
       <div>
         <label htmlFor={`${idPrefix}-email`} className="mb-2 block text-sm font-medium">
-          Email for code delivery
+          Email <span className="font-normal text-muted">(optional)</span>
         </label>
         <input
           id={`${idPrefix}-email`}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
           placeholder="you@example.com"
           className="h-[42px] w-full rounded-full border border-line/15 bg-bg/60 px-5 text-sm outline-none placeholder:text-muted focus:border-accent/60"
         />
-        <p className="mt-1.5 text-xs text-muted">Kept private. Used only to send your code.</p>
+        <p className="mt-1.5 text-xs text-muted">
+          Codes are shown here after you sign with your wallet. Add an email only if you&apos;d like a heads-up when a
+          queued code is ready. Kept private.
+        </p>
       </div>
     </>
   );

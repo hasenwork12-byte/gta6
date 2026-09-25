@@ -48,7 +48,27 @@ export type Redemption = {
   status: RedemptionStatus;
   tx: string | null; // purchase transaction, set on fulfilment
   note: string | null;
+  /** Set when a code from stock was assigned (the code itself is stored encrypted, separately). */
+  keyId?: string | null;
+  fulfilledAt?: number | null;
+  revealCount?: number;
+  lastRevealAt?: number | null;
   demo?: boolean;
+};
+
+/** A stocked code, as stored: the code is encrypted. */
+export type StockItem = { id: string; enc: string; tx: string; addedAt: number };
+
+/** A wallet's own code slots, shown on /redeem. */
+export type MyCode = {
+  id: string;
+  kind: RedemptionKind;
+  platform: string;
+  region: string;
+  createdAt: number;
+  status: RedemptionStatus;
+  hasCode: boolean;
+  revealed: boolean;
 };
 
 /** Safe to show publicly. */
@@ -76,5 +96,7 @@ export type PointsInfo = {
   donationsMax: number;
   /** Copies other wallets gifted to this one, waiting to be claimed. */
   giftsToClaim: GiftToClaim[];
+  /** This wallet's copies (for itself, or gifts it claimed): queued or ready to reveal. */
+  myCodes: MyCode[];
   lastSnapshotAt: number | null;
 };

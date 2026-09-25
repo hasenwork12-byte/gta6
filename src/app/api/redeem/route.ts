@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       signature: str("signature"),
     });
     if (!res.ok) return NextResponse.json({ error: res.error }, { status: res.status });
-    return NextResponse.json({ id: res.id });
+    return NextResponse.json({ id: res.id, delivered: Boolean(res.delivered) });
   } catch (e) {
     console.error("redeem failed", e);
     return NextResponse.json({ error: "Something went wrong. Your points were not spent." }, { status: 500 });

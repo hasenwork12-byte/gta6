@@ -10,7 +10,9 @@ import type { RedemptionKind } from "@/lib/types";
 import PointsPanel from "./PointsPanel";
 import ClaimGift from "./redeem/ClaimGift";
 import DeliveryFields from "./redeem/DeliveryFields";
+import MyCodes from "./redeem/MyCodes";
 import { signAndPost } from "./redeem/signAndPost";
+import { useStock } from "./redeem/useStock";
 import { usePoints } from "./usePoints";
 import WalletButton from "./WalletButton";
 
@@ -37,7 +39,8 @@ export default function RedeemFlow() {
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ id: string; kind: RedemptionKind } | null>(null);
+  const [done, setDone] = useState<{ id: string; kind: RedemptionKind; delivered: boolean } | null>(null);
+  const { stock, refresh: refreshStock } = useStock();
 
   const wallet = publicKey?.toBase58() ?? null;
   useEffect(() => {
@@ -45,6 +48,10 @@ export default function RedeemFlow() {
     setError(null);
     if (wallet) load(wallet);
   }, [wallet, load]);
+  const reload = () => {
+    if (wallet) load(wallet);
+    refreshStock();
+  };
 
   const enoughPoints = !!info && info.points >= info.cost;
   const donationsLeft = info ? Math.max(0, info.donationsMax - info.donationsUsed) : 0;
@@ -52,7 +59,7 @@ export default function RedeemFlow() {
   const canRedeem = enoughPoints && allowed;
 
   const fieldsReady =
-    kind === "self" ? !!platform && !!region && !!email : kind === "gift" ? B58.test(recipient.trim()) && recipient.trim() !== wallet : true;
+    kind === "self" ? !!platform && !!region : kind === "gift" ? B58.test(recipient.trim()) && recipient.trim() !== wallet : true;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -72,8 +79,8 @@ export default function RedeemFlow() {
         email,
         issuedAt,
       });
-      setDone({ id: j.id, kind });
-      load(wallet);
+      setDone({ id: j.id, kind, delivered: Boolean(j.delivered) });
+      reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Redemption failed");
     } finally {
@@ -111,8 +118,9 @@ export default function RedeemFlow() {
           {wallet && loading && !info && <p className="text-sm text-muted">Loading points…</p>}
           {loadError && <p className="text-sm text-accent">{loadError}</p>}
           {info?.giftsToClaim.map((g) => (
-            <ClaimGift key={g.id} gift={g} onClaimed={() => wallet && load(wallet)} />
+            <ClaimGift key={g.id} gift={g} stock={stock} onClaimed={reload} />
           ))}
+          {info && <MyCodes codes={info.myCodes} />}
           {info && <PointsPanel info={info} />}
           {info && (
             <p className="font-mono text-xs text-muted">
@@ -129,17 +137,24 @@ export default function RedeemFlow() {
         {done ? (
           <div className="mt-6 space-y-4">
             <p className="text-2xl font-medium text-good">
-              {done.kind === "self" ? "Request received ✓" : done.kind === "gift" ? "Gift sent ✓" : "Thank you ✓"}
+              {done.kind === "self" ? (done.delivered ? "Your code is ready ✓" : "You're in the queue ✓") : done.kind === "gift" ? "Gift sent ✓" : "Thank you ✓"}
             </p>
             <p className="text-sm leading-relaxed text-muted">
               Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} points were
-              reserved.{" "}
-              {done.kind === "self" && (
-                <>
-                  Your {platformLabel(platform)} code will be emailed to <span className="text-fg">{email}</span> once the
-                  treasury buys it.
-                </>
-              )}
+              spent.{" "}
+              {done.kind === "self" &&
+                (done.delivered ? (
+                  <>
+                    Your {platformLabel(platform)} code is under <span className="text-fg">Your codes</span> — press{" "}
+                    <span className="text-fg">Reveal code</span> and sign with your wallet to see it.
+                  </>
+                ) : (
+                  <>
+                    {platformLabel(platform)} codes for {region} are out of stock right now. You&apos;re in the queue and
+                    your code appears under <span className="text-fg">Your codes</span> automatically when stock
+                    arrives.
+                  </>
+                ))}
               {done.kind === "gift" && (
                 <>
                   <span className="font-mono text-fg">{shortAddr(recipient.trim(), 5)}</span> can claim it by connecting
@@ -189,6 +204,7 @@ export default function RedeemFlow() {
               {kind === "self" && (
                 <DeliveryFields
                   idPrefix="self"
+                  stock={stock}
                   platform={platform}
                   setPlatform={setPlatform}
                   region={region}

@@ -74,4 +74,6 @@ export const points = {
 };
 
 export type PlatformId = "ps5" | "xbox";
+/** Codes are region-locked, so stock is kept per platform + region. */
+export const stockKey = (platform: string, region: string) => `${platform}|${region}`;
 export const platformLabel = (id: string) => points.platforms.find((p) => p.id === id)?.label ?? id;

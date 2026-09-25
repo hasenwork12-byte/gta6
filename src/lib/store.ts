@@ -7,7 +7,7 @@
 // Points are stored as integer "centipoints" (1 point = 100) to avoid floats.
 import { Redis } from "@upstash/redis";
 import { TOKEN_LIVE } from "@/config";
-import type { Redemption } from "./types";
+import type { Redemption, StockItem } from "./types";
 
 const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "";
 const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || "";
@@ -20,6 +20,7 @@ export type SnapDay = { at: number; price: number; holders: number; awarded: num
 export type RedeemOutcome = "ok" | "insufficient" | "cooldown" | "donation_limit" | "queue_full";
 export type ClaimOutcome = "ok" | "not_found" | "not_claimable" | "not_yours";
 export type RedeemLimits = { windowMs: number; maxPending: number; maxDonations: number };
+export type AssignOutcome = "ok" | "empty" | "not_pending";
 
 const kindOf = (r: Redemption) => r.kind ?? "self";
 
@@ -44,6 +45,18 @@ export interface Store {
   resolveRedemption(id: string, status: "fulfilled" | "rejected", tx: string | null, note: string | null): Promise<Redemption | null>;
   /** Returns false if the nonce was already used. */
   useNonce(nonce: string, ttlSec: number): Promise<boolean>;
+
+  // ── Code stock ──
+  addStock(skey: string, items: StockItem[]): Promise<void>;
+  /** Number of codes in stock per `platform|region`. */
+  stockCounts(): Promise<Record<string, number>>;
+  /**
+   * Atomically takes one code for platform+region and fulfils the pending redemption with it
+   * (receipt = the code's purchase tx).
+   */
+  assignFromStock(id: string, platform: string, region: string, now: number): Promise<AssignOutcome>;
+  getAssignedCode(id: string): Promise<StockItem | null>;
+  markRevealed(id: string, now: number): Promise<void>;
   getSnapMeta(): Promise<SnapMeta | null>;
   getSnapBalances(): Promise<Record<string, number>>;
   applySnapshot(args: {
@@ -64,7 +77,31 @@ const K = {
   snapBalances: "snap:balances",
   snapMeta: "snap:meta",
   snapDays: "snap:days",
+  stock: (skey: string) => `stock:${skey}`,
+  stockIndex: "stock:index",
+  assigned: "stock:assigned",
 };
+
+// KEYS: redemptions, pending, stockList, assigned   ARGV: id, platform, region, now
+const ASSIGN_LUA = `
+local raw = redis.call('HGET', KEYS[1], ARGV[1])
+if not raw then return 'not_pending' end
+local r = cjson.decode(raw)
+if r.status ~= 'pending' then return 'not_pending' end
+local item = redis.call('LPOP', KEYS[3])
+if not item then return 'empty' end
+local k = cjson.decode(item)
+r.status = 'fulfilled'
+r.platform = ARGV[2]
+r.region = ARGV[3]
+r.tx = k.tx
+r.keyId = k.id
+r.fulfilledAt = tonumber(ARGV[4])
+redis.call('HSET', KEYS[1], ARGV[1], cjson.encode(r))
+redis.call('HSET', KEYS[4], ARGV[1], item)
+redis.call('DECR', KEYS[2])
+return 'ok'
+`;
 
 // Atomic check-and-deduct so two requests can't spend the same points.
 // KEYS: points, lastRedeem, redemptions, pending, donateTimes
@@ -226,6 +263,41 @@ class RedisStore implements Store {
     return ok === "OK";
   }
 
+  async addStock(skey: string, items: StockItem[]) {
+    if (!items.length) return;
+    const tx = this.r.multi();
+    tx.rpush(K.stock(skey), ...items.map((i) => JSON.stringify(i)));
+    tx.sadd(K.stockIndex, skey);
+    await tx.exec();
+  }
+
+  async stockCounts() {
+    const keys = ((await this.r.smembers(K.stockIndex)) ?? []) as string[];
+    if (!keys.length) return {};
+    const p = this.r.pipeline();
+    keys.forEach((k) => p.llen(K.stock(k)));
+    const lens = (await p.exec()) as number[];
+    return Object.fromEntries(keys.map((k, i) => [k, Number(lens[i] ?? 0)]));
+  }
+
+  async assignFromStock(id: string, platform: string, region: string, now: number) {
+    const skey = `${platform}|${region}`;
+    const res = await this.r.eval(ASSIGN_LUA, [K.redemptions, K.pending, K.stock(skey), K.assigned], [id, platform, region, String(now)]);
+    return String(res) as AssignOutcome;
+  }
+
+  async getAssignedCode(id: string) {
+    const v = await this.r.hget<string>(K.assigned, id);
+    return v ? (JSON.parse(v) as StockItem) : null;
+  }
+
+  async markRevealed(id: string, now: number) {
+    const r = await this.getRedemption(id);
+    if (!r) return;
+    const next = { ...r, revealCount: (r.revealCount ?? 0) + 1, lastRevealAt: now };
+    await this.r.hset(K.redemptions, { [id]: JSON.stringify(next) });
+  }
+
   async getSnapMeta() {
     const v = await this.r.get<string>(K.snapMeta);
     return v ? (JSON.parse(v) as SnapMeta) : null;
@@ -258,6 +330,8 @@ type Mem = {
   donateTimes: Map<string, number[]>;
   redemptions: Map<string, Redemption>;
   nonces: Set<string>;
+  stock: Map<string, StockItem[]>;
+  assigned: Map<string, StockItem>;
   snapMeta: SnapMeta | null;
   snapBalances: Record<string, number>;
 };
@@ -339,6 +413,29 @@ class MemoryStore implements Store {
     this.m.nonces.add(n);
     return true;
   }
+  async addStock(skey: string, items: StockItem[]) {
+    this.m.stock.set(skey, [...(this.m.stock.get(skey) ?? []), ...items]);
+  }
+  async stockCounts() {
+    return Object.fromEntries([...this.m.stock.entries()].map(([k, v]) => [k, v.length]));
+  }
+  async assignFromStock(id: string, platform: string, region: string, now: number): Promise<AssignOutcome> {
+    const r = this.m.redemptions.get(id);
+    if (!r || r.status !== "pending") return "not_pending";
+    const list = this.m.stock.get(`${platform}|${region}`) ?? [];
+    const item = list.shift();
+    if (!item) return "empty";
+    this.m.redemptions.set(id, { ...r, status: "fulfilled", platform, region, tx: item.tx, keyId: item.id, fulfilledAt: now });
+    this.m.assigned.set(id, item);
+    return "ok";
+  }
+  async getAssignedCode(id: string) {
+    return this.m.assigned.get(id) ?? null;
+  }
+  async markRevealed(id: string, now: number) {
+    const r = this.m.redemptions.get(id);
+    if (r) this.m.redemptions.set(id, { ...r, revealCount: (r.revealCount ?? 0) + 1, lastRevealAt: now });
+  }
   async getSnapMeta() {
     return this.m.snapMeta;
   }
@@ -368,6 +465,8 @@ export function getStore(seedPoints: (w: string) => number, seedRedemptions: () 
       donateTimes: new Map(),
       redemptions: new Map(seedRedemptions().map((r) => [r.id, r])),
       nonces: new Set(),
+      stock: new Map(),
+      assigned: new Map(),
       snapMeta: null,
       snapBalances: {},
     };

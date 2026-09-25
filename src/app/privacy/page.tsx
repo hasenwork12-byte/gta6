@@ -18,11 +18,11 @@ export default function Privacy() {
       <section>
         <h2>Redemptions</h2>
         <p>
-          When you redeem, we store your wallet address, chosen platform, store region and email address. The email is
-          used only to deliver your game code and is never shown publicly. The public feed shows a shortened wallet
+          When you redeem, we store your wallet address, chosen platform and store region, and your email if you choose
+          to give one (optional, only for a heads-up about queued codes — never shown publicly). Game codes are stored
+          encrypted and are only revealed to the wallet that owns them. The public feed shows a shortened wallet
           address, the platform, the date and the on-chain purchase receipt. For gifts, the recipient&apos;s wallet
-          address is also shown (shortened); the recipient&apos;s email is collected only when they claim. You can ask us to delete your email after
-          delivery.
+          address is also shown (shortened). You can ask us to delete your email at any time.
         </p>
       </section>
       <section>

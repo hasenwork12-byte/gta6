@@ -41,7 +41,7 @@ export default function Terms() {
           Instead of redeeming for yourself, you can spend {fmtNum(points.redeemCost)} points to gift a copy to another
           wallet, or donate it to the {site.name} team. Each wallet may make up to {points.maxDonationsPerWindow} gifts or
           donations every {points.cooldownDays} days. A gift can only be claimed by the recipient wallet, which chooses
-          the platform and delivery email; unclaimed gifts may be cancelled after 30 days and the points returned to the
+          the platform and region; unclaimed gifts may be cancelled after 30 days and the points returned to the
           sender. Team donations are used only for community giveaways and content, are never resold, and appear in the
           public feed. Gifts and donations are voluntary and give the sender nothing in return. Points themselves still
           cannot be transferred.
@@ -53,7 +53,8 @@ export default function Terms() {
           Requests are filled in the order received, only while the treasury can pay for them. New requests pause while{" "}
           {points.maxPendingRedemptions} are waiting. If a request cannot be filled — for example because the treasury
           is short, the game isn&apos;t available in your region, or redemption isn&apos;t permitted where you live — it
-          is rejected and the points are returned. Codes are delivered by email, are non-refundable once sent, and have
+          is rejected and the points are returned. Codes are delivered on this website to the wallet that owns them (revealed by signing a message),
+          are non-refundable once revealed, and have
           no cash alternative.
         </p>
       </section>

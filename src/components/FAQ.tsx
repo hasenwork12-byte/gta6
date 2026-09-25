@@ -20,8 +20,9 @@ const faqs: { q: string; a: React.ReactNode }[] = [
     a: (
       <>
         Go to the <Link href="/redeem" className="link">redeem page</Link>, connect your wallet, choose PlayStation 5 or
-        Xbox Series X|S and your store region, and sign a free message. The treasury buys the code and it&apos;s emailed
-        to you. The purchase transaction is published in the redemption feed.
+        Xbox Series X|S and your store region, and sign a free message. If a code is in stock it&apos;s delivered
+        instantly — press <em>Reveal code</em> and sign again to see it. If not, you join the queue and get a code
+        automatically as soon as the treasury restocks. The purchase transaction is published in the redemption feed.
       </>
     ),
   },

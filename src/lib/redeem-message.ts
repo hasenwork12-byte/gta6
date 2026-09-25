@@ -22,6 +22,10 @@ export function buildRedeemMessage(f: {
   return lines.join("\n");
 }
 
+export function buildRevealMessage(f: { id: string; wallet: string; issuedAt: string }) {
+  return [`${site.name}: reveal my GTA 6 code.`, "", `Redemption: ${f.id}`, `Wallet: ${f.wallet}`, `Issued: ${f.issuedAt}`, "", FOOTER].join("\n");
+}
+
 export function buildClaimMessage(f: { id: string; wallet: string; platform: string; region: string; issuedAt: string }) {
   return [
     `${site.name}: claim gifted copy of GTA 6.`,

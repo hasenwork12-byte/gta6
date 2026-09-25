@@ -1,14 +1,34 @@
 import { createHash, createPublicKey, randomUUID, verify } from "crypto";
 import { PublicKey } from "@solana/web3.js";
-import { points, TREASURY_WALLET } from "@/config";
+import { points, stockKey, TREASURY_WALLET } from "@/config";
 import { demoPoints, demoRedemptions, demoTopHolders } from "./demo";
-import { buildClaimMessage, buildRedeemMessage } from "./redeem-message";
+import { decryptCode, encryptCode } from "./keyvault";
+import { buildClaimMessage, buildRedeemMessage, buildRevealMessage } from "./redeem-message";
 import { holderBalances, isValidAddress, tokenPriceUsd, walletTokenBalance } from "./solana";
 import { getStore, POINTS_LIVE } from "./store";
 import type { PointsInfo, PublicRedemption, Redemption, RedemptionKind } from "./types";
 
 const DAY_MS = 86_400_000;
-const store = () => getStore(demoPoints, demoRedemptions);
+const g = globalThis as unknown as { __pigDemoStock?: boolean };
+const store = () => {
+  const s = getStore(demoPoints, demoRedemptions);
+  // Demo mode: a few obviously fake codes so instant delivery can be tried locally.
+  if (!POINTS_LIVE && !g.__pigDemoStock) {
+    g.__pigDemoStock = true;
+    for (const p of points.platforms) {
+      void s.addStock(
+        stockKey(p.id, "United States"),
+        [1, 2, 3].map((n) => ({
+          id: `demo-${p.id}-${n}`,
+          enc: encryptCode(`DEMO-${p.id.toUpperCase()}-000${n}-NOT-A-REAL-CODE`),
+          tx: `DEMO-PURCHASE-${p.id}`,
+          addedAt: Date.now(),
+        })),
+      );
+    }
+  }
+  return s;
+};
 
 const isExcluded = (w: string) => w === TREASURY_WALLET || points.excluded.includes(w);
 
@@ -57,6 +77,18 @@ export async function getPointsInfo(wallet: string): Promise<PointsInfo> {
   const giftsToClaim = all
     .filter((r) => r.kind === "gift" && r.status === "unclaimed" && r.recipient === wallet)
     .map((r) => ({ id: r.id, from: r.wallet, createdAt: r.createdAt }));
+  const myCodes = all
+    .filter((r) => ownsCode(r, wallet) && (r.status === "pending" || r.status === "fulfilled"))
+    .map((r) => ({
+      id: r.id,
+      kind: r.kind ?? "self",
+      platform: r.platform,
+      region: r.region,
+      createdAt: r.createdAt,
+      status: r.status,
+      hasCode: Boolean(r.keyId),
+      revealed: (r.revealCount ?? 0) > 0,
+    }));
   return {
     demo: !POINTS_LIVE,
     wallet,
@@ -70,6 +102,7 @@ export async function getPointsInfo(wallet: string): Promise<PointsInfo> {
     donationsUsed,
     donationsMax: points.maxDonationsPerWindow,
     giftsToClaim,
+    myCodes,
     lastSnapshotAt: meta?.at ?? null,
   };
 }
@@ -135,14 +168,36 @@ function verifySignature(wallet: string, message: string, signatureB64: string) 
   }
 }
 
-type Result = { ok: true; id: string } | { ok: false; error: string; status: number };
+type Result = { ok: true; id: string; delivered?: boolean } | { ok: false; error: string; status: number };
 const bad = (error: string, status = 400) => ({ ok: false as const, error, status });
 
 function checkDelivery(platform: string, region: string, email: string) {
   if (!points.platforms.some((p) => p.id === platform)) return bad("Choose PlayStation 5 or Xbox Series X|S.");
   if (!points.regions.includes(region)) return bad("Choose your region.");
-  if (!EMAIL_RE.test(email) || email.length > 200) return bad("Enter a valid email for code delivery.");
+  // Codes are delivered on the site; email is optional (for a heads-up if the request has to wait).
+  if (email && (!EMAIL_RE.test(email) || email.length > 200)) return bad("That email doesn't look right.");
   return null;
+}
+
+/** Tries to hand a code from stock to a pending self/gift redemption. Returns true if delivered. */
+async function tryAssign(id: string): Promise<boolean> {
+  const r = await store().getRedemption(id);
+  if (!r || r.status !== "pending" || (r.kind ?? "self") === "team" || !r.platform || !r.region) return false;
+  return (await store().assignFromStock(id, r.platform, r.region, Date.now())) === "ok";
+}
+
+/** Anyone waiting (oldest first) gets codes as soon as matching stock exists. */
+async function fillQueue(platform: string, region: string) {
+  const waiting = (await store().listRedemptions())
+    .filter((r) => r.status === "pending" && (r.kind ?? "self") !== "team" && r.platform === platform && r.region === region)
+    .sort((a, b) => (a.claimedAt ?? a.createdAt) - (b.claimedAt ?? b.createdAt));
+  let delivered = 0;
+  for (const r of waiting) {
+    const res = await store().assignFromStock(r.id, platform, region, Date.now());
+    if (res === "empty") break;
+    if (res === "ok") delivered++;
+  }
+  return delivered;
 }
 
 async function checkSignature(wallet: string, message: string, issuedAt: string, signature: string) {
@@ -206,7 +261,7 @@ export async function redeem(req: RedeemRequest): Promise<Result> {
   });
   switch (outcome) {
     case "ok":
-      return { ok: true, id: rec.id };
+      return { ok: true, id: rec.id, delivered: kind === "self" ? await tryAssign(rec.id) : false };
     case "insufficient":
       return bad(`You need ${points.redeemCost.toLocaleString()} points to redeem.`, 402);
     case "cooldown":
@@ -240,7 +295,7 @@ export async function claimGift(req: ClaimRequest): Promise<Result> {
   });
   switch (outcome) {
     case "ok":
-      return { ok: true, id: req.id };
+      return { ok: true, id: req.id, delivered: await tryAssign(req.id) };
     case "not_found":
       return bad("Gift not found.", 404);
     case "not_yours":
@@ -248,6 +303,58 @@ export async function claimGift(req: ClaimRequest): Promise<Result> {
     case "not_claimable":
       return bad("This gift has already been claimed.", 409);
   }
+}
+
+// ── Code stock & delivery ────────────────────────────────────────────────────
+
+const ownsCode = (r: Redemption, wallet: string) =>
+  (r.kind ?? "self") === "gift" ? r.recipient === wallet : (r.kind ?? "self") === "self" && r.wallet === wallet;
+
+export async function getStockCounts(): Promise<Record<string, number>> {
+  return store().stockCounts();
+}
+
+/** Admin adds purchased codes; waiting requests for that platform+region are served first. */
+export async function addStock(platform: string, region: string, codes: string[], tx: string) {
+  if (!points.platforms.some((p) => p.id === platform)) throw new Error("Unknown platform.");
+  if (!points.regions.includes(region)) throw new Error("Unknown region.");
+  if (!tx.trim()) throw new Error("Add the purchase transaction so each delivery has a verifiable receipt.");
+  const clean = [...new Set(codes.map((c) => c.trim()).filter(Boolean))];
+  if (!clean.length) throw new Error("Paste at least one code (one per line).");
+  const now = Date.now();
+  await store().addStock(
+    stockKey(platform, region),
+    clean.map((c) => ({ id: randomUUID().slice(0, 8), enc: encryptCode(c), tx: tx.trim(), addedAt: now })),
+  );
+  const delivered = await fillQueue(platform, region);
+  return { added: clean.length, deliveredToQueue: delivered };
+}
+
+/** Admin: take a code from stock for a team donation and show it once. */
+export async function assignTeamCode(id: string, platform: string, region: string) {
+  const r = await store().getRedemption(id);
+  if (!r || r.kind !== "team") throw new Error("Not a team donation.");
+  const res = await store().assignFromStock(id, platform, region, Date.now());
+  if (res === "empty") throw new Error("No codes in stock for that platform and region.");
+  if (res !== "ok") throw new Error("This donation isn't pending.");
+  const item = await store().getAssignedCode(id);
+  return item ? decryptCode(item.enc) : null;
+}
+
+export type RevealRequest = { id: string; wallet: string; issuedAt: string; signature: string };
+
+/** The owner signs a message to see their code. */
+export async function revealCode(req: RevealRequest): Promise<{ ok: true; code: string } | { ok: false; error: string; status: number }> {
+  const r = await store().getRedemption(req.id);
+  if (!r || !ownsCode(r, req.wallet)) return bad("Code not found for this wallet.", 404);
+  if (r.status !== "fulfilled") return bad("This code hasn't been delivered yet.", 409);
+  const item = await store().getAssignedCode(req.id);
+  if (!item) return bad("This copy was delivered by the team directly — check your email or contact us.", 404);
+  const sigErr = await checkSignature(req.wallet, buildRevealMessage(req), req.issuedAt, req.signature);
+  if (sigErr) return sigErr;
+  const code = decryptCode(item.enc);
+  await store().markRevealed(req.id, Date.now());
+  return { ok: true, code };
 }
 
 export async function resolveRedemption(id: string, action: "fulfill" | "reject", tx: string | null, note: string | null) {

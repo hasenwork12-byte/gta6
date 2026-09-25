@@ -27,5 +27,5 @@ export async function signAndPost(
   });
   const j = await r.json();
   if (!r.ok) throw new Error(j.error ?? "Something went wrong");
-  return j as { id: string };
+  return j as { id: string; delivered?: boolean };
 }
