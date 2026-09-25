@@ -1,7 +1,7 @@
 import { createHash, createPublicKey, randomUUID, verify } from "crypto";
 import { PublicKey } from "@solana/web3.js";
 import { points, TREASURY_WALLET } from "@/config";
-import { demoPoints, demoRedemptions } from "./demo";
+import { demoPoints, demoRedemptions, demoTopHolders } from "./demo";
 import { buildRedeemMessage } from "./redeem-message";
 import { holderBalances, tokenPriceUsd, walletTokenBalance } from "./solana";
 import { getStore, POINTS_LIVE } from "./store";
@@ -29,6 +29,12 @@ export async function listPublicRedemptions(): Promise<{ rows: PublicRedemption[
       demo: Boolean(demo) || !POINTS_LIVE,
     }));
   return { rows, demo: !POINTS_LIVE };
+}
+
+export async function getTopHolders(limit = 20): Promise<{ rows: { wallet: string; points: number }[]; demo: boolean }> {
+  if (!POINTS_LIVE) return { rows: demoTopHolders(limit), demo: true };
+  const rows = (await store().topPoints(limit)).map((x) => ({ wallet: x.wallet, points: x.centi / 100 }));
+  return { rows, demo: false };
 }
 
 export async function getPointsInfo(wallet: string): Promise<PointsInfo> {

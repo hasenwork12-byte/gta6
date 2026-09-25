@@ -50,8 +50,9 @@ Change `--accent-1` / `--accent-2` in `src/app/globals.css` (options listed ther
 
 ## Structure
 
-- `src/app/page.tsx` — home (hero, treasury, winners, eligibility, how it works, FAQ)
+- `src/app/page.tsx` — home (hero, bento previews, stat counters, carousels)
 - `src/app/treasury` — public ledger
+- `src/app/points`, `redemptions`, `how-it-works`, `redeem` — full pages behind each preview card
 - `src/app/disclosures`, `terms`, `privacy` — legal (templates: get them reviewed)
 - `src/app/api/treasury`, `src/app/api/eligibility` — server routes reading Solana
 - `src/lib/solana.ts` — all chain reads (cached in memory)

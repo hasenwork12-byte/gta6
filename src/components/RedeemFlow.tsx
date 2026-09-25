@@ -99,7 +99,7 @@ export default function RedeemFlow() {
               the treasury buys it. Requests are filled in order, and the purchase receipt will appear in the public
               feed. If we can&apos;t fill it, your points are returned.
             </p>
-            <Link href="/#redemptions" className="btn-ghost">
+            <Link href="/redemptions" className="btn-ghost">
               View the redemption feed
             </Link>
           </div>

@@ -12,6 +12,16 @@ export const fmtDate = (iso: string | number) => {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 };
 
+/** Compact relative time ("now", "5m", "2h", "3d"), measured from `nowMs` so server and client agree. */
+export const timeAgo = (ms: number, nowMs: number) => {
+  const s = Math.max(0, Math.floor((nowMs - ms) / 1000));
+  if (s < 60) return "now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  if (s < 60 * 86400) return `${Math.floor(s / 86400)}d`;
+  return fmtDate(ms / 1000);
+};
+
 export const fmtDateTime = (unix: number) =>
   new Date(unix * 1000).toLocaleString("en-US", {
     month: "short",

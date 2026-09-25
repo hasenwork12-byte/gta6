@@ -27,6 +27,8 @@ export const site = {
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"),
+  /** Shown in the top bar, e.g. "@paidingames". Leave empty until the account exists. */
+  xHandle: "",
   links: {
     x: "https://x.com/",
     telegram: "https://t.me/",

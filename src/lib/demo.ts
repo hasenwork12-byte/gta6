@@ -46,6 +46,16 @@ export function demoRedemptions(): Redemption[] {
   }));
 }
 
+export function demoTopHolders(n = 20): { wallet: string; points: number }[] {
+  const r = rng(99);
+  let p = 1480;
+  return Array.from({ length: n }, () => {
+    const row = { wallet: fakeAddr(r), points: Math.round(p * 100) / 100 };
+    p = p * (0.8 + r() * 0.15);
+    return row;
+  });
+}
+
 /** Deterministic starting points for any address in demo mode. */
 export function demoPoints(addr: string) {
   let h = 7;

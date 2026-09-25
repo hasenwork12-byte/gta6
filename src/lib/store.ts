@@ -23,6 +23,8 @@ export interface Store {
   getPoints(wallet: string): Promise<{ centi: number; lastDayCenti: number; lastRedeemAt: number | null }>;
   redeem(r: Redemption, costCenti: number, cooldownMs: number, maxPending: number): Promise<RedeemOutcome>;
   listRedemptions(): Promise<Redemption[]>;
+  /** Wallets with the most points, highest first. */
+  topPoints(limit: number): Promise<{ wallet: string; centi: number }[]>;
   getRedemption(id: string): Promise<Redemption | null>;
   /** Moves a pending redemption to fulfilled/rejected; rejection refunds the points. */
   resolveRedemption(id: string, status: "fulfilled" | "rejected", tx: string | null, note: string | null): Promise<Redemption | null>;
@@ -108,6 +110,16 @@ class RedisStore implements Store {
     return Object.values(all)
       .map((v) => JSON.parse(v) as Redemption)
       .sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async topPoints(limit: number) {
+    // Fine for thousands of holders; switch to a sorted set if the hash grows very large.
+    const all = (await this.r.hgetall<Record<string, string>>(K.points)) ?? {};
+    return Object.entries(all)
+      .map(([wallet, c]) => ({ wallet, centi: Number(c) }))
+      .filter((x) => x.centi > 0)
+      .sort((a, b) => b.centi - a.centi)
+      .slice(0, limit);
   }
 
   async getRedemption(id: string) {
@@ -196,6 +208,13 @@ class MemoryStore implements Store {
   }
   async getRedemption(id: string) {
     return this.m.redemptions.get(id) ?? null;
+  }
+  async topPoints(limit: number) {
+    return [...this.m.points.entries()]
+      .map(([wallet, centi]) => ({ wallet, centi }))
+      .filter((x) => x.centi > 0)
+      .sort((a, b) => b.centi - a.centi)
+      .slice(0, limit);
   }
   async resolveRedemption(id: string, status: "fulfilled" | "rejected", tx: string | null, note: string | null) {
     const r = this.m.redemptions.get(id);

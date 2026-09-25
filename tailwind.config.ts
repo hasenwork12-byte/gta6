@@ -25,6 +25,10 @@ const config: Config = {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-50%)" },
         },
+        marqueeY: {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(-50%)" },
+        },
         pulseDot: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.3" },
@@ -32,6 +36,7 @@ const config: Config = {
       },
       animation: {
         marquee: "marquee var(--marquee-duration, 40s) linear infinite",
+        marqueeY: "marqueeY var(--marquee-duration, 30s) linear infinite",
         pulseDot: "pulseDot 1.6s ease-in-out infinite",
       },
     },

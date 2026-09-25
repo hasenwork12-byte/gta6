@@ -40,6 +40,9 @@ body {
   .card {
     @apply rounded-2xl border border-line/[0.08] bg-surface/80 backdrop-blur-sm;
   }
+  .card-hover {
+    @apply transition duration-200 hover:-translate-y-0.5 hover:border-line/[0.16] hover:bg-surface;
+  }
   .label {
     @apply font-mono text-[11px] uppercase tracking-[0.14em] text-muted;
   }
@@ -88,6 +91,15 @@ body {
 .mask-fade-x {
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
+.mask-fade-y {
+  mask-image: linear-gradient(to bottom, transparent, black 14%, black 86%, transparent);
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
 /* Wallet adapter theming */
 .wallet-adapter-button {
@@ -108,7 +120,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-marqueeY {
     animation: none !important;
   }
   .roll-strip {
