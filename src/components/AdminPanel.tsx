@@ -5,7 +5,7 @@ import { platformLabel, site } from "@/config";
 import { fmtDateTime, shortAddr } from "@/lib/format";
 import type { Redemption } from "@/lib/types";
 
-const KEY = "six-palms-admin-token";
+const KEY = "pig-admin-token";
 
 export default function AdminPanel() {
   const [token, setToken] = useState("");

@@ -9,11 +9,17 @@ import WalletProviders from "@/components/WalletProviders";
 const sans = Space_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
+const title = `${site.name} ($${site.ticker}) — hold, earn points, redeem GTA 6`;
+
+// Favicon, iOS icon and share images are file-based: app/icon.svg, app/apple-icon.tsx,
+// app/opengraph-image.tsx and app/twitter-image.tsx.
 export const metadata: Metadata = {
-  title: `${site.name} ($${site.ticker}) — a public treasury for GTA 6 giveaways`,
+  metadataBase: new URL(site.url),
+  title,
   description: site.tagline,
-  icons: { icon: "/icon.svg" },
-  openGraph: { title: site.name, description: site.tagline },
+  applicationName: site.name,
+  openGraph: { type: "website", siteName: site.name, title, description: site.tagline },
+  twitter: { card: "summary_large_image", title, description: site.tagline },
 };
 
 export const viewport: Viewport = { themeColor: "#07060a" };

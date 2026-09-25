@@ -229,14 +229,14 @@ class MemoryStore implements Store {
 }
 
 // Keep the demo store across hot reloads in dev.
-const g = globalThis as unknown as { __sixPalmsMem?: Mem };
+const g = globalThis as unknown as { __pigMem?: Mem };
 
 let _store: Store | null = null;
 export function getStore(seedPoints: (w: string) => number, seedRedemptions: () => Redemption[]): Store {
   if (_store) return _store;
   if (POINTS_LIVE) return (_store = new RedisStore());
-  if (!g.__sixPalmsMem) {
-    g.__sixPalmsMem = {
+  if (!g.__pigMem) {
+    g.__pigMem = {
       points: new Map(),
       lastDay: new Map(),
       lastRedeem: new Map(),
@@ -246,5 +246,5 @@ export function getStore(seedPoints: (w: string) => number, seedRedemptions: () 
       snapBalances: {},
     };
   }
-  return (_store = new MemoryStore(g.__sixPalmsMem, seedPoints));
+  return (_store = new MemoryStore(g.__pigMem, seedPoints));
 }

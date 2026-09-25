@@ -18,10 +18,15 @@ export const PUBLIC_RPC_URL =
   env(process.env.NEXT_PUBLIC_SOLANA_RPC_URL) || "https://api.mainnet-beta.solana.com";
 
 export const site = {
-  name: "Six Palms",
-  ticker: "PALMS",
-  tagline: "Hold $PALMS, earn points, redeem GTA 6. Funded by a public, on-chain treasury.",
-  url: "https://sixpalms.example", // update after deploying
+  name: "Paid In Games",
+  ticker: "PIG",
+  tagline: "Hold $PIG, earn points, redeem GTA 6. Funded by a public, on-chain treasury.",
+  /** Public URL, used for share images. Set NEXT_PUBLIC_SITE_URL once you have a custom domain. */
+  url:
+    env(process.env.NEXT_PUBLIC_SITE_URL) ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000"),
   links: {
     x: "https://x.com/",
     telegram: "https://t.me/",

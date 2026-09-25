@@ -1,4 +1,4 @@
-# Six Palms ($PALMS)
+# Paid In Games ($PIG)
 
 A memecoin site where creator fees fund a public treasury that buys GTA 6 copies
 to raffle among holders. Next.js 15 + Tailwind CSS, deployable to Vercel.
