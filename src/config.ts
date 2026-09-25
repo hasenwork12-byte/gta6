@@ -27,17 +27,26 @@ export const site = {
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
       ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
       : "http://localhost:3000"),
-  /** Shown in the top bar, e.g. "@paidingames". Leave empty until the account exists. */
+  /**
+   * Socials. Leave empty and the link is hidden everywhere on the site.
+   * xHandle: e.g. "@paidingames"   telegram: group/channel name, e.g. "paidingames"
+   */
   xHandle: "",
-  links: {
-    x: "https://x.com/",
-    telegram: "https://t.me/",
-  },
+  telegram: "",
   /** Where the "Buy" button sends people once TOKEN_MINT is set. */
   buyUrl: (mint: string) => `https://jup.ag/swap/SOL-${mint}`,
   explorerTx: (sig: string) => `https://solscan.io/tx/${sig}`,
   explorerAccount: (addr: string) => `https://solscan.io/account/${addr}`,
 };
+
+/** Only the socials that are set. Empty list = nothing shown. */
+export const socials = [
+  ...(site.xHandle ? [{ id: "x" as const, label: site.xHandle, url: `https://x.com/${site.xHandle.replace(/^@/, "")}` }] : []),
+  ...(site.telegram
+    ? [{ id: "telegram" as const, label: "Telegram", url: `https://t.me/${site.telegram.replace(/^@|^https?:\/\/t\.me\//g, "")}` }]
+    : []),
+];
+export const xSocial = socials.find((s) => s.id === "x");
 
 export const points = {
   /** USD value that must be held for one full day to earn 1 point. */

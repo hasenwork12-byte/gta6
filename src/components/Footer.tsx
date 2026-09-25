@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TOKEN_LIVE, TOKEN_MINT, TREASURY_LIVE, TREASURY_WALLET, site } from "@/config";
+import { TOKEN_LIVE, TOKEN_MINT, TREASURY_LIVE, TREASURY_WALLET, site, socials } from "@/config";
 import { TelegramIcon, XIcon } from "./Icons";
 import Logo from "./Logo";
 
@@ -43,14 +43,22 @@ export default function Footer() {
             Creator fees fund a public, on-chain treasury that pays for games holders redeem with points. Memecoins are
             highly speculative. Nothing here is financial advice.
           </p>
-          <div className="flex gap-2">
-            <a href={site.links.x} target="_blank" rel="noreferrer" aria-label="X" className="rounded-full border border-line/10 p-2.5 text-muted transition hover:border-line/25 hover:text-fg">
-              <XIcon />
-            </a>
-            <a href={site.links.telegram} target="_blank" rel="noreferrer" aria-label="Telegram" className="rounded-full border border-line/10 p-2.5 text-muted transition hover:border-line/25 hover:text-fg">
-              <TelegramIcon />
-            </a>
-          </div>
+          {socials.length > 0 && (
+            <div className="flex gap-2">
+              {socials.map((s) => (
+                <a
+                  key={s.id}
+                  href={s.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={s.id === "x" ? `${s.label} on X` : "Telegram"}
+                  className="rounded-full border border-line/10 p-2.5 text-muted transition hover:border-line/25 hover:text-fg"
+                >
+                  {s.id === "x" ? <XIcon /> : <TelegramIcon />}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
           {columns.map((c) => (
