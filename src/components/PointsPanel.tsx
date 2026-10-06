@@ -20,11 +20,11 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
       </div>
 
       <div className="flex flex-wrap items-end gap-x-3 gap-y-1">
-        <RollingNumber value={info.points} format={(n) => fmtNum(n, 2)} className="text-5xl font-medium tracking-tight" />
-        <span className="pb-1 font-mono text-muted">/ {fmtNum(info.cost)} points</span>
+        <RollingNumber value={info.points} format={(n) => fmtNum(n, 2)} className="font-display text-5xl font-extrabold tracking-tight" />
+        <span className="pb-1 font-mono text-muted">/ {fmtNum(info.cost)} XP</span>
       </div>
 
-      <div className="h-2.5 overflow-hidden rounded-full bg-line/[0.07]">
+      <div className="h-3 overflow-hidden rounded-full border border-line/10 bg-bg">
         <div
           className={`h-full rounded-full transition-[width] duration-700 ${
             pct >= 100 ? "bg-good" : "bg-gradient-to-r from-accent to-accent2"
@@ -36,18 +36,18 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
       <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
         <Item label={`$${site.ticker} held`} value={fmtNum(info.tokenBalance)} />
         <Item label="Value now" value={fmtUsd(info.usdValue)} />
-        <Item label="Earning" value={`${fmtNum(info.perDay, 2)} pts/day`} />
-        <Item label="Last snapshot" value={`+${fmtNum(info.lastDay, 2)} pts`} />
+        <Item label="Earning" value={`${fmtNum(info.perDay, 2)} XP/day`} />
+        <Item label="Last XP drop" value={`+${fmtNum(info.lastDay, 2)} XP`} />
       </dl>
 
       <p className="text-xs leading-relaxed text-muted">
         {pct >= 100
-          ? "Enough points to redeem a copy."
+          ? "GTA 6 unlocked. Go claim it. 🎮"
           : daysLeft !== null
-            ? `At today's value, about ${fmtNum(daysLeft)} more ${daysLeft === 1 ? "day" : "days"} to reach ${fmtNum(info.cost)} points. Earnings change with the token price.`
-            : `Hold $${site.ticker} to start earning points at the next daily snapshot.`}
+            ? `At today's value, about ${fmtNum(daysLeft)} more ${daysLeft === 1 ? "day" : "days"} to reach ${fmtNum(info.cost)} XP. Earnings change with the token price.`
+            : `Hold $${site.ticker} to start stacking XP at the next daily drop.`}
         {info.cooldownUntil &&
-          ` This wallet redeemed for itself recently — next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting and donating still work).`}
+          ` This wallet claimed for itself recently. Next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting and donating still work).`}
         {info.demo && " Demo mode: these numbers are placeholders, not read from the chain."}
       </p>
     </div>

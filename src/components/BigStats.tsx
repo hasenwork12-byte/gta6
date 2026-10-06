@@ -12,21 +12,21 @@ export default function BigStats() {
   const s = data.snapshot;
   const stats = [
     {
-      label: "Treasury balance",
+      label: "In the pig",
       value: s.balanceSol,
       fmt: (n: number) => fmtNum(n, 3),
       unit: "SOL",
       sub: `≈ ${fmtUsd(s.balanceSol * s.solUsd)}`,
     },
     {
-      label: s.feesPartial ? "Fees collected (recent)" : "Fees collected",
+      label: s.feesPartial ? "Pig fed (recent)" : "Pig fed, all time",
       value: s.totalFeesSol,
       fmt: (n: number) => fmtNum(n, 3),
       unit: "SOL",
       sub: `≈ ${fmtUsd(s.totalFeesSol * s.solUsd)}`,
     },
     {
-      label: "Games redeemed",
+      label: "Games claimed",
       value: s.gamesRedeemed,
       fmt: (n: number) => fmtNum(n),
       unit: "",
@@ -37,15 +37,15 @@ export default function BigStats() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between gap-3">
-        <p className="label">By the numbers</p>
+        <p className="label">The scoreboard</p>
         {s.demo && <DemoBadge />}
       </div>
-      <div className="grid gap-px overflow-hidden rounded-2xl border border-line/[0.08] bg-line/[0.08] md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3">
         {stats.map((st) => (
-          <div key={st.label} className="bg-bg p-6 sm:p-8">
+          <div key={st.label} className="card p-6 sm:p-8">
             <p className="label">{st.label}</p>
             <div className="mt-4 flex items-end gap-2">
-              <RollingNumber value={st.value} format={st.fmt} className="text-5xl font-medium tracking-tight sm:text-6xl" />
+              <RollingNumber value={st.value} format={st.fmt} className="font-display text-5xl font-extrabold tracking-tight sm:text-6xl" />
               {st.unit && <span className="pb-1 font-mono text-muted">{st.unit}</span>}
             </div>
             <p className="mt-3 font-mono text-sm text-muted">{st.sub}</p>
@@ -54,7 +54,7 @@ export default function BigStats() {
       </div>
       {!s.demo && TREASURY_WALLET && (
         <p className="mt-3 text-xs text-muted">
-          Totalled straight from the treasury wallet&apos;s on-chain transactions.{" "}
+          Totalled straight from the Pig Bank wallet&apos;s on-chain transactions.{" "}
           <a className="link" href={site.explorerAccount(TREASURY_WALLET)} target="_blank" rel="noreferrer">
             Check it yourself on Solscan ↗
           </a>

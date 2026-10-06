@@ -1,83 +1,69 @@
+import Link from "next/link";
 import Hero from "@/components/Hero";
 import ActivityTicker from "@/components/ActivityTicker";
 import BigStats from "@/components/BigStats";
-import Carousel from "@/components/Carousel";
 import { DashboardProvider } from "@/components/DashboardContext";
 import EarnCalculator from "@/components/EarnCalculator";
+import FinalCta from "@/components/FinalCta";
 import HonestLimits from "@/components/HonestLimits";
-import LedgerPreview from "@/components/bento/LedgerPreview";
-import PointsPreview from "@/components/bento/PointsPreview";
-import RedemptionsPreview from "@/components/bento/RedemptionsPreview";
-import RulesPreview from "@/components/bento/RulesPreview";
-import TreasuryPreview from "@/components/bento/TreasuryPreview";
-import ActivityCard from "@/components/cards/ActivityCard";
-import HolderCard from "@/components/cards/HolderCard";
-import RedemptionCard from "@/components/cards/RedemptionCard";
-import { getDashboard, getLedger } from "@/lib/solana";
+import HowItWorks from "@/components/HowItWorks";
+import Leaderboard from "@/components/Leaderboard";
+import LootFeed from "@/components/LootFeed";
+import SectionHeading from "@/components/SectionHeading";
+import { getDashboard } from "@/lib/solana";
 import { getTopHolders, listPublicRedemptions } from "@/lib/points";
-import { DEMO_SOL_USD } from "@/lib/demo";
 
 export const revalidate = 30;
 
 export default async function Home() {
   // If the RPC is down at render time, sections fall back to empty states.
-  const [dashboard, ledger, redemptions, holders] = await Promise.all([
+  const [dashboard, redemptions, holders] = await Promise.all([
     getDashboard().catch(() => null),
-    getLedger().catch(() => null),
     listPublicRedemptions().catch(() => ({ rows: [], demo: true })),
-    getTopHolders(15).catch(() => ({ rows: [], demo: true })),
+    getTopHolders(8).catch(() => ({ rows: [], demo: true })),
   ]);
   const now = Date.now();
-  const entries = ledger?.entries ?? [];
-  const ledgerDemo = ledger?.demo ?? true;
-  const refTime = dashboard?.snapshot.updatedAt ?? Math.floor(now / 1000);
-  const fees = entries.filter((e) => e.direction === "in").map((e) => ({ time: e.time, sol: e.sol }));
-  const solBySig = new Map(entries.map((e) => [e.signature, e.sol]));
-  const solUsd = dashboard?.snapshot.solUsd ?? DEMO_SOL_USD;
 
   return (
     <DashboardProvider initial={dashboard}>
       <Hero />
       <ActivityTicker />
 
-      <div className="section mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <TreasuryPreview fees={fees} refTime={refTime} className="sm:col-span-2" />
-        <RedemptionsPreview rows={redemptions.rows} demo={redemptions.demo} now={now} />
-        <PointsPreview demo={holders.demo} />
-        <LedgerPreview entries={entries} demo={ledgerDemo} now={now} />
-        <RulesPreview />
+      <div className="section mt-20">
+        <SectionHeading eyebrow="How to play" title="Four quests. One GTA 6." />
+        <HowItWorks />
       </div>
 
-      <div id="calculator" className="section mt-24 scroll-mt-8">
+      <div id="calculator" className="section mt-20 scroll-mt-24">
         <EarnCalculator />
       </div>
 
-      <div className="section mt-24">
+      <div className="section mt-20 grid items-start gap-8 lg:grid-cols-[1.25fr_1fr]">
+        <div>
+          <div className="flex items-end justify-between gap-3">
+            <SectionHeading eyebrow="Leaderboard" title="Top oinkers" />
+            <Link href="/points" className="mb-7 text-xs font-semibold text-muted transition hover:text-fg">
+              Full board →
+            </Link>
+          </div>
+          <Leaderboard rows={holders.rows} demo={holders.demo} />
+        </div>
+        <div>
+          <SectionHeading eyebrow="Fresh loot" title="Who just got paid" />
+          <LootFeed rows={redemptions.rows.slice(0, 7)} demo={redemptions.demo} now={now} />
+        </div>
+      </div>
+
+      <div className="section mt-20">
         <BigStats />
       </div>
 
-      <div className="section mt-24 space-y-20">
-        <Carousel title="Recent redemptions" href="/redemptions" demo={redemptions.demo}>
-          {redemptions.rows.slice(0, 15).map((r) => (
-            <RedemptionCard key={r.id} r={r} now={now} paidSol={r.tx ? solBySig.get(r.tx) : undefined} />
-          ))}
-        </Carousel>
-
-        <Carousel title="Top holders by points" href="/points" demo={holders.demo} itemClassName="w-[70%] sm:w-[calc(33.333%-11px)] lg:w-[calc(20%-13px)]">
-          {holders.rows.map((h, i) => (
-            <HolderCard key={h.wallet} rank={i + 1} wallet={h.wallet} pts={h.points} demo={holders.demo} />
-          ))}
-        </Carousel>
-
-        <Carousel title="Treasury activity" href="/ledger" demo={ledgerDemo}>
-          {entries.slice(0, 15).map((e) => (
-            <ActivityCard key={e.signature} e={e} demo={ledgerDemo} solUsd={solUsd} />
-          ))}
-        </Carousel>
+      <div className="section mt-20">
+        <HonestLimits />
       </div>
 
-      <div className="section mt-24">
-        <HonestLimits />
+      <div className="section mt-20">
+        <FinalCta />
       </div>
     </DashboardProvider>
   );

@@ -58,7 +58,7 @@ export function demoRedemptions(): Redemption[] {
 
 export function demoTopHolders(n = 20): { wallet: string; points: number }[] {
   const r = rng(99);
-  let p = 1480;
+  let p = points.redeemCost * 1.48;
   return Array.from({ length: n }, () => {
     const row = { wallet: fakeAddr(r), points: Math.round(p * 100) / 100 };
     p = p * (0.8 + r() * 0.15);
@@ -70,7 +70,7 @@ export function demoTopHolders(n = 20): { wallet: string; points: number }[] {
 export function demoPoints(addr: string) {
   let h = 7;
   for (const c of addr) h = (h * 33 + c.charCodeAt(0)) >>> 0;
-  return Math.floor(rng(h)() * 1500);
+  return Math.floor(rng(h)() * points.redeemCost * 1.5);
 }
 
 export function demoLedger(): LedgerEntry[] {

@@ -3,16 +3,10 @@
 import { useState } from "react";
 import { platformLabel, points, site } from "@/config";
 import { fmtDateTime, fmtNum, shortAddr, timeAgo } from "@/lib/format";
+import { redemptionTitle } from "@/lib/redemption-title";
 import type { PublicRedemption } from "@/lib/types";
 import StatusPill from "./StatusPill";
 
-const shortPlatform = (p: string) => (p === "ps5" ? "PS5" : p === "xbox" ? "Xbox" : "");
-
-export function redemptionTitle(r: PublicRedemption) {
-  if (r.kind === "team") return "Team donation";
-  if (r.kind === "gift") return `Gift · ${shortPlatform(r.platform) || "awaiting claim"}`;
-  return `GTA 6 · ${shortPlatform(r.platform)}`;
-}
 
 const statusInfo = (s: PublicRedemption["status"]) =>
   s === "fulfilled"
@@ -58,9 +52,9 @@ export default function RedemptionCard({ r, now, paidSol }: { r: PublicRedemptio
       {open && (
         <dl className="mt-3 space-y-2 font-mono text-xs">
           <Row k="Type" v={r.kind === "self" ? "For themselves" : r.kind === "gift" ? "Gift to a wallet" : "Donated to the team"} />
-          <Row k="Points spent" v={`${fmtNum(points.redeemCost)} by ${shortAddr(r.wallet, 4)}`} />
+          <Row k="XP spent" v={`${fmtNum(points.redeemCost)} by ${shortAddr(r.wallet, 4)}`} />
           {r.kind === "gift" && <Row k="Recipient" v={r.recipient ? shortAddr(r.recipient, 5) : "—"} />}
-          <Row k="Paid by treasury" v={paidSol ? `${fmtNum(paidSol, 4)} SOL` : "—"} />
+          <Row k="Paid by the pig" v={paidSol ? `${fmtNum(paidSol, 4)} SOL` : "—"} />
           <Row k="Platform" v={r.platform ? platformLabel(r.platform) : r.kind === "team" ? "Chosen by team" : "Chosen when claimed"} />
           <Row k="Requested" v={fmtDateTime(r.createdAt / 1000)} />
           <Row k="Status" v={status.label} />

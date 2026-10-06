@@ -14,7 +14,7 @@ export function buildRedeemMessage(f: {
   region?: string;
   issuedAt: string;
 }) {
-  const lines = [`${site.name}: redeem ${points.redeemCost} points for one copy of GTA 6.`, "", `Wallet: ${f.wallet}`];
+  const lines = [`${site.name}: spend ${points.redeemCost} XP on one copy of GTA 6.`, "", `Wallet: ${f.wallet}`];
   if (f.kind === "self") lines.push("For: myself", `Platform: ${f.platform}`, `Region: ${f.region}`);
   if (f.kind === "gift") lines.push(`For: gift to ${f.recipient}`);
   if (f.kind === "team") lines.push(`For: donation to the ${site.name} team (community giveaways and videos)`);

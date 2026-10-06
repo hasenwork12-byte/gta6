@@ -34,9 +34,9 @@ function shareUrl(kind: RedemptionKind) {
   const tag = xSocial ? ` ${xSocial.label}` : "";
   const text =
     kind === "gift"
-      ? `Just gifted a friend a copy of GTA 6 with my $${site.ticker} points 🐷🎮${tag}`
+      ? `Just gifted a friend a copy of GTA 6 with my $${site.ticker} XP 🐷🎮${tag}`
       : kind === "team"
-        ? `Just donated a copy of GTA 6 to the ${site.name} community with my $${site.ticker} points 🐷🎮${tag}`
+        ? `Just donated a copy of GTA 6 to the ${site.name} community with my $${site.ticker} XP 🐷🎮${tag}`
         : `Just got GTA 6 for holding $${site.ticker}. Paid in games 🐷🎮${tag}`;
   // Only rendered after a redeem, so always on the client. (site.url's Vercel fallback is server-only.)
   return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin)}`;
@@ -103,13 +103,13 @@ export default function RedeemFlow() {
   };
 
   const blocker = !wallet
-    ? "Connect your wallet to redeem."
+    ? "Connect your wallet to claim."
     : !info
       ? null
       : !enoughPoints
-        ? `You need ${fmtNum(points.redeemCost)} points to redeem.`
+        ? `You need ${fmtNum(points.redeemCost)} XP to claim. Keep stacking. 💎`
         : kind === "self" && info.cooldownUntil
-          ? `You've redeemed for yourself in the last ${points.cooldownDays} days — you can still gift or donate.`
+          ? `You've claimed for yourself in the last ${points.cooldownDays} days. You can still gift or donate.`
           : kind !== "self" && donationsLeft === 0
             ? `You've used all ${info.donationsMax} gifts/donations for this ${points.cooldownDays}-day window.`
             : null;
@@ -119,7 +119,7 @@ export default function RedeemFlow() {
       {/* Left: wallet + points */}
       <div className="card p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="label">Your points</p>
+          <p className="label">Your XP</p>
           <WalletButton />
         </div>
         <div className="mt-6 space-y-6" aria-live="polite">
@@ -129,7 +129,7 @@ export default function RedeemFlow() {
               transaction, no fee, and we never ask for your seed phrase.
             </p>
           )}
-          {wallet && loading && !info && <p className="text-sm text-muted">Loading points…</p>}
+          {wallet && loading && !info && <p className="text-sm text-muted">Loading XP…</p>}
           {loadError && <p className="text-sm text-accent">{loadError}</p>}
           {info?.giftsToClaim.map((g) => (
             <ClaimGift key={g.id} gift={g} stock={stock} onClaimed={reload} />
@@ -146,7 +146,7 @@ export default function RedeemFlow() {
 
       {/* Right: redeem form */}
       <div className="card p-5 sm:p-7">
-        <p className="label">Redeem · {fmtNum(points.redeemCost)} points</p>
+        <p className="label">Claim · {fmtNum(points.redeemCost)} XP</p>
 
         {done ? (
           <div className="relative mt-6 space-y-4">
@@ -161,7 +161,7 @@ export default function RedeemFlow() {
                   : "Oink! Thank you"}
             </p>
             <p className="text-sm leading-relaxed text-muted">
-              Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} points were
+              Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} XP were
               spent.{" "}
               {done.kind === "self" &&
                 (done.delivered ? (
@@ -180,7 +180,7 @@ export default function RedeemFlow() {
                 <>
                   <span className="font-mono text-fg">{shortAddr(recipient.trim(), 5)}</span> can claim it by connecting
                   that wallet on this page. Share the link with them: <span className="text-fg">/redeem</span>. If it&apos;s
-                  never claimed, the team can cancel it and return your points.
+                  never claimed, the team can cancel it and return your XP.
                 </>
               )}
               {done.kind === "team" && <>The team will use this copy for a community giveaway or video.</>}{" "}
@@ -194,7 +194,7 @@ export default function RedeemFlow() {
                 View the redemption feed
               </Link>
               <button onClick={() => setDone(null)} className="btn-ghost">
-                Redeem another
+                Claim another
               </button>
             </div>
           </div>
@@ -279,7 +279,7 @@ export default function RedeemFlow() {
                   I&apos;ve read the <Link href="/terms" className="link">redemption terms</Link> and{" "}
                   <Link href="/disclosures" className="link">disclosures</Link>
                   {kind === "self" ? ", and redeeming a game is allowed where I live" : ""}. I understand fulfilment
-                  depends on the treasury balance{kind !== "self" ? " and that spent points aren't returned once the copy is claimed or used" : ""}.
+                  depends on the Pig Bank balance{kind !== "self" ? " and that spent XP isn't returned once the copy is claimed or used" : ""}.
                 </span>
               </label>
 
@@ -287,7 +287,7 @@ export default function RedeemFlow() {
                 {busy
                   ? "Waiting for signature…"
                   : kind === "self"
-                    ? "Sign & redeem"
+                    ? "Sign & claim"
                     : kind === "gift"
                       ? "Sign & send gift"
                       : "Sign & donate"}

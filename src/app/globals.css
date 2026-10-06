@@ -10,13 +10,15 @@
    D  Acid orange       255 122 24  →  255 196 61
 */
 :root {
-  --bg: 7 6 10;
-  --surface: 14 12 19;
+  /* Arcade night: plum-black base, sticker cards, coin gold for money. */
+  --bg: 14 8 20;
+  --surface: 26 16 34;
   --line: 255 255 255;
-  --fg: 244 241 247;
-  --muted: 139 135 150;
+  --fg: 248 242 250;
+  --muted: 160 146 172;
   --accent-1: 255 61 139;
   --accent-2: 255 159 67;
+  --gold: 255 201 60;
   --good: 74 222 128;
   color-scheme: dark;
 }
@@ -27,7 +29,10 @@ html {
 }
 
 body {
-  background: rgb(var(--bg));
+  background-color: rgb(var(--bg));
+  /* faint arcade dot grid */
+  background-image: radial-gradient(rgb(var(--line) / 0.045) 1px, transparent 1px);
+  background-size: 22px 22px;
   color: rgb(var(--fg));
   -webkit-font-smoothing: antialiased;
 }
@@ -37,27 +42,35 @@ body {
 }
 
 @layer components {
+  /* "Sticker" card: thick border + hard drop shadow */
   .card {
-    @apply rounded-2xl border border-line/[0.08] bg-surface/80 backdrop-blur-sm;
+    @apply rounded-3xl border-2 border-line/[0.09] bg-surface shadow-[0_6px_0_0_rgb(0_0_0/0.45)];
   }
   .card-hover {
-    @apply transition duration-200 hover:-translate-y-0.5 hover:border-line/[0.16] hover:bg-surface;
+    @apply transition duration-150 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_10px_0_0_rgb(0_0_0/0.45)];
   }
   .label {
-    @apply font-mono text-[11px] uppercase tracking-[0.14em] text-muted;
+    @apply font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-muted;
   }
   .accent-text {
     @apply bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent;
   }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border-2 border-line/10 bg-bg/60 px-2.5 py-0.5 font-mono text-[11px] font-semibold;
+  }
+  /* Pressable 3D buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold transition-all duration-100
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-50
+      active:translate-y-[3px];
   }
   .btn-primary {
-    @apply btn bg-gradient-to-r from-accent to-accent2 text-black hover:brightness-110;
+    @apply btn bg-gradient-to-r from-accent to-accent2 text-[#1d0612] shadow-[0_4px_0_0_#9e1d52] hover:brightness-110
+      active:shadow-[0_1px_0_0_#9e1d52];
   }
   .btn-ghost {
-    @apply btn border border-line/15 text-fg hover:border-line/30 hover:bg-line/[0.04];
+    @apply btn border-2 border-line/15 bg-surface text-fg shadow-[0_4px_0_0_rgb(0_0_0/0.5)] hover:border-line/30
+      active:shadow-[0_1px_0_0_rgb(0_0_0/0.5)];
   }
   .section {
     @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
@@ -66,7 +79,6 @@ body {
     @apply text-accent2 underline-offset-4 hover:underline;
   }
 }
-
 .tabular {
   font-variant-numeric: tabular-nums;
 }
@@ -130,6 +142,7 @@ body {
   .animate-marqueeY,
   .animate-float,
   .animate-shadowPulse,
+  .animate-wave,
   .animate-twinkle {
     animation: none !important;
   }

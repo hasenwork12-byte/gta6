@@ -3,7 +3,7 @@ import { join } from "path";
 import { ImageResponse } from "next/og";
 import { points, site } from "@/config";
 
-export const alt = `${site.name} ($${site.ticker}): hold, earn points, redeem GTA 6`;
+export const alt = `${site.name} ($${site.ticker}): hold, stack XP, claim GTA 6`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -97,11 +97,11 @@ export default async function OpengraphImage() {
           </div>
           <div style={{ fontSize: 92, fontWeight: 700, lineHeight: 1.02, marginTop: 36, letterSpacing: -2 }}>{site.name}</div>
           <div style={{ fontSize: 44, marginTop: 18, display: "flex", gap: 14 }}>
-            <span>Hold. Earn points.</span>
-            <span style={{ color: ORANGE }}>Redeem GTA 6.</span>
+            <span>Hold. Stack XP.</span>
+            <span style={{ color: ORANGE }}>Claim GTA 6.</span>
           </div>
           <div style={{ fontSize: 26, marginTop: 22, color: "#8b8794" }}>
-            {`${points.redeemCost.toLocaleString("en-US")} points = one copy · paid by a public treasury`}
+            {`${points.redeemCost.toLocaleString("en-US")} XP = one copy · paid by the Pig Bank`}
           </div>
         </div>
       </div>

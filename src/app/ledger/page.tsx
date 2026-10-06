@@ -6,7 +6,7 @@ import { fmtDateTime, fmtNum, shortAddr } from "@/lib/format";
 import DemoBadge, { LiveBadge } from "@/components/DemoBadge";
 import SectionHeading from "@/components/SectionHeading";
 
-export const metadata: Metadata = { title: `Ledger — ${site.name}` };
+export const metadata: Metadata = { title: `Receipts — ${site.name}` };
 export const revalidate = 45;
 
 export default async function LedgerPage() {
@@ -19,9 +19,9 @@ export default async function LedgerPage() {
   return (
     <div className="section pt-14">
       <SectionHeading
-        eyebrow="Transparency"
-        title="Public treasury ledger"
-        sub="Every SOL that enters or leaves the treasury wallet, with a link to the transaction on Solscan. Game purchases are matched against fulfilled redemptions."
+        eyebrow="Receipts"
+        title="Every SOL in and out of the pig"
+        sub="Every SOL that enters or leaves the Pig Bank, each linked to its transaction on Solscan. Don't trust, verify."
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
@@ -37,8 +37,8 @@ export default async function LedgerPage() {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <Summary label="In (fees)" value={`+${fmtNum(totalIn, 3)} SOL`} tone="text-good" />
-        <Summary label="Out (purchases)" value={`−${fmtNum(totalOut, 3)} SOL`} tone="text-accent" />
+        <Summary label="Pig fed (fees)" value={`+${fmtNum(totalIn, 3)} SOL`} tone="text-good" />
+        <Summary label="Spent on games" value={`−${fmtNum(totalOut, 3)} SOL`} tone="text-accent" />
         <Summary label="Games delivered" value={String(delivered)} />
       </div>
 
@@ -105,7 +105,7 @@ function Summary({ label, value, tone = "" }: { label: string; value: string; to
   return (
     <div className="card p-4 sm:p-5">
       <p className="label">{label}</p>
-      <p className={`mt-3 font-mono text-lg sm:text-2xl ${tone}`}>{value}</p>
+      <p className={`mt-3 font-display text-xl font-extrabold sm:text-3xl ${tone}`}>{value}</p>
     </div>
   );
 }

@@ -31,7 +31,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
       <div className="relative grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
           <p className="label">Calculator</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">How long until my copy?</h2>
+          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">When do I eat? 🍽️</h2>
 
           <label htmlFor="earn-usd" className="mt-6 block text-sm text-muted">
             If I hold this much ${site.ticker}…
@@ -74,7 +74,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
         </div>
 
         <div id="earn-result" aria-live="polite" className="rounded-2xl border border-line/[0.08] bg-bg/50 p-5 sm:p-6">
-          <p className="text-sm text-muted">…GTA 6 is yours in about</p>
+          <p className="text-sm text-muted">…you unlock GTA 6 in about</p>
           <p className="mt-1 flex items-baseline gap-2">
             <span className="accent-text font-display text-6xl font-extrabold tracking-tight tabular sm:text-7xl">
               {days ? fmtNum(days) : "—"}
@@ -92,26 +92,26 @@ export default function EarnCalculator({ className = "" }: { className?: string 
 
           <dl className="mt-5 grid grid-cols-2 gap-3 border-t border-line/[0.07] pt-4 font-mono text-xs">
             <div>
-              <dt className="text-muted">Points / day</dt>
+              <dt className="text-muted">XP / day</dt>
               <dd className="mt-1 text-sm text-fg">+{fmtNum(perDay, perDay < 10 ? 1 : 0)}</dd>
             </div>
             <div>
-              <dt className="text-muted">Points / month</dt>
+              <dt className="text-muted">XP / month</dt>
               <dd className="mt-1 text-sm text-fg">+{fmtNum(perMonth, 0)}</dd>
             </div>
           </dl>
           {days !== null && days < points.cooldownDays && (
             <p className="mt-4 text-xs leading-relaxed text-muted">
-              You can redeem one copy for yourself every {points.cooldownDays} days. Extra points can be{" "}
-              <Link href="/redeem" className="link">gifted to a friend</Link>.
+              You can claim one copy for yourself every {points.cooldownDays} days. Extra XP can be{" "}
+              <Link href="/redeem" className="link">gifted to a fren</Link>.
             </p>
           )}
         </div>
       </div>
 
       <p className="relative mt-5 text-xs leading-relaxed text-muted">
-        Estimate only. Assumes the ${site.ticker} price stays flat. You earn on the lower of your balance and price at
-        two daily snapshots, so your first day only counts once the second snapshot runs. Points have no cash value.
+        Estimate only (NFA). Assumes the ${site.ticker} price stays flat. You earn on the lower of your balance and price at
+        two daily snapshots, so your first day only counts once the second snapshot runs. XP has no cash value.
       </p>
     </div>
   );

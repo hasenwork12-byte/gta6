@@ -5,32 +5,32 @@ import { fmtNum, fmtUsd } from "@/lib/format";
 const faqs: { q: string; a: React.ReactNode }[] = [
   {
     q: `What is $${site.ticker}?`,
-    a: `A community memecoin on Solana. Its creator fees go to a public treasury that buys copies of GTA 6, which holders can redeem with points. It is a meme and a rewards experiment — not an investment product.`,
+    a: `A community memecoin on Solana. Its creator fees feed the Pig Bank, a public wallet that buys copies of GTA 6, which holders claim with XP. It's a meme and a rewards experiment — not an investment product.`,
   },
   {
-    q: "How do points work?",
-    a: `Every ${fmtUsd(points.usdPerPointDay, 0)} worth of $${site.ticker} you hold for a full day earns 1 point. For example, holding $100 earns 10 points a day, so ${fmtNum(points.redeemCost)} points takes about 100 days; holding $1,000 takes about 10. Points are added once a day at ${points.snapshotTime}.`,
+    q: "How does XP work?",
+    a: `Every ${fmtUsd(points.usdPerPointDay, 0)} worth of $${site.ticker} you hold for a full day earns 1 XP. Hold $1,000 and you earn ${fmtNum(1000 / points.usdPerPointDay)} XP a day, so ${fmtNum(points.redeemCost)} XP takes about ${fmtNum(points.redeemCost / (1000 / points.usdPerPointDay))} days. XP drops once a day at ${points.snapshotTime}.`,
   },
   {
     q: "Why do I have to hold for the whole day?",
-    a: "You earn on the lower of your balances at two consecutive daily snapshots, so buying right before a snapshot and selling right after earns nothing. The price used is also the lower of the two, so short price spikes don't inflate points.",
+    a: "You earn on the lower of your balances at two consecutive daily snapshots, so buying right before a snapshot and selling right after earns nothing. The price used is also the lower of the two, so short price spikes don't inflate XP. Jeeting right after the drop earns nothing.",
   },
   {
-    q: "How do I redeem?",
+    q: "How do I claim my copy?",
     a: (
       <>
-        Go to the <Link href="/redeem" className="link">redeem page</Link>, connect your wallet, choose PlayStation 5 or
+        Go to the <Link href="/redeem" className="link">claim page</Link>, connect your wallet, choose PlayStation 5 or
         Xbox Series X|S and your store region, and sign a free message. If a code is in stock it&apos;s delivered
         instantly — press <em>Reveal code</em> and sign again to see it. If not, you join the queue and get a code
-        automatically as soon as the treasury restocks. The purchase transaction is published in the redemption feed.
+        automatically as soon as the pig restocks. The purchase transaction shows up in the loot feed.
       </>
     ),
   },
   {
-    q: "I have more points than I need. Can I give copies away?",
+    q: "I have more XP than I need. Can I give copies away?",
     a: (
       <>
-        Yes. On the <Link href="/redeem" className="link">redeem page</Link>, choose <em>Gift a wallet</em> to send a copy to
+        Yes. On the <Link href="/redeem" className="link">claim page</Link>, choose <em>Gift a wallet</em> to send a copy to
         someone else&apos;s wallet — they connect that wallet on the same page, pick PS5 or Xbox and claim it. Or choose{" "}
         <em>Donate to the team</em> and the copy is used for community giveaways and videos. Both are listed in the public
         feed. You can gift or donate up to {points.maxDonationsPerWindow} copies every {points.cooldownDays} days, on top of
@@ -40,11 +40,11 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Is a game guaranteed?",
-    a: `No. Redemptions are filled in order while the treasury can pay for them. If trading volume drops, fees drop and redemptions slow down. If we can't fill a request, your points are returned. Each wallet can redeem one copy for itself every ${points.cooldownDays} days.`,
+    a: `No. Claims are filled in order while the Pig Bank can pay for them. If trading volume drops, fees drop and claims slow down. If we can't fill a request, your XP is returned. Each wallet can claim one copy for itself every ${points.cooldownDays} days.`,
   },
   {
-    q: "Can I sell or transfer points?",
-    a: "No. Points aren't tokens, have no cash value, and are tied to the wallet that earned them. They can only be redeemed for games.",
+    q: "Can I sell or transfer XP?",
+    a: "No. XP isn't a token, has no cash value, and is tied to the wallet that earned it. It can only be spent on games.",
   },
   {
     q: "Is this affiliated with Rockstar Games, Sony or Microsoft?",

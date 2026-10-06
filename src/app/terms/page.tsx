@@ -23,7 +23,7 @@ export default function Terms() {
       <section>
         <h2>What points are</h2>
         <p>
-          Points are an off-chain loyalty record. They are not tokens or securities, have <strong>no cash value</strong>,
+          Points (shown on this site as &ldquo;XP&rdquo;) are an off-chain loyalty record. They are not tokens or securities, have <strong>no cash value</strong>,
           cannot be sold, transferred or exchanged for money, and exist only to redeem games offered on this site.
         </p>
       </section>

@@ -20,7 +20,7 @@ export const PUBLIC_RPC_URL =
 export const site = {
   name: "Paid In Games",
   ticker: "PIG",
-  tagline: "Hold $PIG, earn points, redeem GTA 6. Funded by a public, on-chain treasury.",
+  tagline: "Hold $PIG, stack XP, claim GTA 6. Every trade feeds a public, on-chain Pig Bank.",
   /** Public URL, used for share images. Set NEXT_PUBLIC_SITE_URL once you have a custom domain. */
   url:
     env(process.env.NEXT_PUBLIC_SITE_URL) ||
@@ -50,9 +50,9 @@ export const xSocial = socials.find((s) => s.id === "x");
 
 export const points = {
   /** USD value that must be held for one full day to earn 1 point. */
-  usdPerPointDay: 10,
+  usdPerPointDay: 100,
   /** Points needed to redeem one copy. */
-  redeemCost: 1000,
+  redeemCost: 100,
   /** USD price of one copy — used for the treasury progress bar. */
   gamePriceUsd: 70,
   /** A wallet can redeem a copy for itself at most once per this many days. */

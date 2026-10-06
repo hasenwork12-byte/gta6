@@ -1,57 +1,89 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BigStats from "@/components/BigStats";
-import Carousel from "@/components/Carousel";
 import { DashboardProvider } from "@/components/DashboardContext";
+import PigBank from "@/components/PigBank";
 import SectionHeading from "@/components/SectionHeading";
-import TreasuryPreview from "@/components/bento/TreasuryPreview";
-import ActivityCard from "@/components/cards/ActivityCard";
-import { TREASURY_LIVE, TREASURY_WALLET, site } from "@/config";
-import { DEMO_SOL_USD } from "@/lib/demo";
-import { shortAddr } from "@/lib/format";
+import { TREASURY_LIVE, TREASURY_WALLET, points, site } from "@/config";
+import { fmtDateTime, fmtNum, fmtUsd, shortAddr } from "@/lib/format";
 import { getDashboard, getLedger } from "@/lib/solana";
 
-export const metadata: Metadata = { title: `Treasury — ${site.name}` };
+export const metadata: Metadata = { title: `Pig Bank — ${site.name}` };
 export const revalidate = 30;
 
 export default async function TreasuryPage() {
   const [dashboard, ledger] = await Promise.all([getDashboard().catch(() => null), getLedger().catch(() => null)]);
-  const entries = ledger?.entries ?? [];
+  const entries = (ledger?.entries ?? []).slice(0, 8);
   const demo = ledger?.demo ?? true;
-  const refTime = dashboard?.snapshot.updatedAt ?? Math.floor(Date.now() / 1000);
-  const fees = entries.filter((e) => e.direction === "in").map((e) => ({ time: e.time, sol: e.sol }));
 
   return (
     <DashboardProvider initial={dashboard}>
-      <div className="section pt-14">
-        <SectionHeading
-          eyebrow="Treasury"
-          title="Where the fees are right now"
-          sub="Read directly from the treasury wallet on Solana. This is what pays for redeemed games."
-        />
-        <div className="mb-6 flex flex-wrap items-center gap-3">
-          {TREASURY_LIVE && (
-            <a className="btn-ghost !py-1.5 font-mono text-xs" href={site.explorerAccount(TREASURY_WALLET)} target="_blank" rel="noreferrer">
-              Wallet {shortAddr(TREASURY_WALLET, 6)} ↗
-            </a>
-          )}
-          <Link href="/ledger" className="btn-ghost !py-1.5 text-xs">
-            Full ledger →
-          </Link>
+      <div className="section pt-12">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1fr]">
+          <div>
+            <SectionHeading
+              eyebrow="The Pig Bank"
+              title="Every trade feeds the pig"
+              sub={`Creator fees from every $${site.ticker} trade land in one public wallet. When the pig holds ${fmtUsd(points.gamePriceUsd, 0)}, that's another GTA 6 for a holder. Read straight from Solana, no trust me bro.`}
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              {TREASURY_LIVE && (
+                <a className="btn-ghost font-mono text-xs" href={site.explorerAccount(TREASURY_WALLET)} target="_blank" rel="noreferrer">
+                  Wallet {shortAddr(TREASURY_WALLET, 6)} ↗
+                </a>
+              )}
+              <Link href="/ledger" className="btn-ghost text-xs">
+                All receipts →
+              </Link>
+            </div>
+          </div>
+          <PigBank className="mx-auto w-full max-w-[520px]" />
         </div>
-
-        <TreasuryPreview fees={fees} refTime={refTime} href="/ledger" />
 
         <div className="mt-16">
           <BigStats />
         </div>
 
         <div className="mt-16">
-          <Carousel title="Treasury activity" href="/ledger" demo={demo}>
-            {entries.slice(0, 15).map((e) => (
-              <ActivityCard key={e.signature} e={e} demo={demo} solUsd={dashboard?.snapshot.solUsd ?? DEMO_SOL_USD} />
-            ))}
-          </Carousel>
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <h2 className="font-display text-2xl font-extrabold tracking-tight">Latest feedings</h2>
+            <Link href="/ledger" className="text-xs font-semibold text-muted transition hover:text-fg">
+              Full receipts →
+            </Link>
+          </div>
+          {entries.length === 0 ? (
+            <div className="card p-10 text-center text-sm text-muted">The pig is hungry. No transactions yet.</div>
+          ) : (
+            <ul className="card divide-y-2 divide-line/[0.05] overflow-hidden">
+              {entries.map((e) => {
+                const fed = e.direction === "in";
+                return (
+                  <li key={e.signature} className="flex items-center gap-3 px-5 py-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-line/10 bg-bg text-lg" aria-hidden>
+                      {fed ? "🪙" : "🎮"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">{fed ? "Pig fed" : "GTA 6 copy bought"}</p>
+                      <p className="font-mono text-[11px] text-muted">{fmtDateTime(e.time)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-mono text-sm font-semibold ${fed ? "text-good" : "text-accent"}`}>
+                        {fed ? "+" : "−"}
+                        {fmtNum(e.sol, 3)} SOL
+                      </p>
+                      {demo ? (
+                        <span className="font-mono text-[11px] text-muted">demo</span>
+                      ) : (
+                        <a className="link font-mono text-[11px]" href={site.explorerTx(e.signature)} target="_blank" rel="noreferrer">
+                          Solscan ↗
+                        </a>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       </div>
     </DashboardProvider>

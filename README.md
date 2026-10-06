@@ -1,7 +1,7 @@
 # Paid In Games ($PIG)
 
 A memecoin site where creator fees fund a public treasury that buys GTA 6 copies,
-which holders redeem with points earned by holding. Next.js 15 + Tailwind CSS, deployable to Vercel.
+which holders claim with points (shown as "XP") earned by holding. Next.js 15 + Tailwind CSS, deployable to Vercel.
 
 ## Run locally
 
@@ -25,7 +25,8 @@ npm run dev                  # http://localhost:3000
 
 ## Points & redemptions
 
-- $10 held for a full day = 1 point; 1,000 points = one copy (PS5 or Xbox).
+- $100 held for a full day = 1 XP; 100 XP = one copy (PS5 or Xbox). The UI calls
+  points "XP"; code and the terms page still say points.
   All numbers live in `points` in `src/config.ts`.
 - `vercel.json` runs `/api/cron/snapshot` daily at 00:00 UTC. A wallet earns on
   the lower of its balance at two consecutive snapshots, at the lower of the two
@@ -57,9 +58,10 @@ Change `--accent-1` / `--accent-2` in `src/app/globals.css` (options listed ther
 
 ## Structure
 
-- `src/app/page.tsx` — home (hero, bento previews, stat counters, carousels)
-- `src/app/treasury` — public ledger
-- `src/app/points`, `redemptions`, `how-it-works`, `redeem` — full pages behind each preview card
+- `src/app/page.tsx` — home (hero with the Pig Bank, quests, calculator, leaderboard, loot feed)
+- `src/app/treasury` — the Pig Bank (treasury), `ledger` — receipts
+- `src/app/points` (leaderboard + XP check), `redemptions` (loot drops), `how-it-works` (how to play), `redeem` (claim)
+- `src/components/Nav.tsx` — top bar + phone tab bar; `PigBank.tsx` — the filling pig
 - `src/app/disclosures`, `terms`, `privacy` — legal (templates: get them reviewed)
 - `src/app/api/*` — server routes: treasury (reads Solana), points, redeem, claim, reveal, stock, admin, cron
 - `src/lib/solana.ts` — all chain reads (cached in memory)

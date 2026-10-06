@@ -44,7 +44,7 @@ export default function PointsChecker() {
         />
         <div className="flex gap-3">
           <button className="btn-primary flex-1 sm:flex-none" disabled={loading || !input.trim()}>
-            {loading ? "Checking…" : "Check points"}
+            {loading ? "Checking…" : "Check XP"}
           </button>
           <WalletButton />
         </div>
@@ -54,15 +54,15 @@ export default function PointsChecker() {
         {error && <p className="text-sm text-accent">{error}</p>}
         {!error && !info && !loading && (
           <p className="text-sm text-muted">
-            Every ${fmtNum(points.usdPerPointDay)} held for a full day earns 1 point. {fmtNum(points.redeemCost)} points
-            redeems one copy of GTA 6.
+            Every ${fmtNum(points.usdPerPointDay)} held for a full day earns 1 XP. {fmtNum(points.redeemCost)} XP
+            unlocks one copy of GTA 6.
           </p>
         )}
         {info && (
           <div className="space-y-6">
             <PointsPanel info={info} />
             <Link href="/redeem" className={info.points >= info.cost ? "btn-primary" : "btn-ghost"}>
-              {info.points >= info.cost ? "Redeem GTA 6 →" : "See how redeeming works →"}
+              {info.points >= info.cost ? "Claim GTA 6 →" : "See how claiming works →"}
             </Link>
           </div>
         )}

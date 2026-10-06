@@ -7,7 +7,7 @@ import { site } from "@/config";
 import { getLedger } from "@/lib/solana";
 import { listPublicRedemptions } from "@/lib/points";
 
-export const metadata: Metadata = { title: `Redemptions — ${site.name}` };
+export const metadata: Metadata = { title: `Loot drops — ${site.name}` };
 export const revalidate = 30;
 
 export default async function RedemptionsPage() {
@@ -21,18 +21,18 @@ export default async function RedemptionsPage() {
   return (
     <div className="section pt-14">
       <SectionHeading
-        eyebrow="Redemptions"
-        title="Every redeemed copy"
-        sub="Open a card to see its receipt. Delivered copies link to the treasury's payment on Solscan."
+        eyebrow="Loot drops"
+        title="Every copy that dropped"
+        sub="Open a card for its receipt. Delivered copies link to the Pig Bank's payment on Solscan. Proof or it didn't happen."
       />
       <div className="mb-6 flex flex-wrap items-center gap-3">
         {demo && <DemoBadge />}
         <Link href="/redeem" className="btn-primary !py-2 text-xs">
-          Redeem yours
+          Claim yours
         </Link>
       </div>
       {rows.length === 0 ? (
-        <div className="card p-10 text-center text-sm text-muted">No redemptions yet.</div>
+        <div className="card p-10 text-center text-sm text-muted">No loot dropped yet. Be the first. 👀</div>
       ) : (
         <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((r) => (

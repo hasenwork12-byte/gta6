@@ -14,6 +14,7 @@ const config: Config = {
         muted: "rgb(var(--muted) / <alpha-value>)",
         accent: "rgb(var(--accent-1) / <alpha-value>)",
         accent2: "rgb(var(--accent-2) / <alpha-value>)",
+        gold: "rgb(var(--gold) / <alpha-value>)",
         good: "rgb(var(--good) / <alpha-value>)",
       },
       fontFamily: {
@@ -53,6 +54,11 @@ const config: Config = {
           "0%, 100%": { transform: "scale(0.4)", opacity: "0" },
           "50%": { transform: "scale(1)", opacity: "1" },
         },
+        // Liquid surface in the Pig Bank: shift by exactly one wavelength (16 units) so it loops seamlessly.
+        wave: {
+          from: { transform: "translateX(0)" },
+          to: { transform: "translateX(-16px)" },
+        },
         burst: {
           "0%": { transform: "translate(0, 0) scale(0.6)", opacity: "1" },
           "100%": { transform: "translate(var(--dx), var(--dy)) scale(1)", opacity: "0" },
@@ -63,6 +69,7 @@ const config: Config = {
         shadowPulse: "shadowPulse 6s ease-in-out infinite",
         coinDrop: "coinDrop 2.4s cubic-bezier(0.5, 0, 0.75, 0) infinite",
         twinkle: "twinkle 2.8s ease-in-out infinite",
+        wave: "wave 2.2s linear infinite",
         burst: "burst 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards",
         marquee: "marquee var(--marquee-duration, 40s) linear infinite",
         marqueeY: "marqueeY var(--marquee-duration, 30s) linear infinite",

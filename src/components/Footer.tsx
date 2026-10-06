@@ -7,19 +7,19 @@ type Item = { label: string; href: string; external?: boolean };
 
 const columns: { title: string; items: Item[] }[] = [
   {
-    title: "Product",
+    title: "Play",
     items: [
-      { label: "Redeem", href: "/redeem" },
-      { label: "Points", href: "/points" },
-      { label: "Redemptions", href: "/redemptions" },
-      { label: "How it works", href: "/how-it-works" },
+      { label: "Claim GTA 6", href: "/redeem" },
+      { label: "Leaderboard", href: "/points" },
+      { label: "Loot drops", href: "/redemptions" },
+      { label: "How to play", href: "/how-it-works" },
     ],
   },
   {
-    title: "Treasury",
+    title: "Pig Bank",
     items: [
-      { label: "Overview", href: "/treasury" },
-      { label: "Public ledger", href: "/ledger" },
+      { label: "The pig", href: "/treasury" },
+      { label: "Receipts", href: "/ledger" },
       ...(TREASURY_LIVE ? [{ label: "Wallet on Solscan", href: site.explorerAccount(TREASURY_WALLET), external: true }] : []),
       ...(TOKEN_LIVE ? [{ label: `Buy $${site.ticker}`, href: site.buyUrl(TOKEN_MINT), external: true }] : []),
     ],
@@ -36,13 +36,13 @@ const columns: { title: string; items: Item[] }[] = [
 
 export default function Footer() {
   return (
-    <footer className="mt-28 border-t border-line/[0.07]">
+    <footer className="mt-28 border-t-2 border-line/[0.07] bg-bg/80">
       <div className="section grid gap-12 py-14 md:grid-cols-[1.3fr_2fr]">
         <div className="space-y-5">
           <Logo />
           <p className="max-w-xs text-sm leading-relaxed text-muted">
-            Creator fees fund a public, on-chain treasury that pays for games holders redeem with points. Memecoins are
-            highly speculative. Nothing here is financial advice.
+            Every trade feeds a public, on-chain piggy bank that buys games for holders who stack XP. Memecoins are
+            highly speculative. NFA, DYOR.
           </p>
           {socials.length > 0 && (
             <div className="flex gap-2">
