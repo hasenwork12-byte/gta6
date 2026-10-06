@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { site } from "@/config";
 import Sidebar from "@/components/Sidebar";
@@ -8,6 +8,8 @@ import WalletProviders from "@/components/WalletProviders";
 
 const sans = Space_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+// Chunky display face for headlines only; body text stays Space Grotesk.
+const display = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "800"], variable: "--font-display" });
 
 const title = `${site.name} ($${site.ticker}) — hold, earn points, redeem GTA 6`;
 
@@ -26,7 +28,7 @@ export const viewport: Viewport = { themeColor: "#07060a" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable} ${display.variable}`}>
       <body className="min-h-screen font-sans">
         <WalletProviders>
           <div className="md:flex">

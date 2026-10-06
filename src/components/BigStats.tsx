@@ -1,5 +1,6 @@
 "use client";
 
+import { TREASURY_WALLET, site } from "@/config";
 import { fmtNum, fmtUsd } from "@/lib/format";
 import { useDashboard } from "./DashboardContext";
 import DemoBadge from "./DemoBadge";
@@ -51,6 +52,14 @@ export default function BigStats() {
           </div>
         ))}
       </div>
+      {!s.demo && TREASURY_WALLET && (
+        <p className="mt-3 text-xs text-muted">
+          Totalled straight from the treasury wallet&apos;s on-chain transactions.{" "}
+          <a className="link" href={site.explorerAccount(TREASURY_WALLET)} target="_blank" rel="noreferrer">
+            Check it yourself on Solscan ↗
+          </a>
+        </p>
+      )}
       {error && <p className="mt-3 text-xs text-amber-300">RPC hiccup — showing last known values.</p>}
     </div>
   );

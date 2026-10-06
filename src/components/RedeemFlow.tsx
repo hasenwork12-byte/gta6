@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { points, platformLabel, site } from "@/config";
+import { points, platformLabel, site, xSocial } from "@/config";
 import { fmtNum, shortAddr } from "@/lib/format";
 import { buildRedeemMessage } from "@/lib/redeem-message";
 import type { RedemptionKind } from "@/lib/types";
+import CoinBurst from "./CoinBurst";
 import PointsPanel from "./PointsPanel";
 import ClaimGift from "./redeem/ClaimGift";
 import DeliveryFields from "./redeem/DeliveryFields";
@@ -27,6 +28,19 @@ const KINDS: { id: RedemptionKind; label: string; hint: string }[] = [
 ];
 
 const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/** Prefilled X post after a redemption: every happy holder is free marketing. */
+function shareUrl(kind: RedemptionKind) {
+  const tag = xSocial ? ` ${xSocial.label}` : "";
+  const text =
+    kind === "gift"
+      ? `Just gifted a friend a copy of GTA 6 with my $${site.ticker} points 🐷🎮${tag}`
+      : kind === "team"
+        ? `Just donated a copy of GTA 6 to the ${site.name} community with my $${site.ticker} points 🐷🎮${tag}`
+        : `Just got GTA 6 for holding $${site.ticker}. Paid in games 🐷🎮${tag}`;
+  // Only rendered after a redeem, so always on the client. (site.url's Vercel fallback is server-only.)
+  return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin)}`;
+}
 
 export default function RedeemFlow() {
   const { publicKey, signMessage } = useWallet();
@@ -135,9 +149,16 @@ export default function RedeemFlow() {
         <p className="label">Redeem · {fmtNum(points.redeemCost)} points</p>
 
         {done ? (
-          <div className="mt-6 space-y-4">
-            <p className="text-2xl font-medium text-good">
-              {done.kind === "self" ? (done.delivered ? "Your code is ready ✓" : "You're in the queue ✓") : done.kind === "gift" ? "Gift sent ✓" : "Thank you ✓"}
+          <div className="relative mt-6 space-y-4">
+            <CoinBurst key={done.id} />
+            <p className="font-display text-3xl font-extrabold tracking-tight text-good">
+              {done.kind === "self"
+                ? done.delivered
+                  ? "Oink! Your code is ready"
+                  : "Oink! You're in the queue"
+                : done.kind === "gift"
+                  ? "Oink! Gift sent"
+                  : "Oink! Thank you"}
             </p>
             <p className="text-sm leading-relaxed text-muted">
               Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} points were
@@ -166,6 +187,9 @@ export default function RedeemFlow() {
               Requests are filled in order, and the purchase receipt will appear in the public feed.
             </p>
             <div className="flex flex-wrap gap-2">
+              <a href={shareUrl(done.kind)} target="_blank" rel="noreferrer" className="btn-primary">
+                Share on X
+              </a>
               <Link href="/redemptions" className="btn-ghost">
                 View the redemption feed
               </Link>

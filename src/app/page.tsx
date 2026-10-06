@@ -3,6 +3,8 @@ import ActivityTicker from "@/components/ActivityTicker";
 import BigStats from "@/components/BigStats";
 import Carousel from "@/components/Carousel";
 import { DashboardProvider } from "@/components/DashboardContext";
+import EarnCalculator from "@/components/EarnCalculator";
+import HonestLimits from "@/components/HonestLimits";
 import LedgerPreview from "@/components/bento/LedgerPreview";
 import PointsPreview from "@/components/bento/PointsPreview";
 import RedemptionsPreview from "@/components/bento/RedemptionsPreview";
@@ -46,6 +48,10 @@ export default async function Home() {
         <RulesPreview />
       </div>
 
+      <div id="calculator" className="section mt-24 scroll-mt-8">
+        <EarnCalculator />
+      </div>
+
       <div className="section mt-24">
         <BigStats />
       </div>
@@ -68,6 +74,10 @@ export default async function Home() {
             <ActivityCard key={e.signature} e={e} demo={ledgerDemo} solUsd={solUsd} />
           ))}
         </Carousel>
+      </div>
+
+      <div className="section mt-24">
+        <HonestLimits />
       </div>
     </DashboardProvider>
   );

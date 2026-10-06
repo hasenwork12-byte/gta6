@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import DemoBadge from "@/components/DemoBadge";
+import EarnCalculator from "@/components/EarnCalculator";
 import PointsChecker from "@/components/PointsChecker";
 import SectionHeading from "@/components/SectionHeading";
 import { points, site } from "@/config";
@@ -20,6 +21,7 @@ export default async function PointsPage() {
         sub={`Paste any address or connect your wallet. ${fmtNum(points.redeemCost)} points redeems one copy of GTA 6.`}
       />
       <PointsChecker />
+      <EarnCalculator className="mt-10" />
 
       <div className="mt-16">
         <div className="mb-5 flex items-center gap-3">

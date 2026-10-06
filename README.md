@@ -1,7 +1,7 @@
 # Paid In Games ($PIG)
 
-A memecoin site where creator fees fund a public treasury that buys GTA 6 copies
-to raffle among holders. Next.js 15 + Tailwind CSS, deployable to Vercel.
+A memecoin site where creator fees fund a public treasury that buys GTA 6 copies,
+which holders redeem with points earned by holding. Next.js 15 + Tailwind CSS, deployable to Vercel.
 
 ## Run locally
 
@@ -61,6 +61,6 @@ Change `--accent-1` / `--accent-2` in `src/app/globals.css` (options listed ther
 - `src/app/treasury` — public ledger
 - `src/app/points`, `redemptions`, `how-it-works`, `redeem` — full pages behind each preview card
 - `src/app/disclosures`, `terms`, `privacy` — legal (templates: get them reviewed)
-- `src/app/api/treasury`, `src/app/api/eligibility` — server routes reading Solana
+- `src/app/api/*` — server routes: treasury (reads Solana), points, redeem, claim, reveal, stock, admin, cron
 - `src/lib/solana.ts` — all chain reads (cached in memory)
 - `src/lib/demo.ts` — deterministic demo data

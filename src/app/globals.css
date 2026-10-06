@@ -119,10 +119,23 @@ body {
   border-radius: 20px !important;
 }
 
+/* SVG parts animate around their own centre */
+.svg-box {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee,
-  .animate-marqueeY {
+  .animate-marqueeY,
+  .animate-float,
+  .animate-shadowPulse,
+  .animate-twinkle {
     animation: none !important;
+  }
+  .animate-coinDrop,
+  .animate-burst {
+    display: none;
   }
   .roll-strip {
     transition: none !important;

@@ -8,9 +8,9 @@ export default function CopyAddress({ address, label = "CA" }: { address: string
 
   if (!address) {
     return (
-      <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-dashed border-line/15 px-4 py-2 font-mono text-xs text-muted">
+      <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-dashed border-accent2/30 bg-accent2/[0.04] px-4 py-2 font-mono text-xs text-muted">
         <span className="text-fg/60">{label}</span>
-        <span className="truncate">Contract address appears here at launch</span>
+        <span className="truncate">Oink soon. The contract address drops here at launch.</span>
       </div>
     );
   }
