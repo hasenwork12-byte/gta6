@@ -5,7 +5,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { points, site } from "@/config";
 import { fmtNum, shortAddr } from "@/lib/format";
 import DemoBadge from "./DemoBadge";
-import PigAvatar from "./PigAvatar";
+import PigAvatar, { MetalPig } from "./PigAvatar";
 
 export type BoardRow = { wallet: string; points: number; lastDay: number };
 type Tab = "all" | "today";
@@ -99,9 +99,9 @@ const valueOf = (r: BoardRow, tab: Tab) => (tab === "today" ? r.lastDay : r.poin
 
 // Podium: 2nd, 1st, 3rd on wide screens; 1st first on phones.
 const PODIUM = [
-  { at: 1, badge: "bg-[#d6d3df] text-[#2a2533]", ring: "border-line/30", glow: "from-line/10", lift: "sm:mt-8" },
-  { at: 0, badge: "bg-gold text-[#3a2600]", ring: "border-gold/60", glow: "from-gold/25", lift: "" },
-  { at: 2, badge: "bg-[#e08a4f] text-[#3a1a06]", ring: "border-accent2/50", glow: "from-accent2/20", lift: "sm:mt-12" },
+  { at: 1, metal: "silver" as const, badge: "bg-[#d6d3df] text-[#2a2533]", ring: "border-line/30", glow: "from-line/10", lift: "sm:mt-8" },
+  { at: 0, metal: "gold" as const, badge: "bg-gold text-[#3a2600]", ring: "border-gold/60", glow: "from-gold/25", lift: "" },
+  { at: 2, metal: "bronze" as const, badge: "bg-[#e08a4f] text-[#3a1a06]", ring: "border-accent2/50", glow: "from-accent2/20", lift: "sm:mt-12" },
 ];
 
 export default function Leaderboard({
@@ -271,7 +271,7 @@ export default function Leaderboard({
               <div className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${p.glow} to-transparent`} />
               <div className="relative">
                 <div className="relative mx-auto w-fit">
-                  <PigAvatar wallet={r.wallet} crown={isFirst} className={`${isFirst ? "h-20 w-20 animate-float" : "h-16 w-16"}`} />
+                  <MetalPig metal={p.metal} className={`${isFirst ? "h-20 w-20 animate-float" : "h-16 w-16"}`} />
                   <span className={`absolute -bottom-1 -right-2 grid h-7 w-7 place-items-center rounded-full border-2 border-bg font-display text-sm font-extrabold ${p.badge}`} aria-hidden>
                     {p.at + 1}
                   </span>

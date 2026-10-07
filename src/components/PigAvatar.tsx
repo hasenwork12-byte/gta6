@@ -80,3 +80,51 @@ export default function PigAvatar({ wallet, crown = false, className = "h-10 w-1
     </svg>
   );
 }
+
+// ── Podium pigs: one anonymous face, cast in gold, silver or bronze ──────────
+const METALS = {
+  gold: { hi: "#fff3c4", lo: "#e0a800", edge: "#8a6000", snout: "#f5c842", bg: "#2e2306", ring: "#ffc93c" },
+  silver: { hi: "#ffffff", lo: "#a9adbb", edge: "#545866", snout: "#cfd2db", bg: "#1f2129", ring: "#d6d3df" },
+  bronze: { hi: "#ffd2ae", lo: "#b8612b", edge: "#5e2b0b", snout: "#de9361", bg: "#2e1709", ring: "#e08a4f" },
+} as const;
+export type Metal = keyof typeof METALS;
+
+/** Same pig for every wallet on the podium: only the metal changes. Gold wears the crown. */
+export function MetalPig({ metal, className = "h-16 w-16" }: { metal: Metal; className?: string }) {
+  const m = METALS[metal];
+  const skin = `url(#pig-${metal}-skin)`;
+  return (
+    <svg viewBox="0 0 40 40" className={className} aria-hidden>
+      <defs>
+        {/* Same id + same contents in every copy, so repeats on one page are harmless. */}
+        <linearGradient id={`pig-${metal}-skin`} x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stopColor={m.hi} />
+          <stop offset="0.55" stopColor={m.lo} />
+          <stop offset="1" stopColor={m.edge} />
+        </linearGradient>
+      </defs>
+      <circle cx="20" cy="20" r="19" fill={m.bg} stroke={m.ring} strokeWidth="1.5" />
+      <path d="M9 14 L12 6 L17 12 Z" fill={skin} stroke={m.edge} strokeWidth=".8" strokeLinejoin="round" />
+      <path d="M31 14 L28 6 L23 12 Z" fill={skin} stroke={m.edge} strokeWidth=".8" strokeLinejoin="round" />
+      <ellipse cx="20" cy="22" rx="12" ry="11" fill={skin} stroke={m.edge} strokeWidth=".8" />
+      {/* metallic shine */}
+      <ellipse cx="15" cy="16" rx="4.5" ry="2.2" fill="#fff" opacity=".45" transform="rotate(-25 15 16)" />
+      <circle cx="15.5" cy="19.5" r="1.6" fill="#1a0d14" />
+      <circle cx="24.5" cy="19.5" r="1.6" fill="#1a0d14" />
+      <circle cx="16" cy="19" r=".5" fill="#fff" />
+      <circle cx="25" cy="19" r=".5" fill="#fff" />
+      <ellipse cx="20" cy="25.5" rx="5" ry="3.6" fill={m.snout} stroke={m.edge} strokeWidth=".7" />
+      <ellipse cx="18.2" cy="25.5" rx=".9" ry="1.3" fill={m.edge} />
+      <ellipse cx="21.8" cy="25.5" rx=".9" ry="1.3" fill={m.edge} />
+      {metal === "gold" && (
+        <path
+          d="M11 13 L12.5 4.5 L16.5 9.5 L20 3 L23.5 9.5 L27.5 4.5 L29 13 Z"
+          fill="#ffc93c"
+          stroke="#8a6000"
+          strokeWidth=".8"
+          strokeLinejoin="round"
+        />
+      )}
+    </svg>
+  );
+}
