@@ -59,6 +59,10 @@ const config: Config = {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-16px)" },
         },
+        rise: {
+          from: { transform: "translateY(8px)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
+        },
         burst: {
           "0%": { transform: "translate(0, 0) scale(0.6)", opacity: "1" },
           "100%": { transform: "translate(var(--dx), var(--dy)) scale(1)", opacity: "0" },
@@ -70,6 +74,7 @@ const config: Config = {
         coinDrop: "coinDrop 2.4s cubic-bezier(0.5, 0, 0.75, 0) infinite",
         twinkle: "twinkle 2.8s ease-in-out infinite",
         wave: "wave 2.2s linear infinite",
+        rise: "rise 0.4s ease-out backwards",
         burst: "burst 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards",
         marquee: "marquee var(--marquee-duration, 40s) linear infinite",
         marqueeY: "marqueeY var(--marquee-duration, 30s) linear infinite",

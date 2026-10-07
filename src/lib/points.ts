@@ -53,9 +53,14 @@ export async function listPublicRedemptions(): Promise<{ rows: PublicRedemption[
   return { rows, demo: !POINTS_LIVE };
 }
 
-export async function getTopHolders(limit = 20): Promise<{ rows: { wallet: string; points: number }[]; demo: boolean }> {
+export type TopHolder = { wallet: string; points: number; lastDay: number };
+
+/** Top wallets by XP, with what each earned at the latest snapshot (for "today" and rank changes). */
+export async function getTopHolders(limit = 20): Promise<{ rows: TopHolder[]; demo: boolean }> {
   if (!POINTS_LIVE) return { rows: demoTopHolders(limit), demo: true };
-  const rows = (await store().topPoints(limit)).map((x) => ({ wallet: x.wallet, points: x.centi / 100 }));
+  const top = await store().topPoints(limit);
+  const last = await store().lastDays(top.map((x) => x.wallet));
+  const rows = top.map((x, i) => ({ wallet: x.wallet, points: x.centi / 100, lastDay: (last[i] ?? 0) / 100 }));
   return { rows, demo: false };
 }
 

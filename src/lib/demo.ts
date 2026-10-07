@@ -56,11 +56,14 @@ export function demoRedemptions(): Redemption[] {
   });
 }
 
-export function demoTopHolders(n = 20): { wallet: string; points: number }[] {
+export function demoTopHolders(n = 20): { wallet: string; points: number; lastDay: number }[] {
   const r = rng(99);
   let p = points.redeemCost * 1.48;
   return Array.from({ length: n }, () => {
-    const row = { wallet: fakeAddr(r), points: Math.round(p * 100) / 100 };
+    // lastDay: XP earned at the latest snapshot; ~1 in 8 sold before it and earned nothing.
+    const wallet = fakeAddr(r);
+    const lastDay = r() < 0.12 ? 0 : Math.round(p * (0.02 + r() * 0.16) * 100) / 100;
+    const row = { wallet, points: Math.round(p * 100) / 100, lastDay };
     p = p * (0.8 + r() * 0.15);
     return row;
   });

@@ -143,6 +143,7 @@ body {
   .animate-float,
   .animate-shadowPulse,
   .animate-wave,
+  .animate-rise,
   .animate-twinkle {
     animation: none !important;
   }

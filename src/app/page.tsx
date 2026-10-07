@@ -46,7 +46,7 @@ export default async function Home() {
               Full board →
             </Link>
           </div>
-          <Leaderboard rows={holders.rows} demo={holders.demo} />
+          <Leaderboard rows={holders.rows} demo={holders.demo} variant="compact" />
         </div>
         <div>
           <SectionHeading eyebrow="Fresh loot" title="Who just got paid" />
