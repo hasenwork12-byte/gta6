@@ -34,10 +34,10 @@ function shareUrl(kind: RedemptionKind) {
   const tag = xSocial ? ` ${xSocial.label}` : "";
   const text =
     kind === "gift"
-      ? `Just gifted a friend a copy of GTA 6 with my $${site.ticker} XP 🐷🎮${tag}`
+      ? `Just gifted a friend a copy of GTA 6 with my $${site.ticker} XP${tag}`
       : kind === "team"
-        ? `Just donated a copy of GTA 6 to the ${site.name} community with my $${site.ticker} XP 🐷🎮${tag}`
-        : `Just got GTA 6 for holding $${site.ticker}. Paid in games 🐷🎮${tag}`;
+        ? `Just donated a copy of GTA 6 to the ${site.name} community with my $${site.ticker} XP${tag}`
+        : `Just got GTA 6 for holding $${site.ticker}. Paid in games.${tag}`;
   // Only rendered after a redeem, so always on the client. (site.url's Vercel fallback is server-only.)
   return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin)}`;
 }
@@ -107,7 +107,7 @@ export default function RedeemFlow() {
     : !info
       ? null
       : !enoughPoints
-        ? `You need ${fmtNum(points.redeemCost)} XP to claim. Keep stacking. 💎`
+        ? `You need ${fmtNum(points.redeemCost)} XP to claim. Keep stacking.`
         : kind === "self" && info.cooldownUntil
           ? `You've claimed for yourself in the last ${points.cooldownDays} days. You can still gift or donate.`
           : kind !== "self" && donationsLeft === 0

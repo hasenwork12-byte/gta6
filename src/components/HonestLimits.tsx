@@ -1,3 +1,4 @@
+import { TriangleAlert } from "lucide-react";
 import { site } from "@/config";
 
 const LIMITS: [string, string][] = [
@@ -28,7 +29,10 @@ export default function HonestLimits() {
       <div className="mt-7 grid gap-4 sm:grid-cols-2">
         {LIMITS.map(([title, body]) => (
           <div key={title} className="card p-5 sm:p-6">
-            <p className="font-display text-lg font-extrabold">⚠️ {title}</p>
+            <p className="flex items-center gap-2 font-display text-lg font-extrabold">
+              <TriangleAlert className="h-5 w-5 shrink-0 text-gold" aria-hidden />
+              {title}
+            </p>
             <p className="mt-1.5 text-sm leading-relaxed text-muted">{body}</p>
           </div>
         ))}

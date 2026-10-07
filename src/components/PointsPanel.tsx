@@ -42,7 +42,7 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
 
       <p className="text-xs leading-relaxed text-muted">
         {pct >= 100
-          ? "GTA 6 unlocked. Go claim it. 🎮"
+          ? "GTA 6 unlocked. Go claim it."
           : daysLeft !== null
             ? `At today's value, about ${fmtNum(daysLeft)} more ${daysLeft === 1 ? "day" : "days"} to reach ${fmtNum(info.cost)} XP. Earnings change with the token price.`
             : `Hold $${site.ticker} to start stacking XP at the next daily drop.`}

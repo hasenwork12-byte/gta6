@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Coins, Gamepad2 } from "lucide-react";
 import BigStats from "@/components/BigStats";
 import { DashboardProvider } from "@/components/DashboardContext";
 import PigBank from "@/components/PigBank";
@@ -59,8 +60,8 @@ export default async function TreasuryPage() {
                 const fed = e.direction === "in";
                 return (
                   <li key={e.signature} className="flex items-center gap-3 px-5 py-3">
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-line/10 bg-bg text-lg" aria-hidden>
-                      {fed ? "🪙" : "🎮"}
+                    <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 ${fed ? "border-gold/25 bg-gold/10 text-gold" : "border-accent/25 bg-accent/10 text-accent"}`}>
+                      {fed ? <Coins className="h-5 w-5" aria-hidden /> : <Gamepad2 className="h-5 w-5" aria-hidden />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold">{fed ? "Pig fed" : "GTA 6 copy bought"}</p>

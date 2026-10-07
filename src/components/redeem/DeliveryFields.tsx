@@ -98,7 +98,7 @@ export default function DeliveryFields({
         {platform && region && (
           <p className={`mt-2 text-xs ${(stock[stockKey(platform, region)] ?? 0) > 0 ? "text-good" : "text-amber-300"}`}>
             {(stock[stockKey(platform, region)] ?? 0) > 0
-              ? `⚡ In stock — your code is delivered instantly on this page.`
+              ? `In stock: your code is delivered instantly on this page.`
               : "Out of stock right now — you'll join the queue and get a code automatically when stock arrives."}
           </p>
         )}

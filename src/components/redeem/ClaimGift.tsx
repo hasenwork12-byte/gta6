@@ -1,5 +1,6 @@
 "use client";
 
+import { Gift } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { fmtDate, shortAddr } from "@/lib/format";
@@ -45,7 +46,10 @@ export default function ClaimGift({
 
   return (
     <div className="rounded-2xl border border-good/30 bg-good/[0.06] p-5">
-      <p className="text-lg font-medium">🎁 You&apos;ve been gifted a copy of GTA 6</p>
+      <p className="flex items-center gap-2 text-lg font-medium">
+        <Gift className="h-5 w-5 shrink-0 text-accent" aria-hidden />
+        You&apos;ve been gifted a copy of GTA 6
+      </p>
       <p className="mt-1 font-mono text-xs text-muted">
         From {shortAddr(gift.from, 5)} · {fmtDate(gift.createdAt / 1000)}
       </p>

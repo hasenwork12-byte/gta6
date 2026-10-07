@@ -31,7 +31,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
       <div className="relative grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
           <p className="label">Calculator</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">When do I eat? 🍽️</h2>
+          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">When do I eat?</h2>
 
           <label htmlFor="earn-usd" className="mt-6 block text-sm text-muted">
             If I hold this much ${site.ticker}…

@@ -99,9 +99,9 @@ const valueOf = (r: BoardRow, tab: Tab) => (tab === "today" ? r.lastDay : r.poin
 
 // Podium: 2nd, 1st, 3rd on wide screens; 1st first on phones.
 const PODIUM = [
-  { at: 1, medal: "🥈", ring: "border-line/30", glow: "from-line/10", lift: "sm:mt-8" },
-  { at: 0, medal: "🥇", ring: "border-gold/60", glow: "from-gold/25", lift: "" },
-  { at: 2, medal: "🥉", ring: "border-accent2/50", glow: "from-accent2/20", lift: "sm:mt-12" },
+  { at: 1, badge: "bg-[#d6d3df] text-[#2a2533]", ring: "border-line/30", glow: "from-line/10", lift: "sm:mt-8" },
+  { at: 0, badge: "bg-gold text-[#3a2600]", ring: "border-gold/60", glow: "from-gold/25", lift: "" },
+  { at: 2, badge: "bg-[#e08a4f] text-[#3a1a06]", ring: "border-accent2/50", glow: "from-accent2/20", lift: "sm:mt-12" },
 ];
 
 export default function Leaderboard({
@@ -139,14 +139,14 @@ export default function Leaderboard({
   if (rows.length === 0) {
     return (
       <div className="card p-10 text-center text-sm text-muted">
-        No XP dropped yet. The first drop comes at the second daily snapshot. 🐷
+        No XP dropped yet. The first drop comes at the second daily snapshot.
       </div>
     );
   }
 
   const share = mine
     ? `https://x.com/intent/post?text=${encodeURIComponent(
-        `I'm #${mine.rank} on the $${site.ticker} leaderboard with ${fmtNum(mine.points, 1)} XP 🐷 Next stop: GTA 6 🎮`,
+        `I'm #${mine.rank} on the $${site.ticker} leaderboard with ${fmtNum(mine.points, 1)} XP. Next stop: GTA 6.`,
       )}`
     : "";
 
@@ -187,7 +187,7 @@ export default function Leaderboard({
           {(
             [
               ["all", "All time"],
-              ["today", "Today's gainers 🔥"],
+              ["today", "Today's gainers"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -237,7 +237,7 @@ export default function Leaderboard({
                   <p className="text-sm text-muted">
                     {above
                       ? `${fmtNum(valueOf(above, tab) - valueOf(mine, tab), 1)} XP behind #${above.rank}. Keep stacking.`
-                      : "Top of the board. Pig Lord energy. 👑"}
+                      : "Top of the board. Pig Lord status."}
                   </p>
                 </div>
               </div>
@@ -272,8 +272,8 @@ export default function Leaderboard({
               <div className="relative">
                 <div className="relative mx-auto w-fit">
                   <PigAvatar wallet={r.wallet} crown={isFirst} className={`${isFirst ? "h-20 w-20 animate-float" : "h-16 w-16"}`} />
-                  <span className="absolute -bottom-1 -right-2 text-2xl" aria-hidden>
-                    {p.medal}
+                  <span className={`absolute -bottom-1 -right-2 grid h-7 w-7 place-items-center rounded-full border-2 border-bg font-display text-sm font-extrabold ${p.badge}`} aria-hidden>
+                    {p.at + 1}
                   </span>
                 </div>
                 <p className="mt-3 font-mono text-sm">
@@ -338,7 +338,7 @@ export default function Leaderboard({
                   {fmtNum(valueOf(r, tab), 1)} XP
                 </p>
                 {tab === "all" && r.lastDay > 0 && <p className="font-mono text-[11px] text-good">+{fmtNum(r.lastDay, 1)} today</p>}
-                {tab === "all" && r.lastDay === 0 && <p className="font-mono text-[11px] text-muted">no XP today 😴</p>}
+                {tab === "all" && r.lastDay === 0 && <p className="font-mono text-[11px] text-muted">no XP today</p>}
               </div>
             </li>
           ))}

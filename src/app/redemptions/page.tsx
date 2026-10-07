@@ -32,7 +32,7 @@ export default async function RedemptionsPage() {
         </Link>
       </div>
       {rows.length === 0 ? (
-        <div className="card p-10 text-center text-sm text-muted">No loot dropped yet. Be the first. 👀</div>
+        <div className="card p-10 text-center text-sm text-muted">No loot dropped yet. Be the first.</div>
       ) : (
         <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((r) => (

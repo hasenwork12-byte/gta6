@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { Gamepad2, Gift, Handshake, type LucideIcon } from "lucide-react";
 import { shortAddr, timeAgo } from "@/lib/format";
 import { redemptionTitle } from "@/lib/redemption-title";
 import type { PublicRedemption } from "@/lib/types";
 import DemoBadge from "./DemoBadge";
 import StatusPill from "./cards/StatusPill";
 
-const ICON: Record<PublicRedemption["kind"], string> = { self: "🎮", gift: "🎁", team: "🤝" };
+const ICON: Record<PublicRedemption["kind"], LucideIcon> = { self: Gamepad2, gift: Gift, team: Handshake };
 
 /** Compact, game-style feed of the latest claims. */
 export default function LootFeed({ rows, demo, now }: { rows: PublicRedemption[]; demo: boolean; now: number }) {
@@ -22,15 +23,16 @@ export default function LootFeed({ rows, demo, now }: { rows: PublicRedemption[]
         </Link>
       </div>
       {rows.length === 0 ? (
-        <p className="p-8 text-center text-sm text-muted">No loot dropped yet. Be the first. 👀</p>
+        <p className="p-8 text-center text-sm text-muted">No loot dropped yet. Be the first.</p>
       ) : (
         <ul className="divide-y-2 divide-line/[0.05]">
           {rows.map((r) => {
             const done = r.status === "fulfilled";
+            const Icon = ICON[r.kind];
             return (
               <li key={r.id} className="flex items-center gap-3 px-5 py-3">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-line/10 bg-bg text-lg" aria-hidden>
-                  {ICON[r.kind]}
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-accent/25 bg-accent/10 text-accent">
+                  <Icon className="h-5 w-5" aria-hidden />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{redemptionTitle(r)}</p>
