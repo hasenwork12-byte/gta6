@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Hero from "@/components/Hero";
-import ActivityTicker from "@/components/ActivityTicker";
 import BigStats from "@/components/BigStats";
 import { DashboardProvider } from "@/components/DashboardContext";
 import EarnCalculator from "@/components/EarnCalculator";
@@ -27,7 +26,6 @@ export default async function Home() {
   return (
     <DashboardProvider initial={dashboard}>
       <Hero />
-      <ActivityTicker />
 
       <div className="section mt-20">
         <SectionHeading eyebrow="How to play" title="Four quests. One GTA 6." />

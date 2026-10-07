@@ -1,28 +1,29 @@
 import Link from "next/link";
+import { Coins, Gamepad2, Gem, Wallet } from "lucide-react";
 import { points, site } from "@/config";
 import { fmtNum, fmtUsd } from "@/lib/format";
 
 const quests = [
   {
-    emoji: "🐷",
+    icon: Wallet,
     title: `Grab $${site.ticker}`,
     body: "Buy on Solana. That's your ticket into the game.",
     reward: "Ticket in",
   },
   {
-    emoji: "💎",
+    icon: Gem,
     title: "Hold. Don't jeet.",
     body: `Every ${fmtUsd(points.usdPerPointDay, 0)} you hold for a full day earns 1 XP. Paper hands earn nothing.`,
     reward: `+1 XP / ${fmtUsd(points.usdPerPointDay, 0)} / day`,
   },
   {
-    emoji: "🪙",
+    icon: Coins,
     title: "Feed the pig",
     body: "Every trade drops creator fees into the Pig Bank, a public wallet anyone can check.",
     reward: "Pig gets fat",
   },
   {
-    emoji: "🎮",
+    icon: Gamepad2,
     title: "Claim GTA 6",
     body: `Hit ${fmtNum(points.redeemCost)} XP, pick PS5 or Xbox, sign once. Code drops instantly if it's in stock.`,
     reward: `${fmtNum(points.redeemCost)} XP → 1 copy`,
@@ -38,8 +39,8 @@ export default function HowItWorks() {
           <li key={q.title} className="card card-hover relative flex flex-col p-5">
             <div className="flex items-center justify-between">
               <span className="label">Quest {String(i + 1).padStart(2, "0")}</span>
-              <span className="text-2xl" aria-hidden>
-                {q.emoji}
+              <span className="grid h-10 w-10 place-items-center rounded-xl border-2 border-accent/25 bg-accent/10 text-accent">
+                <q.icon className="h-5 w-5" strokeWidth={2} aria-hidden />
               </span>
             </div>
             <h3 className="mt-4 font-display text-xl font-extrabold tracking-tight">{q.title}</h3>
