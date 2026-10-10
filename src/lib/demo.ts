@@ -71,6 +71,9 @@ export function demoTopHolders(n = 20): { wallet: string; points: number; lastDa
 
 /** Deterministic starting points for any address in demo mode. */
 export function demoPoints(addr: string) {
+  // Local testing: give every wallet the same XP so the claim flow can be tried end to end.
+  const start = Number(process.env.DEMO_START_XP);
+  if (start > 0) return start;
   let h = 7;
   for (const c of addr) h = (h * 33 + c.charCodeAt(0)) >>> 0;
   return Math.floor(rng(h)() * points.redeemCost * 1.5);

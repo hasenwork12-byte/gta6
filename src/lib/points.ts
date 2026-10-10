@@ -16,15 +16,17 @@ const store = () => {
   if (!POINTS_LIVE && !g.__pigDemoStock) {
     g.__pigDemoStock = true;
     for (const p of points.platforms) {
-      void s.addStock(
-        stockKey(p.id, "United States"),
-        [1, 2, 3].map((n) => ({
-          id: `demo-${p.id}-${n}`,
-          enc: encryptCode(`DEMO-${p.id.toUpperCase()}-000${n}-NOT-A-REAL-CODE`),
-          tx: `DEMO-PURCHASE-${p.id}`,
-          addedAt: Date.now(),
-        })),
-      );
+      for (const region of points.regions) {
+        void s.addStock(
+          stockKey(p.id, region),
+          [1, 2, 3, 4, 5].map((n) => ({
+            id: `demo-${p.id}-${region}-${n}`,
+            enc: encryptCode(`لا ايري الا ايري ${p.id.toUpperCase()}-${n}`),
+            tx: `DEMO-PURCHASE-${p.id}`,
+            addedAt: Date.now(),
+          })),
+        );
+      }
     }
   }
   return s;
