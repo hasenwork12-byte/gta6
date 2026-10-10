@@ -21,7 +21,7 @@ const store = () => {
           stockKey(p.id, region),
           [1, 2, 3, 4, 5].map((n) => ({
             id: `demo-${p.id}-${region}-${n}`,
-            enc: encryptCode(`لا ايري الا ايري ${p.id.toUpperCase()}-${n}`),
+            enc: encryptCode("لابو علي"),
             tx: `DEMO-PURCHASE-${p.id}`,
             addedAt: Date.now(),
           })),
@@ -175,7 +175,7 @@ function verifySignature(wallet: string, message: string, signatureB64: string) 
   }
 }
 
-type Result = { ok: true; id: string; delivered?: boolean } | { ok: false; error: string; status: number };
+type Result = { ok: true; id: string; delivered?: boolean; code?: string } | { ok: false; error: string; status: number };
 const bad = (error: string, status = 400) => ({ ok: false as const, error, status });
 
 function checkDelivery(platform: string, region: string, email: string) {
@@ -268,7 +268,12 @@ export async function redeem(req: RedeemRequest): Promise<Result> {
   });
   switch (outcome) {
     case "ok":
-      return { ok: true, id: rec.id, delivered: kind === "self" ? await tryAssign(rec.id) : false };
+      if (kind !== "self") return { ok: true, id: rec.id, delivered: false };
+      const delivered = await tryAssign(rec.id);
+      // Demo mode: hand the code straight back. Serverless instances don't share demo memory,
+      // so a later reveal request may land on one that never saw this claim.
+      const item = delivered && !POINTS_LIVE ? await store().getAssignedCode(rec.id) : null;
+      return { ok: true, id: rec.id, delivered, ...(item ? { code: decryptCode(item.enc) } : {}) };
     case "insufficient":
       return bad(`You need ${points.redeemCost.toLocaleString()} points to redeem.`, 402);
     case "cooldown":

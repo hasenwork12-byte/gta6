@@ -12,6 +12,7 @@ import PointsPanel from "./PointsPanel";
 import ClaimGift from "./redeem/ClaimGift";
 import DeliveryFields from "./redeem/DeliveryFields";
 import MyCodes from "./redeem/MyCodes";
+import RevealedCode from "./redeem/RevealedCode";
 import { signAndPost } from "./redeem/signAndPost";
 import { useStock } from "./redeem/useStock";
 import { usePoints } from "./usePoints";
@@ -53,7 +54,7 @@ export default function RedeemFlow() {
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ id: string; kind: RedemptionKind; delivered: boolean } | null>(null);
+  const [done, setDone] = useState<{ id: string; kind: RedemptionKind; delivered: boolean; code?: string } | null>(null);
   const { stock, refresh: refreshStock } = useStock();
 
   const wallet = publicKey?.toBase58() ?? null;
@@ -93,7 +94,7 @@ export default function RedeemFlow() {
         email,
         issuedAt,
       });
-      setDone({ id: j.id, kind, delivered: Boolean(j.delivered) });
+      setDone({ id: j.id, kind, delivered: Boolean(j.delivered), code: j.code });
       reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Redemption failed");
@@ -164,7 +165,9 @@ export default function RedeemFlow() {
               Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} XP were
               spent.{" "}
               {done.kind === "self" &&
-                (done.delivered ? (
+                (done.code ? (
+                  <>Here&apos;s your {platformLabel(platform)} code:</>
+                ) : done.delivered ? (
                   <>
                     Your {platformLabel(platform)} code is under <span className="text-fg">Your codes</span> — press{" "}
                     <span className="text-fg">Reveal code</span> and sign with your wallet to see it.
@@ -186,6 +189,7 @@ export default function RedeemFlow() {
               {done.kind === "team" && <>The team will use this copy for a community giveaway or video.</>}{" "}
               Requests are filled in order, and the purchase receipt will appear in the public feed.
             </p>
+            {done.code && <RevealedCode code={done.code} />}
             <div className="flex flex-wrap gap-2">
               <a href={shareUrl(done.kind)} target="_blank" rel="noreferrer" className="btn-primary">
                 Share on X
