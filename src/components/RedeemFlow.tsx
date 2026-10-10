@@ -135,7 +135,7 @@ export default function RedeemFlow() {
           {info?.giftsToClaim.map((g) => (
             <ClaimGift key={g.id} gift={g} stock={stock} onClaimed={reload} />
           ))}
-          {info && <MyCodes codes={info.myCodes} />}
+          {info && <MyCodes codes={info.myCodes} demo={info.demo} />}
           {info && <PointsPanel info={info} />}
           {info && (
             <p className="font-mono text-xs text-muted">
@@ -189,7 +189,7 @@ export default function RedeemFlow() {
               {done.kind === "team" && <>The team will use this copy for a community giveaway or video.</>}{" "}
               Requests are filled in order, and the purchase receipt will appear in the public feed.
             </p>
-            {done.code && <RevealedCode code={done.code} />}
+            {done.code && <RevealedCode code={done.code} demo={info?.demo} />}
             <div className="flex flex-wrap gap-2">
               <a href={shareUrl(done.kind)} target="_blank" rel="noreferrer" className="btn-primary">
                 Share on X

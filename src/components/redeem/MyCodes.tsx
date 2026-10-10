@@ -10,21 +10,21 @@ import RevealedCode from "./RevealedCode";
 import { signAndPost } from "./signAndPost";
 
 /** The connected wallet's copies: queued, or ready to reveal (wallet signature required). */
-export default function MyCodes({ codes }: { codes: MyCode[] }) {
+export default function MyCodes({ codes, demo = false }: { codes: MyCode[]; demo?: boolean }) {
   if (codes.length === 0) return null;
   return (
     <div>
       <p className="label mb-3">Your codes</p>
       <ul className="space-y-3">
         {codes.map((c) => (
-          <CodeRow key={c.id} c={c} />
+          <CodeRow key={c.id} c={c} demo={demo} />
         ))}
       </ul>
     </div>
   );
 }
 
-function CodeRow({ c }: { c: MyCode }) {
+function CodeRow({ c, demo }: { c: MyCode; demo: boolean }) {
   const { publicKey, signMessage } = useWallet();
   const [code, setCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -75,7 +75,7 @@ function CodeRow({ c }: { c: MyCode }) {
           <span className="text-xs text-muted">Delivered by the team</span>
         )}
       </div>
-      {code && <RevealedCode code={code} />}
+      {code && <RevealedCode code={code} demo={demo} />}
       {code && (
         <p className="mt-2 text-[11px] text-muted">
           Redeem it in the {c.platform === "ps5" ? "PlayStation Store" : "Microsoft Store"} for your region. Keep it private.
