@@ -54,9 +54,15 @@ export function DashboardProvider({ initial, children }: { initial: Dashboard | 
           sol: fee,
           counterparty: null,
           label: "Creator fee",
+          kind: "fee",
         };
         return {
-          snapshot: { ...d.snapshot, balanceSol: d.snapshot.balanceSol + fee, totalFeesSol: d.snapshot.totalFeesSol + fee },
+          snapshot: {
+            ...d.snapshot,
+            balanceSol: d.snapshot.balanceSol + fee,
+            totalFeesSol: d.snapshot.totalFeesSol + fee,
+            buyback: { ...d.snapshot.buyback, owedSol: d.snapshot.buyback.owedSol + fee * d.snapshot.buyback.share },
+          },
           recent: [entry, ...d.recent].slice(0, 20),
         };
       });

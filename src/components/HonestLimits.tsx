@@ -17,7 +17,7 @@ const LIMITS: [string, string][] = [
   ],
   [
     "Run by people, not a contract",
-    "XP is tracked by our server, and the team buys codes by hand. Every purchase is on-chain, but the rules can be changed.",
+    "XP is tracked by our server, and the team buys codes and makes buybacks by hand. Every purchase is on-chain, but the rules can be changed.",
   ],
 ];
 
@@ -25,7 +25,7 @@ const LIMITS: [string, string][] = [
 export default function HonestLimits() {
   return (
     <div>
-      <SectionHeading index={5} eyebrow="Before you ape in" title="The honest limits. No cap." />
+      <SectionHeading index={6} eyebrow="Before you ape in" title="The honest limits. No cap." />
       <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         {LIMITS.map(([title, body]) => (
           <div key={title} className="card p-4 sm:p-6">

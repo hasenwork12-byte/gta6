@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Coins, Gamepad2, Gem, Wallet } from "lucide-react";
-import { points, site } from "@/config";
+import { buyback, points, site } from "@/config";
 import { fmtNum, fmtUsd } from "@/lib/format";
 
 const quests = [
@@ -19,8 +19,8 @@ const quests = [
   {
     icon: Coins,
     title: "Feed the pig",
-    body: "Every trade drops creator fees into the Pig Bank, a public wallet anyone can check.",
-    reward: "Pig gets fat",
+    body: `Every trade drops creator fees into the Pig Bank, a public wallet anyone can check. ${Math.round((1 - buyback.share) * 100)}% buys games, ${Math.round(buyback.share * 100)}% buys $${site.ticker} back${buyback.burn ? " and burns it" : ""}.`,
+    reward: buyback.burn ? "Pig gets fat · supply burns" : "Pig gets fat",
   },
   {
     icon: Gamepad2,

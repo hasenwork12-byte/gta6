@@ -86,3 +86,10 @@ export const platformLabel = (id: string) => points.platforms.find((p) => p.id =
 
 /** GTA 6 launch, for the hero countdown. Rockstar's announced date: Nov 19 2026 (local midnight, shown as UTC). */
 export const gta6Launch = { iso: "2026-11-19T00:00:00Z", label: "Nov 19, 2026" };
+
+/**
+ * Buyback: this share of every creator fee is set aside to buy $PIG back.
+ * The site spots buybacks on-chain by itself: any Pig Bank transaction that spends SOL and receives $PIG.
+ * burn: true = bought tokens get burned (the site also spots burns from the Pig Bank wallet).
+ */
+export const buyback = { share: 0.2, burn: true };

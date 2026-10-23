@@ -1,3 +1,5 @@
+export type LedgerKind = "fee" | "game" | "buyback" | "burn" | "transfer";
+
 export type LedgerEntry = {
   signature: string;
   time: number; // unix seconds
@@ -5,6 +7,10 @@ export type LedgerEntry = {
   sol: number;
   counterparty: string | null;
   label: string;
+  /** Missing on older demo rows: treat "in" as fee, "out" as transfer. */
+  kind?: LedgerKind;
+  /** $PIG moved: bought (buyback) or destroyed (burn). */
+  tokens?: number;
 };
 
 export type TreasurySnapshot = {
@@ -19,6 +25,7 @@ export type TreasurySnapshot = {
   gamesRedeemed: number;
   gamesDelivered: number;
   updatedAt: number;
+  buyback: BuybackSummary;
 };
 
 export type Dashboard = { snapshot: TreasurySnapshot; recent: LedgerEntry[] };
@@ -99,4 +106,24 @@ export type PointsInfo = {
   /** This wallet's copies (for itself, or gifts it claimed): queued or ready to reveal. */
   myCodes: MyCode[];
   lastSnapshotAt: number | null;
+};
+
+export type BuybackPoint = { time: number; sol: number; tokens: number; signature: string };
+
+export type BuybackSummary = {
+  /** Share of fees reserved for buybacks (0.2 = 20%). */
+  share: number;
+  burn: boolean;
+  /** SOL spent on buybacks, and $PIG bought with it. */
+  solSpent: number;
+  tokensBought: number;
+  tokensBurned: number;
+  /** SOL reserved for buybacks that hasn't been spent yet. Not available for games. */
+  owedSol: number;
+  /** Token supply (for "% of supply bought back"); null if unknown. */
+  supply: number | null;
+  /** Oldest first. */
+  history: BuybackPoint[];
+  /** true when only the most recent transactions were scanned. */
+  partial: boolean;
 };

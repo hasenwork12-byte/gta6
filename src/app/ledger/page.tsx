@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TREASURY_WALLET, site } from "@/config";
 import { getLedger } from "@/lib/solana";
 import { listRedemptions } from "@/lib/points";
-import { fmtDateTime, fmtNum, shortAddr } from "@/lib/format";
+import { fmtCompact, fmtDateTime, fmtNum, shortAddr } from "@/lib/format";
 import DemoBadge, { LiveBadge } from "@/components/DemoBadge";
 import SectionHeading from "@/components/SectionHeading";
 
@@ -13,8 +13,10 @@ export default async function LedgerPage() {
   const [ledger, redemptions] = await Promise.all([getLedger().catch(() => null), listRedemptions().catch(() => [])]);
   const delivered = redemptions.filter((r) => r.status === "fulfilled").length;
 
-  const totalIn = ledger?.entries.filter((e) => e.direction === "in").reduce((a, e) => a + e.sol, 0) ?? 0;
-  const totalOut = ledger?.entries.filter((e) => e.direction === "out").reduce((a, e) => a + e.sol, 0) ?? 0;
+  const totalIn = ledger?.entries.filter((e) => e.kind === "fee").reduce((a, e) => a + e.sol, 0) ?? 0;
+  const sum = (kind: string) => ledger?.entries.filter((e) => e.kind === kind).reduce((a, e) => a + e.sol, 0) ?? 0;
+  const totalOut = sum("game");
+  const totalBuyback = sum("buyback");
 
   return (
     <div className="section pt-14">
@@ -36,9 +38,10 @@ export default async function LedgerPage() {
         )}
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Summary label="Pig fed (fees)" value={`+${fmtNum(totalIn, 3)} SOL`} tone="text-good" />
         <Summary label="Spent on games" value={`−${fmtNum(totalOut, 3)} SOL`} tone="text-accent" />
+        <Summary label="Spent on buybacks" value={`−${fmtNum(totalBuyback, 3)} SOL`} tone="text-gold" />
         <Summary label="Games delivered" value={String(delivered)} />
       </div>
 
@@ -67,6 +70,7 @@ export default async function LedgerPage() {
                   <td className={`whitespace-nowrap px-5 py-3 font-mono ${e.direction === "in" ? "text-good" : "text-accent"}`}>
                     {e.direction === "in" ? "+" : "−"}
                     {fmtNum(e.sol, 4)} SOL
+                    {e.tokens ? <span className="ml-2 text-gold">{e.kind === "burn" ? "burned " : "+"}{fmtCompact(e.tokens)} ${site.ticker}</span> : null}
                   </td>
                   <td className="px-5 py-3 font-mono text-xs text-muted">{e.counterparty ? shortAddr(e.counterparty, 5) : "—"}</td>
                   <td className="px-5 py-3">
@@ -90,6 +94,12 @@ export default async function LedgerPage() {
                     {e.direction === "in" ? "+" : "−"}
                     {fmtNum(e.sol, 3)}
                   </p>
+                  {e.tokens ? (
+                    <p className="font-mono text-[11px] text-gold">
+                      {e.kind === "burn" ? "burned " : "+"}
+                      {fmtCompact(e.tokens)} ${site.ticker}
+                    </p>
+                  ) : null}
                   <TxLink sig={e.signature} demo={ledger.demo} />
                 </div>
               </li>

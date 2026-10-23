@@ -31,3 +31,7 @@ export const fmtDateTime = (unix: number) =>
     hour12: false,
     timeZone: "UTC",
   }) + " UTC";
+
+/** 1,234,567 → "1.23M". For token amounts and chart axes. */
+export const fmtCompact = (v: number) =>
+  v.toLocaleString("en-US", { notation: "compact", maximumFractionDigits: v >= 1e9 ? 2 : 1 });

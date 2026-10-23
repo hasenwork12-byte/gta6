@@ -1,5 +1,6 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, type ParsedTransactionMeta, type TokenBalance } from "@solana/web3.js";
 import { TOKEN_LIVE, TOKEN_MINT, TREASURY_LIVE, TREASURY_WALLET } from "@/config";
+import { summarizeBuybacks } from "./buyback";
 import { demoBalance, demoLedger, demoSnapshot, DEMO_TOKEN_USD } from "./demo";
 import { listRedemptions } from "./points";
 import type { Dashboard, LedgerEntry, TreasurySnapshot } from "./types";
@@ -116,6 +117,39 @@ export async function walletTokenBalance(wallet: string): Promise<number> {
   return res.value.reduce((a, acc) => a + Number(acc.account.data.parsed?.info?.tokenAmount?.uiAmount ?? 0), 0);
 }
 
+/** How much $PIG the treasury gained (+) or lost (−) in a transaction, and how much every other owner gained. */
+function pigDeltas(meta: ParsedTransactionMeta, treasury: string) {
+  const out = { treasury: 0, othersGained: 0 };
+  if (!TOKEN_LIVE) return out;
+  const byOwner = new Map<string, number>();
+  const add = (list: TokenBalance[] | null | undefined, sign: number) => {
+    for (const b of list ?? []) {
+      if (b.mint !== TOKEN_MINT || !b.owner) continue;
+      byOwner.set(b.owner, (byOwner.get(b.owner) ?? 0) + sign * Number(b.uiTokenAmount.uiAmount ?? 0));
+    }
+  };
+  add(meta.postTokenBalances, 1);
+  add(meta.preTokenBalances, -1);
+  for (const [owner, v] of byOwner) {
+    if (owner === treasury) out.treasury = v;
+    else if (v > 0) out.othersGained += v;
+  }
+  return out;
+}
+
+/** Total $PIG supply (UI units). Burns lower it. */
+async function tokenSupply(): Promise<number | null> {
+  if (!TOKEN_LIVE) return null;
+  return cached("supply", 5 * 60_000, async () => {
+    try {
+      const { value } = await conn().getTokenSupply(new PublicKey(TOKEN_MINT));
+      return Number(value.uiAmount ?? 0) || null;
+    } catch {
+      return null;
+    }
+  });
+}
+
 export async function getLedger(): Promise<{ entries: LedgerEntry[]; partial: boolean; demo: boolean }> {
   if (!TREASURY_LIVE) return { entries: demoLedger(), partial: false, demo: true };
   return cached("ledger", 45_000, async () => {
@@ -141,8 +175,22 @@ export async function getLedger(): Promise<{ entries: LedgerEntry[]; partial: bo
         if (idx < 0) return;
         const deltas = tx.meta.postBalances.map((post, j) => post - tx.meta!.preBalances[j]);
         const d = deltas[idx];
-        if (d === 0) return;
+        const pig = pigDeltas(tx.meta, treasury.toBase58());
+        if (d === 0 && pig.treasury === 0) return;
         const direction = d > 0 ? "in" : "out";
+        const sig = chunk[k].signature;
+        const time = tx.blockTime ?? chunk[k].blockTime ?? 0;
+
+        // Buyback: the pig spent SOL and received $PIG. Burn: $PIG left the pig and nobody received it.
+        if (pig.treasury > 0 && d < 0) {
+          entries.push({ signature: sig, time, direction: "out", sol: Math.abs(d) / LAMPORTS_PER_SOL, counterparty: null, label: "Buyback", kind: "buyback", tokens: pig.treasury });
+          return;
+        }
+        if (pig.treasury < 0 && pig.othersGained === 0) {
+          entries.push({ signature: sig, time, direction: "out", sol: Math.abs(Math.min(d, 0)) / LAMPORTS_PER_SOL, counterparty: null, label: "Burn", kind: "burn", tokens: -pig.treasury });
+          return;
+        }
+        if (d === 0) return;
         // Counterparty = account with the largest opposite balance change.
         let cp: string | null = null;
         let best = 0;
@@ -154,14 +202,15 @@ export async function getLedger(): Promise<{ entries: LedgerEntry[]; partial: bo
             cp = keys[j];
           }
         });
-        const sig = chunk[k].signature;
+        const kind = purchaseTx.has(sig) ? "game" : direction === "in" ? "fee" : "transfer";
         entries.push({
           signature: sig,
-          time: tx.blockTime ?? chunk[k].blockTime ?? 0,
+          time,
           direction,
           sol: Math.abs(d) / LAMPORTS_PER_SOL,
           counterparty: cp,
-          label: purchaseTx.has(sig) ? "Game purchase" : direction === "in" ? "Creator fee" : "Outgoing transfer",
+          label: kind === "game" ? "Game purchase" : kind === "fee" ? "Creator fee" : "Outgoing transfer",
+          kind,
         });
       });
     }
@@ -182,14 +231,15 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
     const [h, counts] = await Promise.all([holderCount(), redemptionCounts()]);
     return { ...demoSnapshot(), ...counts, ...(h === null ? {} : { holders: h }) };
   }
-  const [lamports, price, holders, ledger, counts] = await Promise.all([
+  const [lamports, price, holders, ledger, counts, supply] = await Promise.all([
     cached("balance", 20_000, () => conn().getBalance(new PublicKey(TREASURY_WALLET))),
     solUsd(),
     holderCount(),
     getLedger(),
     redemptionCounts(),
+    tokenSupply(),
   ]);
-  const fees = ledger.entries.filter((e) => e.direction === "in").reduce((a, e) => a + e.sol, 0);
+  const fees = ledger.entries.filter((e) => e.kind === "fee").reduce((a, e) => a + e.sol, 0);
   return {
     demo: false,
     treasuryWallet: TREASURY_WALLET,
@@ -200,6 +250,7 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
     holders,
     ...counts,
     updatedAt: Math.floor(Date.now() / 1000),
+    buyback: summarizeBuybacks(ledger.entries, fees, supply, ledger.partial),
   };
 }
 

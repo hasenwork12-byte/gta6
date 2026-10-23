@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { points, site } from "@/config";
+import { buyback, points, site } from "@/config";
 import { fmtNum, fmtUsd } from "@/lib/format";
 
 const faqs: { q: string; a: React.ReactNode }[] = [
@@ -10,6 +10,10 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   {
     q: "How does XP work?",
     a: `Every ${fmtUsd(points.usdPerPointDay, 0)} worth of $${site.ticker} you hold for a full day earns 1 XP. Hold $1,000 and you earn ${fmtNum(1000 / points.usdPerPointDay)} XP a day, so ${fmtNum(points.redeemCost)} XP takes about ${fmtNum(points.redeemCost / (1000 / points.usdPerPointDay))} days. XP drops once a day at ${points.snapshotTime}.`,
+  },
+  {
+    q: "What is the buyback?",
+    a: `${Math.round(buyback.share * 100)}% of every creator fee is set aside to buy $${site.ticker} on the open market${buyback.burn ? ", and everything bought back is burned, so the supply only goes down" : ""}. The other ${Math.round((1 - buyback.share) * 100)}% buys games. Buybacks are made from the Pig Bank wallet, so each one is on-chain and listed on the Pig Bank page.`,
   },
   {
     q: "Why do I have to hold for the whole day?",

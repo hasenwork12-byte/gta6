@@ -1,6 +1,7 @@
 "use client";
 
 import { points } from "@/config";
+import { gamesSol } from "@/lib/buyback";
 import { fmtNum, fmtUsd } from "@/lib/format";
 import { useDashboard } from "./DashboardContext";
 import DemoBadge from "./DemoBadge";
@@ -32,7 +33,9 @@ const COINS = [
 export default function PigBank({ className = "" }: { className?: string }) {
   const { data } = useDashboard();
   const s = data?.snapshot;
-  const usd = s ? s.balanceSol * s.solUsd : 0;
+  // Only the part not owed to buybacks can buy games.
+  const pot = s ? gamesSol(s.balanceSol, s.buyback.owedSol) : 0;
+  const usd = s ? pot * s.solUsd : 0;
   const price = points.gamePriceUsd;
   const funded = Math.floor(usd / price);
   const remainder = usd - funded * price;
@@ -126,7 +129,7 @@ export default function PigBank({ className = "" }: { className?: string }) {
         <div className="absolute left-[47.4%] top-[65%] -translate-x-1/2 -translate-y-1/2">
           <div className="rounded-2xl border-2 border-line/10 bg-bg/85 px-3 py-1.5 text-center shadow-[0_4px_0_0_rgb(0_0_0/0.4)] backdrop-blur sm:px-4 sm:py-2">
             <RollingNumber
-              value={s?.balanceSol ?? 0}
+              value={pot}
               format={(n) => fmtNum(n, 3)}
               className="font-display text-xl font-extrabold leading-none tracking-tight sm:text-3xl"
             />

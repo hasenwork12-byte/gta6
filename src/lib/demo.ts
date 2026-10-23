@@ -1,6 +1,7 @@
 // Deterministic DEMO data. Every surface that renders this shows a
 // "DEMO DATA" badge, and demo rows never link to real transactions.
-import { points } from "@/config";
+import { buyback, points } from "@/config";
+import { summarizeBuybacks } from "./buyback";
 import type { LedgerEntry, Redemption, TreasurySnapshot } from "./types";
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -79,6 +80,9 @@ export function demoPoints(addr: string) {
   return Math.floor(rng(h)() * points.redeemCost * 1.5);
 }
 
+/** Demo total supply: 1B, a typical pump.fun launch. */
+export const DEMO_SUPPLY = 1_000_000_000;
+
 export function demoLedger(): LedgerEntry[] {
   const r = rng(42);
   const out: LedgerEntry[] = [];
@@ -93,26 +97,51 @@ export function demoLedger(): LedgerEntry[] {
       sol: isPurchase ? +(points.gamePriceUsd / DEMO_SOL_USD).toFixed(4) : +(0.02 + r() * 0.6).toFixed(4),
       counterparty: fakeAddr(r),
       label: isPurchase ? "Game purchase" : "Creator fee",
+      kind: isPurchase ? "game" : "fee",
     });
+  }
+  return [...out, ...demoBuybacks()].sort((a, b) => b.time - a.time);
+}
+
+/** About two weeks of buybacks, one every ~2 days, each followed by a burn. Price drifts up a little. */
+function demoBuybacks(): LedgerEntry[] {
+  const r = rng(77);
+  const out: LedgerEntry[] = [];
+  const n = 8;
+  for (let i = 0; i < n; i++) {
+    const time = DEMO_NOW - (n - i) * 2 * 86400 + Math.floor(r() * 20000);
+    const sol = +(0.09 + r() * 0.07).toFixed(4);
+    const price = DEMO_TOKEN_USD * (0.7 + i * 0.05);
+    const tokens = Math.round((sol * DEMO_SOL_USD) / price);
+    out.push({ signature: "DEMO" + fakeAddr(r, 60), time, direction: "out", sol, counterparty: null, label: "Buyback", kind: "buyback", tokens });
+    if (buyback.burn) {
+      out.push({ signature: "DEMO" + fakeAddr(r, 60), time: time + 300, direction: "out", sol: 0, counterparty: null, label: "Burn", kind: "burn", tokens });
+    }
   }
   return out;
 }
 
 export function demoSnapshot(): TreasurySnapshot {
-  // ≈ $42 of $70 toward the next copy; lifetime fees = 9 copies bought + balance.
   const delivered = 9;
-  const balanceSol = 0.2297;
+  const games = (delivered * points.gamePriceUsd) / DEMO_SOL_USD;
+  const ledger = demoLedger();
+  const spent = ledger.filter((e) => e.kind === "buyback").reduce((a, e) => a + e.sol, 0);
+  // Pick lifetime fees so a small amount is still owed to the next buyback,
+  // and whatever isn't spent on games or buybacks is the balance.
+  const fees = (spent + 0.05) / buyback.share;
+  const balanceSol = +(fees - games - spent).toFixed(4);
   return {
     demo: true,
     treasuryWallet: "DEMO-TREASURY",
     balanceSol,
     solUsd: DEMO_SOL_USD,
-    totalFeesSol: +(balanceSol + (delivered * points.gamePriceUsd) / DEMO_SOL_USD).toFixed(4),
+    totalFeesSol: +fees.toFixed(4),
     feesPartial: false,
     holders: 1843,
     gamesRedeemed: 11,
     gamesDelivered: delivered,
     updatedAt: DEMO_NOW,
+    buyback: summarizeBuybacks(ledger, fees, DEMO_SUPPLY, false),
   };
 }
 

@@ -20,6 +20,7 @@ const columns: { title: string; items: Item[] }[] = [
     items: [
       { label: "The pig", href: "/treasury" },
       { label: "Receipts", href: "/ledger" },
+      { label: "Buybacks", href: "/treasury#buybacks" },
       ...(TREASURY_LIVE ? [{ label: "Wallet on Solscan", href: site.explorerAccount(TREASURY_WALLET), external: true }] : []),
       ...(TOKEN_LIVE ? [{ label: `Buy $${site.ticker}`, href: site.buyUrl(TOKEN_MINT), external: true }] : []),
     ],

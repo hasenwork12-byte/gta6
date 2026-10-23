@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Hero from "@/components/Hero";
 import BigStats from "@/components/BigStats";
+import BuybackPanel from "@/components/BuybackPanel";
 import { DashboardProvider } from "@/components/DashboardContext";
 import EarnCalculator from "@/components/EarnCalculator";
 import FinalCta from "@/components/FinalCta";
@@ -12,6 +13,7 @@ import SectionHeading from "@/components/SectionHeading";
 import SloganTape from "@/components/scene/SloganTape";
 import { getDashboard } from "@/lib/solana";
 import { getTopHolders, listPublicRedemptions } from "@/lib/points";
+import { buyback, site } from "@/config";
 
 export const revalidate = 30;
 
@@ -56,6 +58,20 @@ export default async function Home() {
 
       <div className="section gap-section">
         <BigStats />
+      </div>
+
+      <div id="buybacks" className="section gap-section scroll-mt-24">
+        <div className="flex items-end justify-between gap-3">
+          <SectionHeading
+            index={5}
+            eyebrow={buyback.burn ? "Buyback & burn" : "Buyback"}
+            title={`${Math.round(buyback.share * 100)}% of fees buy $${site.ticker} back`}
+          />
+          <Link href="/treasury#buybacks" className="mb-7 shrink-0 text-xs font-semibold text-muted transition hover:text-fg">
+            Every buyback →
+          </Link>
+        </div>
+        <BuybackPanel />
       </div>
 
       <div className="section gap-section">

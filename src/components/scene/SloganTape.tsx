@@ -2,7 +2,7 @@
  * Two crossing "caution tape" strips that scroll forever. Separators are a
  * tiny pig snout (inline SVG), so no emoji or icon font is needed.
  */
-const WORDS = ["Hold $PIG", "Stack XP", "Claim GTA 6", "Feed the pig", "Don't jeet", "Paid in games", "Oink oink"];
+const WORDS = ["Hold $PIG", "Stack XP", "Claim GTA 6", "Feed the pig", "Buyback & burn", "Don't jeet", "Paid in games", "Oink oink"];
 
 function Snout() {
   return (
