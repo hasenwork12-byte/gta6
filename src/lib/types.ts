@@ -26,6 +26,9 @@ export type TreasurySnapshot = {
   gamesDelivered: number;
   updatedAt: number;
   buyback: BuybackSummary;
+  fees: FeeSummary;
+  /** GTA 6 codes bought and ready to hand out. */
+  keysInStock: number;
 };
 
 export type Dashboard = { snapshot: TreasurySnapshot; recent: LedgerEntry[] };
@@ -108,7 +111,7 @@ export type PointsInfo = {
   lastSnapshotAt: number | null;
 };
 
-export type BuybackPoint = { time: number; sol: number; tokens: number; signature: string };
+export type BuybackPoint = { time: number; sol: number; tokens: number; signature: string; burnTx?: string };
 
 export type BuybackSummary = {
   /** Share of fees reserved for buybacks (0.2 = 20%). */
@@ -120,10 +123,24 @@ export type BuybackSummary = {
   tokensBurned: number;
   /** SOL reserved for buybacks that hasn't been spent yet. Not available for games. */
   owedSol: number;
+  /** Part of the Pig Bank balance held back for buybacks (0 when the bot keeps it in its own wallet). */
+  reservedSol: number;
   /** Token supply (for "% of supply bought back"); null if unknown. */
   supply: number | null;
   /** Oldest first. */
   history: BuybackPoint[];
   /** true when only the most recent transactions were scanned. */
   partial: boolean;
+};
+
+/** Creator fees as the fee bot sees them. */
+export type FeeSummary = {
+  /** true when the auto-claim bot is configured. */
+  bot: boolean;
+  /** Claimed + still waiting to be claimed. */
+  earnedSol: number;
+  claimedSol: number;
+  unclaimedSol: number;
+  lastClaimAt: number | null;
+  lastRunAt: number | null;
 };

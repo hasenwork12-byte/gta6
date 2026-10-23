@@ -7,6 +7,8 @@ const env = (v: string | undefined) => (v ?? "").trim();
 
 export const TOKEN_MINT = env(process.env.NEXT_PUBLIC_TOKEN_MINT);
 export const TREASURY_WALLET = env(process.env.NEXT_PUBLIC_TREASURY_WALLET);
+/** The coin's creator wallet (where pump.fun creator fees build up). Public address only. Defaults to the Pig Bank. */
+export const CREATOR_WALLET = env(process.env.NEXT_PUBLIC_CREATOR_WALLET) || TREASURY_WALLET;
 const FORCE_DEMO = env(process.env.NEXT_PUBLIC_FORCE_DEMO) === "true";
 
 /** Treasury data (balance, fees, ledger) is read from chain when this is true. */

@@ -64,8 +64,8 @@ export default async function Home() {
         <div className="flex items-end justify-between gap-3">
           <SectionHeading
             index={5}
-            eyebrow={buyback.burn ? "Buyback & burn" : "Buyback"}
-            title={`${Math.round(buyback.share * 100)}% of fees buy $${site.ticker} back`}
+            eyebrow={buyback.burn ? "The money machine · buyback & burn" : "The money machine · buyback"}
+            title={`Fees in. Games out. ${Math.round(buyback.share * 100)}% buys $${site.ticker} back.`}
           />
           <Link href="/treasury#buybacks" className="mb-7 shrink-0 text-xs font-semibold text-muted transition hover:text-fg">
             Every buyback →

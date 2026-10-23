@@ -61,7 +61,13 @@ export function DashboardProvider({ initial, children }: { initial: Dashboard | 
             ...d.snapshot,
             balanceSol: d.snapshot.balanceSol + fee,
             totalFeesSol: d.snapshot.totalFeesSol + fee,
-            buyback: { ...d.snapshot.buyback, owedSol: d.snapshot.buyback.owedSol + fee * d.snapshot.buyback.share },
+            buyback: {
+              ...d.snapshot.buyback,
+              owedSol: d.snapshot.buyback.owedSol + fee * d.snapshot.buyback.share,
+              reservedSol: d.snapshot.buyback.reservedSol + fee * d.snapshot.buyback.share,
+            },
+            // Demo: a fresh fee lands in the creator vault, waiting for the next auto-claim.
+            fees: { ...d.snapshot.fees, earnedSol: d.snapshot.fees.earnedSol + fee, unclaimedSol: d.snapshot.fees.unclaimedSol + fee },
           },
           recent: [entry, ...d.recent].slice(0, 20),
         };

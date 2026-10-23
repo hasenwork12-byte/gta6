@@ -1,8 +1,10 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, type ParsedTransactionMeta, type TokenBalance } from "@solana/web3.js";
-import { TOKEN_LIVE, TOKEN_MINT, TREASURY_LIVE, TREASURY_WALLET } from "@/config";
+import { CREATOR_WALLET, TOKEN_LIVE, TOKEN_MINT, TREASURY_LIVE, TREASURY_WALLET } from "@/config";
+import { BOT_LIVE, botAddress, readUnclaimed } from "./bot";
+import { getTotals, listRuns } from "./botlog";
 import { summarizeBuybacks } from "./buyback";
 import { demoBalance, demoLedger, demoSnapshot, DEMO_TOKEN_USD } from "./demo";
-import { listRedemptions } from "./points";
+import { getStockCounts, listRedemptions } from "./points";
 import type { Dashboard, LedgerEntry, TreasurySnapshot } from "./types";
 
 const RPC_URL = (process.env.SOLANA_RPC_URL || "").trim() || "https://api.mainnet-beta.solana.com";
@@ -226,31 +228,69 @@ async function redemptionCounts() {
   };
 }
 
+async function keysInStock(): Promise<number> {
+  const counts = await getStockCounts().catch(() => ({}) as Record<string, number>);
+  return Object.values(counts).reduce((a, n) => a + n, 0);
+}
+
+/** The fee bot's log and the fees still waiting in the creator vaults. */
+async function botData() {
+  const creator = botAddress() || CREATOR_WALLET;
+  const [totals, runs, unclaimed] = await Promise.all([
+    BOT_LIVE ? getTotals() : null,
+    BOT_LIVE ? listRuns(300) : null,
+    creator ? cached("unclaimed", 20_000, () => readUnclaimed(new PublicKey(creator)).catch(() => 0)) : 0,
+  ]);
+  return { totals, runs, unclaimed };
+}
+
 export async function getSnapshot(): Promise<TreasurySnapshot> {
   if (!TREASURY_LIVE) {
-    const [h, counts] = await Promise.all([holderCount(), redemptionCounts()]);
-    return { ...demoSnapshot(), ...counts, ...(h === null ? {} : { holders: h }) };
+    const [h, counts, keys] = await Promise.all([holderCount(), redemptionCounts(), keysInStock()]);
+    const demo = demoSnapshot();
+    return { ...demo, ...counts, ...(h === null ? {} : { holders: h }), keysInStock: keys || demo.keysInStock };
   }
-  const [lamports, price, holders, ledger, counts, supply] = await Promise.all([
+  const [lamports, price, holders, ledger, counts, supply, keys, bot] = await Promise.all([
     cached("balance", 20_000, () => conn().getBalance(new PublicKey(TREASURY_WALLET))),
     solUsd(),
     holderCount(),
     getLedger(),
     redemptionCounts(),
     tokenSupply(),
+    keysInStock(),
+    botData(),
   ]);
   const fees = ledger.entries.filter((e) => e.kind === "fee").reduce((a, e) => a + e.sol, 0);
+  const sameWallet = botAddress() === TREASURY_WALLET;
+  const buybackSummary = summarizeBuybacks(
+    ledger.entries,
+    fees,
+    supply,
+    ledger.partial,
+    bot.totals && bot.runs ? { totals: bot.totals, runs: bot.runs, sameWallet } : undefined,
+  );
+  // With the bot, it knows every claim. Without it, fees seen arriving in the Pig Bank count as claimed.
+  const claimed = bot.totals ? bot.totals.claimedSol : fees;
   return {
     demo: false,
     treasuryWallet: TREASURY_WALLET,
     balanceSol: lamports / LAMPORTS_PER_SOL,
     solUsd: price,
-    totalFeesSol: fees,
-    feesPartial: ledger.partial,
+    totalFeesSol: Math.max(fees, claimed),
+    feesPartial: ledger.partial && !bot.totals,
     holders,
     ...counts,
     updatedAt: Math.floor(Date.now() / 1000),
-    buyback: summarizeBuybacks(ledger.entries, fees, supply, ledger.partial),
+    buyback: buybackSummary,
+    fees: {
+      bot: BOT_LIVE,
+      earnedSol: claimed + bot.unclaimed,
+      claimedSol: claimed,
+      unclaimedSol: bot.unclaimed,
+      lastClaimAt: bot.totals?.lastClaimAt ?? null,
+      lastRunAt: bot.totals?.lastRunAt ?? null,
+    },
+    keysInStock: keys,
   };
 }
 

@@ -2,10 +2,11 @@
 
 import { Flame, RefreshCw } from "lucide-react";
 import { TREASURY_LIVE, site } from "@/config";
-import { fmtCompact, fmtDateTime, fmtNum, fmtUsd } from "@/lib/format";
+import { fmtCompact, fmtDateTime, fmtNum, fmtUsd, shortAddr } from "@/lib/format";
 import BuybackChart from "./BuybackChart";
 import { useDashboard } from "./DashboardContext";
 import DemoBadge from "./DemoBadge";
+import FeeMeter from "./FeeMeter";
 
 /**
  * The buyback side of the Pig Bank: how fees are split, what's been bought
@@ -31,10 +32,13 @@ export default function BuybackPanel({ full = false }: { full?: boolean }) {
     { label: "Next buyback", value: fmtNum(b.owedSol, 3), unit: "SOL", sub: "set aside, not for games" },
   ];
 
-  const recent = [...b.history].reverse().slice(0, 8);
+  const recent = [...b.history].reverse().slice(0, full ? 25 : 3);
+  const demo = s.demo || !TREASURY_LIVE;
 
   return (
     <div className="space-y-4">
+      <FeeMeter />
+
       {/* Fee split */}
       <div className="card p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -84,10 +88,10 @@ export default function BuybackPanel({ full = false }: { full?: boolean }) {
         {b.partial && <p className="mt-3 text-xs text-muted">Based on the Pig Bank&apos;s most recent transactions.</p>}
       </div>
 
-      {/* Individual buybacks */}
-      {full && recent.length > 0 && (
+      {/* Individual buybacks, each with its buy and burn transaction */}
+      {recent.length > 0 && (
         <div className="card overflow-hidden">
-          <p className="label border-b-2 border-line/[0.06] px-5 py-3.5">Every buyback, newest first</p>
+          <p className="label border-b-2 border-line/[0.06] px-5 py-3.5">{full ? "Every buyback, newest first" : `Latest ${b.burn ? "burns" : "buybacks"}`}</p>
           <ul className="divide-y-2 divide-line/[0.05]">
             {recent.map((h) => (
               <li key={h.signature} className="flex items-center gap-3 px-4 py-3 sm:px-5">
@@ -96,25 +100,29 @@ export default function BuybackPanel({ full = false }: { full?: boolean }) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold">
-                    {fmtCompact(h.tokens)} ${site.ticker} {b.burn ? "bought & burned" : "bought back"}
+                    {fmtCompact(h.tokens)} ${site.ticker} {b.burn ? (h.burnTx ? "bought & burned" : "bought, burn pending") : "bought back"}
                   </p>
                   <p className="font-mono text-[11px] text-muted">{fmtDateTime(h.time)}</p>
+                  <p className="mt-0.5 flex flex-wrap gap-x-3 font-mono text-[11px]">
+                    <TxLink sig={h.signature} label="Buy tx" demo={demo} />
+                    {h.burnTx && <TxLink sig={h.burnTx} label="Burn tx" demo={demo} />}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-mono text-sm font-semibold">{fmtNum(h.sol, 3)} SOL</p>
-                  {s.demo || !TREASURY_LIVE ? (
-                    <span className="font-mono text-[11px] text-muted">demo</span>
-                  ) : (
-                    <a className="link font-mono text-[11px]" href={site.explorerTx(h.signature)} target="_blank" rel="noreferrer">
-                      Solscan ↗
-                    </a>
-                  )}
-                </div>
+                <p className="shrink-0 text-right font-mono text-sm font-semibold">{fmtNum(h.sol, 3)} SOL</p>
               </li>
             ))}
           </ul>
         </div>
       )}
     </div>
+  );
+}
+
+function TxLink({ sig, label, demo }: { sig: string; label: string; demo: boolean }) {
+  if (demo) return <span className="text-muted">{label}: demo</span>;
+  return (
+    <a className="link" href={site.explorerTx(sig)} target="_blank" rel="noreferrer" title={sig}>
+      {label} {shortAddr(sig, 4)} ↗
+    </a>
   );
 }

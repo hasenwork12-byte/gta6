@@ -34,7 +34,7 @@ export default function PigBank({ className = "" }: { className?: string }) {
   const { data } = useDashboard();
   const s = data?.snapshot;
   // Only the part not owed to buybacks can buy games.
-  const pot = s ? gamesSol(s.balanceSol, s.buyback.owedSol) : 0;
+  const pot = s ? gamesSol(s.balanceSol, s.buyback.reservedSol) : 0;
   const usd = s ? pot * s.solUsd : 0;
   const price = points.gamePriceUsd;
   const funded = Math.floor(usd / price);

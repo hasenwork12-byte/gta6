@@ -82,6 +82,8 @@ export function demoPoints(addr: string) {
 
 /** Demo total supply: 1B, a typical pump.fun launch. */
 export const DEMO_SUPPLY = 1_000_000_000;
+/** Demo fees sitting in the creator vaults, waiting for the bot. */
+const DEMO_UNCLAIMED = 0.0842;
 
 export function demoLedger(): LedgerEntry[] {
   const r = rng(42);
@@ -142,6 +144,16 @@ export function demoSnapshot(): TreasurySnapshot {
     gamesDelivered: delivered,
     updatedAt: DEMO_NOW,
     buyback: summarizeBuybacks(ledger, fees, DEMO_SUPPLY, false),
+    fees: {
+      bot: true,
+      earnedSol: +(fees + DEMO_UNCLAIMED).toFixed(4),
+      claimedSol: +fees.toFixed(4),
+      unclaimedSol: DEMO_UNCLAIMED,
+      // Relative to the real clock so the "last claim" timer looks alive in demo mode.
+      lastClaimAt: Math.floor(Date.now() / 1000) - 754,
+      lastRunAt: Math.floor(Date.now() / 1000) - 154,
+    },
+    keysInStock: 7,
   };
 }
 
