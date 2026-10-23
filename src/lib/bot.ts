@@ -30,10 +30,15 @@ const ATA_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 const VAULT_RENT_LAMPORTS = 890_880;
 
 const num = (v: string | undefined, d: number) => (Number(v) > 0 ? Number(v) : d);
-const MIN_CLAIM_SOL = num(process.env.BOT_MIN_CLAIM_SOL, 0.01);
-const MIN_BUYBACK_SOL = num(process.env.BOT_MIN_BUYBACK_SOL, 0.02);
-/** Safety cap per run, so a bug can never spend the whole wallet in one go. */
-const MAX_BUYBACK_SOL = num(process.env.BOT_MAX_BUYBACK_SOL, 2);
+const MIN_CLAIM_SOL = num(process.env.BOT_MIN_CLAIM_SOL, 0.002);
+/**
+ * Claim rhythm copied from usepaid's claim wallet (PaidybYx…) on launch day: first claim
+ * seconds after launch, then one roughly every 1m45s-2m while fees keep coming in.
+ * Call the bot every minute; it claims at most once per this many seconds.
+ */
+const CLAIM_EVERY_SEC = num(process.env.BOT_CLAIM_EVERY_SEC, 105);
+/** Below this the swap would cost more in fees than it buys; it just waits for the next claim. */
+const MIN_BUYBACK_SOL = 0.001;
 /** Always left in the bot wallet for transaction fees. */
 const GAS_RESERVE_SOL = num(process.env.BOT_GAS_RESERVE_SOL, 0.02);
 const MIN_SWEEP_SOL = 0.005;
@@ -113,8 +118,68 @@ async function sendIxs(kp: Keypair, ixs: TransactionInstruction[]) {
   return sendAndWait(tx);
 }
 
+// ── Safety checks: nothing is signed unless it provably touches only our coin ─
+let _verifiedMint: string | null = null;
+/**
+ * Proves TOKEN_MINT is the coin this bot wallet launched: pump.fun's bonding
+ * curve for that mint (an account only pump.fun can write) records the bot
+ * wallet as creator. A wrong or swapped contract address can never pass.
+ */
+async function assertOurCoin(kp: Keypair) {
+  if (_verifiedMint === TOKEN_MINT) return;
+  const mint = new PublicKey(TOKEN_MINT);
+  const curve = await conn.getAccountInfo(pda([Buffer.from("bonding-curve"), mint.toBuffer()], PUMP));
+  if (!curve || !curve.owner.equals(PUMP)) throw new Error(`Refusing: ${TOKEN_MINT} is not a pump.fun coin.`);
+  // BondingCurve layout (pump IDL): 8 discriminator, 5 × u64, complete (bool), creator (pubkey) at 49.
+  const creator = new PublicKey(curve.data.subarray(49, 81));
+  if (!creator.equals(kp.publicKey)) {
+    throw new Error(`Refusing: ${TOKEN_MINT} was created by ${creator.toBase58()}, not the bot wallet ${kp.publicKey.toBase58()}.`);
+  }
+  // then is_mayhem_mode (81), is_cashback_coin (82).
+  if (curve.data[82] === 1) throw new Error("Refusing: this coin was launched in cashback mode, so it has no creator fees.");
+  _verifiedMint = TOKEN_MINT;
+}
+
+/** Throws unless every instruction runs one of the allowed programs and the bot pays the fee. */
+function assertPrograms(tx: VersionedTransaction, kp: Keypair, allowed: PublicKey[], what: string) {
+  const keys = tx.message.staticAccountKeys;
+  if (!keys[0]?.equals(kp.publicKey)) throw new Error(`Refusing ${what}: fee payer is not the bot wallet.`);
+  if (tx.message.addressTableLookups.length) throw new Error(`Refusing ${what}: unexpected lookup tables.`);
+  for (const ix of tx.message.compiledInstructions) {
+    const program = keys[ix.programIdIndex];
+    if (!allowed.some((a) => a.equals(program))) throw new Error(`Refusing ${what}: unknown program ${program.toBase58()}.`);
+  }
+}
+
+/** Dry-runs a transaction and returns the watched accounts as they would be afterwards. */
+async function simulate(tx: VersionedTransaction, watch: PublicKey[], what: string) {
+  const sim = await conn.simulateTransaction(tx, {
+    sigVerify: false,
+    accounts: { encoding: "base64", addresses: watch.map((w) => w.toBase58()) },
+  });
+  if (sim.value.err) throw new Error(`Refusing ${what}: dry run failed ${JSON.stringify(sim.value.err)}.`);
+  return sim.value.accounts ?? [];
+}
+
+const tokenAmountOf = (data: Buffer | null | undefined) => (data && data.length >= 72 ? data.readBigUInt64LE(64) : 0n);
+
 // ── Steps ─────────────────────────────────────────────────────────────────────
-/** PumpPortal builds the claim transaction (all of the creator's fees at once); we sign and send it. */
+const CLAIM_PROGRAMS = [
+  PUMP,
+  PUMP_AMM,
+  new PublicKey("pfeeUxB6jkeY1Hxd7CsFCAjcbHA9rWtchMGdZ6VojVZ"), // pump fees
+  new PublicKey("ComputeBudget111111111111111111111111111111"),
+  SystemProgram.programId,
+  TOKEN_PROGRAM,
+  new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"),
+  ATA_PROGRAM,
+];
+
+/**
+ * PumpPortal builds the claim transaction (all of the creator's fees at once).
+ * Before signing: only pump.fun / token / system programs, and a dry run must
+ * show the bot wallet not losing more than the network fee.
+ */
 async function claimFees(kp: Keypair): Promise<string> {
   const r = await fetch("https://pumpportal.fun/api/trade-local", {
     method: "POST",
@@ -124,6 +189,10 @@ async function claimFees(kp: Keypair): Promise<string> {
   });
   if (!r.ok) throw new Error(`Fee claim build failed (${r.status}): ${(await r.text()).slice(0, 200)}`);
   const tx = VersionedTransaction.deserialize(new Uint8Array(await r.arrayBuffer()));
+  assertPrograms(tx, kp, CLAIM_PROGRAMS, "fee claim");
+  const before = await conn.getBalance(kp.publicKey, "confirmed");
+  const [after] = await simulate(tx, [kp.publicKey], "fee claim");
+  if (!after || after.lamports < before - 0.005 * LAMPORTS_PER_SOL) throw new Error("Refusing fee claim: dry run shows SOL leaving the bot wallet.");
   tx.sign([kp]);
   return sendAndWait(tx);
 }
@@ -146,7 +215,24 @@ async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tok
   });
   const order = await (await fetch(`https://api.jup.ag/swap/v2/order?${q}`, { headers, cache: "no-store" })).json();
   if (!order?.transaction) throw new Error(`Jupiter order failed: ${order?.errorMessage ?? order?.error ?? "no transaction"}`);
+  // The quote must be SOL → exactly our mint.
+  if (order.outputMint !== TOKEN_MINT || order.inputMint !== WSOL.toBase58()) {
+    throw new Error(`Refusing swap: Jupiter quoted ${order.inputMint} → ${order.outputMint}, expected SOL → ${TOKEN_MINT}.`);
+  }
   const tx = VersionedTransaction.deserialize(Buffer.from(order.transaction, "base64"));
+  if (!tx.message.staticAccountKeys[0]?.equals(kp.publicKey)) throw new Error("Refusing swap: fee payer is not the bot wallet.");
+
+  // Dry run: our coin's balance must go up, and the bot must not lose more SOL than it meant to spend.
+  const mint = new PublicKey(TOKEN_MINT);
+  const tokenProgram = (await conn.getAccountInfo(mint))!.owner;
+  const ata = pda([kp.publicKey.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()], ATA_PROGRAM);
+  const [solBefore, ataBefore] = await Promise.all([conn.getBalance(kp.publicKey, "confirmed"), conn.getAccountInfo(ata)]);
+  const [solAfter, ataAfter] = await simulate(tx, [kp.publicKey, ata], "swap");
+  const gained = tokenAmountOf(ataAfter ? Buffer.from(ataAfter.data[0], "base64") : null) - tokenAmountOf(ataBefore?.data);
+  if (gained <= 0n) throw new Error(`Refusing swap: dry run shows no ${TOKEN_MINT} arriving in the bot wallet.`);
+  // Allow the spend plus network fees and the one-time token account rent.
+  if (!solAfter || solAfter.lamports < solBefore - lamports - 0.01 * LAMPORTS_PER_SOL) throw new Error("Refusing swap: dry run spends more SOL than the buyback amount.");
+
   tx.sign([kp]);
   const res = await (
     await fetch("https://api.jup.ag/swap/v2/execute", {
@@ -206,9 +292,13 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
   const persist = () => saveTotals(totals);
 
   try {
+    // 0. Prove the contract address is the coin this wallet launched. Nothing runs otherwise.
+    await assertOurCoin(kp);
+
     // 1. Claim
     const unclaimed = await readUnclaimed(kp.publicKey);
-    if (unclaimed >= MIN_CLAIM_SOL) {
+    const due = !totals.lastClaimAt || run.at - totals.lastClaimAt >= CLAIM_EVERY_SEC;
+    if (due && unclaimed >= MIN_CLAIM_SOL) {
       run.claimTx = await claimFees(kp);
       // What left the fee vaults, so it's right even if part arrives as wrapped SOL.
       const claimed = Math.max(0, unclaimed - (await readUnclaimed(kp.publicKey)));
@@ -220,7 +310,8 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
     }
 
     // 2. Buy back what's owed (capped, and never touching the gas reserve)
-    const spend = Math.min(totals.owedSol, MAX_BUYBACK_SOL, (await balanceSol(kp.publicKey)) - GAS_RESERVE_SOL);
+    // Exactly the buyback share of everything claimed: no cap.
+    const spend = Math.min(totals.owedSol, (await balanceSol(kp.publicKey)) - GAS_RESERVE_SOL);
     if (spend >= MIN_BUYBACK_SOL) {
       const { sig, tokens } = await buyPig(kp, Math.floor(spend * LAMPORTS_PER_SOL));
       Object.assign(run, { swapTx: sig, buybackSol: spend, tokensBought: tokens });
