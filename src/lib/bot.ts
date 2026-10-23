@@ -30,7 +30,10 @@ const ATA_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 const VAULT_RENT_LAMPORTS = 890_880;
 
 const num = (v: string | undefined, d: number) => (Number(v) > 0 ? Number(v) : d);
-const MIN_CLAIM_SOL = num(process.env.BOT_MIN_CLAIM_SOL, 0.002);
+// usepaid claims as little as ~0.001 SOL (measured on their launch-day claims).
+const MIN_CLAIM_SOL = num(process.env.BOT_MIN_CLAIM_SOL, 0.001);
+/** How often the watcher re-checks the fee vaults between runs. */
+const POLL_MS = 5_000;
 /**
  * Claim rhythm copied from usepaid's claim wallet (PaidybYx…) on launch day: first claim
  * seconds after launch, then one roughly every 1m45s-2m while fees keep coming in.
@@ -352,4 +355,28 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
     await releaseLock();
   }
   return { run, totals };
+}
+
+/**
+ * One cron call = one full run, then keep watching the fee vaults every 5s and
+ * run again the moment a claim is due. With the cron firing every minute this
+ * reacts within seconds, like usepaid (first claim 8–27s after launch, then one
+ * every ~1m45s–2m while fees keep coming in, as little as ~0.001 SOL).
+ * Vercel stops a call at 60s and a full run takes up to ~30s, so a new run is
+ * only started in the first WATCH_MS; later fees are picked up by the next call.
+ */
+const WATCH_MS = 25_000;
+
+export async function runBotWatching() {
+  const started = Date.now();
+  const runs = [await runBot()];
+  const kp = botKeypair();
+  if (!kp || runs[0].skipped) return runs;
+  while (Date.now() - started < WATCH_MS) {
+    await new Promise((r) => setTimeout(r, POLL_MS));
+    const totals = await getTotals();
+    const due = !totals.lastClaimAt || Date.now() / 1000 - totals.lastClaimAt >= CLAIM_EVERY_SEC;
+    if (due && (await readUnclaimed(kp.publicKey)) >= MIN_CLAIM_SOL) runs.push(await runBot());
+  }
+  return runs;
 }
