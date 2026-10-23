@@ -50,7 +50,7 @@ export const xSocial = socials.find((s) => s.id === "x");
 
 export const points = {
   /** USD value that must be held for one full day to earn 1 point. */
-  usdPerPointDay: 100,
+  usdPerPointDay: 20,
   /** Points needed to redeem one copy. */
   redeemCost: 100,
   /** USD price of one copy — used for the treasury progress bar. */

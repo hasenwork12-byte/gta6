@@ -11,8 +11,7 @@ const DAY_MS = 86_400_000;
 
 /**
  * "I hold $X → GTA 6 in N days." Answers the one question every visitor has.
- * Assumes a flat price; the first snapshot only records balances, so a new
- * holder starts earning one day later.
+ * Counts full days held; the clock starts at your first daily snapshot.
  */
 export default function EarnCalculator({ className = "" }: { className?: string }) {
   const [usd, setUsd] = useState(1_000);
@@ -20,7 +19,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => setNow(Date.now()), []);
   const perDay = usd / points.usdPerPointDay;
-  const days = perDay > 0 ? Math.ceil(points.redeemCost / perDay) + 1 : null;
+  const days = perDay > 0 ? Math.ceil(points.redeemCost / perDay) : null;
   const date = days && now ? new Date(now + days * DAY_MS) : null;
   const perMonth = perDay * 30;
 
@@ -118,7 +117,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
 
       <p className="relative mt-5 text-xs leading-relaxed text-muted">
         Estimate only (NFA). Assumes the ${site.ticker} price stays flat. You earn on the lower of your balance and price at
-        two daily snapshots, so your first day only counts once the second snapshot runs. XP has no cash value.
+        two daily snapshots, so the count starts at the first snapshot after you buy ({points.snapshotTime}). XP has no cash value.
       </p>
     </div>
   );
