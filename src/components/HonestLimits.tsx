@@ -1,5 +1,6 @@
 import { TriangleAlert } from "lucide-react";
 import { site } from "@/config";
+import SectionHeading from "./SectionHeading";
 
 const LIMITS: [string, string][] = [
   [
@@ -24,11 +25,10 @@ const LIMITS: [string, string][] = [
 export default function HonestLimits() {
   return (
     <div>
-      <p className="label">Before you ape in</p>
-      <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">The honest limits. No cap.</h2>
-      <div className="mt-7 grid gap-4 sm:grid-cols-2">
+      <SectionHeading index={5} eyebrow="Before you ape in" title="The honest limits. No cap." />
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         {LIMITS.map(([title, body]) => (
-          <div key={title} className="card p-5 sm:p-6">
+          <div key={title} className="card p-4 sm:p-6">
             <p className="flex items-center gap-2 font-display text-lg font-extrabold">
               <TriangleAlert className="h-5 w-5 shrink-0 text-gold" aria-hidden />
               {title}

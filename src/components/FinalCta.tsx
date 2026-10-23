@@ -5,9 +5,14 @@ import HeroPig from "./HeroPig";
 /** Closing band: one last nudge, with the mascot. */
 export default function FinalCta() {
   return (
-    <div className="card relative overflow-hidden border-accent/30 bg-gradient-to-br from-accent/20 via-surface to-accent2/10 p-6 sm:p-10">
+    <div className="card relative overflow-hidden border-accent/30 bg-gradient-to-br from-accent/20 via-surface to-accent2/10 p-5 sm:p-10">
       <div className="grid items-center gap-6 md:grid-cols-[1fr_auto]">
         <div className="text-center md:text-left">
+          {/* end-of-mission stamp, the payoff every holder is playing for */}
+          <div className="mb-4 inline-flex -rotate-3 flex-col items-center rounded-xl border-2 border-gold/70 px-4 py-1.5 text-gold">
+            <span className="font-display text-xl font-extrabold uppercase italic tracking-wide sm:text-2xl">Mission passed</span>
+            <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em]">Respect + · GTA 6 unlocked</span>
+          </div>
           <p className="label">Your move</p>
           <h2 className="mt-2 font-display text-4xl font-extrabold leading-[0.95] tracking-tight sm:text-5xl">
             Stop scrolling.

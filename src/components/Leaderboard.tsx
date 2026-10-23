@@ -97,11 +97,11 @@ function useNextDrop() {
 
 const valueOf = (r: BoardRow, tab: Tab) => (tab === "today" ? r.lastDay : r.points);
 
-// Podium: 2nd, 1st, 3rd on wide screens; 1st first on phones.
+// Podium: 2nd, 1st, 3rd side by side on every screen; compact on phones.
 const PODIUM = [
-  { at: 1, metal: "silver" as const, badge: "bg-[#d6d3df] text-[#2a2533]", ring: "border-line/30", glow: "from-line/10", lift: "sm:mt-8" },
+  { at: 1, metal: "silver" as const, badge: "bg-[#d6d3df] text-[#2a2533]", ring: "border-line/30", glow: "from-line/10", lift: "mt-5 sm:mt-8" },
   { at: 0, metal: "gold" as const, badge: "bg-gold text-[#3a2600]", ring: "border-gold/60", glow: "from-gold/25", lift: "" },
-  { at: 2, metal: "bronze" as const, badge: "bg-[#e08a4f] text-[#3a1a06]", ring: "border-accent2/50", glow: "from-accent2/20", lift: "sm:mt-12" },
+  { at: 2, metal: "bronze" as const, badge: "bg-[#e08a4f] text-[#3a1a06]", ring: "border-accent2/50", glow: "from-accent2/20", lift: "mt-8 sm:mt-12" },
 ];
 
 export default function Leaderboard({
@@ -257,49 +257,53 @@ export default function Leaderboard({
       )}
 
       {/* Podium */}
-      <div className="grid items-start gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-3 items-start gap-2 sm:gap-3">
         {PODIUM.filter((p) => top[p.at]).map((p) => {
           const r = top[p.at];
           const isFirst = p.at === 0;
           return (
             <div
               key={r.wallet}
-              className={`card relative overflow-hidden border-2 p-5 text-center ${p.ring} ${p.lift} ${isFirst ? "shadow-[0_0_40px_-8px_rgb(var(--gold)/0.45),0_6px_0_0_rgb(0_0_0/0.45)]" : "order-last sm:order-none"} ${
+              className={`card relative overflow-hidden border-2 px-2 py-4 text-center sm:p-5 ${p.ring} ${p.lift} ${isFirst ? "shadow-[0_0_40px_-8px_rgb(var(--gold)/0.45),0_6px_0_0_rgb(0_0_0/0.45)]" : ""} ${
                 r.wallet === me ? "ring-2 ring-accent" : ""
               }`}
             >
               <div className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${p.glow} to-transparent`} />
               <div className="relative">
                 <div className="relative mx-auto w-fit">
-                  <MetalPig metal={p.metal} className={`${isFirst ? "h-20 w-20 animate-float" : "h-16 w-16"}`} />
-                  <span className={`absolute -bottom-1 -right-2 grid h-7 w-7 place-items-center rounded-full border-2 border-bg font-display text-sm font-extrabold ${p.badge}`} aria-hidden>
+                  <MetalPig metal={p.metal} className={`${isFirst ? "h-14 w-14 animate-float sm:h-20 sm:w-20" : "h-11 w-11 sm:h-16 sm:w-16"}`} />
+                  <span className={`absolute -bottom-1 -right-2 grid h-6 w-6 place-items-center rounded-full border-2 border-bg font-display text-xs font-extrabold sm:h-7 sm:w-7 sm:text-sm ${p.badge}`} aria-hidden>
                     {p.at + 1}
                   </span>
                 </div>
-                <p className="mt-3 font-mono text-sm">
+                <p className="mt-2.5 truncate font-mono text-[11px] sm:mt-3 sm:text-sm">
                   <WalletText wallet={r.wallet} demo={demo} />
                 </p>
-                <div className="mt-1.5 flex items-center justify-center gap-2">
+                <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1 sm:gap-2">
                   <TierChip xp={r.points} />
                   {tab === "all" && <Move move={r.move} />}
                 </div>
-                <p className="mt-3 font-display text-4xl font-extrabold tracking-tight">
+                <p className="mt-2 font-display text-2xl font-extrabold tracking-tight sm:mt-3 sm:text-4xl">
                   {tab === "today" && "+"}
                   {fmtNum(valueOf(r, tab), 1)}
-                  <span className="ml-1 text-base text-muted">XP</span>
+                  <span className="ml-0.5 text-xs text-muted sm:ml-1 sm:text-base">XP</span>
                 </p>
                 {tab === "all" ? (
                   <>
-                    <div className="mt-3">
+                    <div className="mt-2.5 sm:mt-3">
                       <XpBar xp={r.points} />
                     </div>
-                    <p className="mt-2 font-mono text-[11px] text-muted">
+                    <p className="mt-2 font-mono text-[10px] leading-snug text-muted sm:text-[11px]">
                       {r.points >= points.redeemCost ? "GTA 6 unlocked ✓" : `${fmtNum((r.points / points.redeemCost) * 100, 0)}% to GTA 6`}
-                      {r.lastDay > 0 && <span className="text-good"> · +{fmtNum(r.lastDay, 1)} today</span>}
+                      {r.lastDay > 0 && (
+                        <span className="block text-good sm:inline">
+                          <span className="hidden sm:inline"> · </span>+{fmtNum(r.lastDay, 1)} today
+                        </span>
+                      )}
                     </p>
                   </>
                 ) : (
-                  <p className="mt-2 font-mono text-[11px] text-muted">{fmtNum(r.points, 1)} XP total</p>
+                  <p className="mt-2 font-mono text-[10px] text-muted sm:text-[11px]">{fmtNum(r.points, 1)} XP total</p>
                 )}
               </div>
             </div>

@@ -30,8 +30,15 @@ export default function EarnCalculator({ className = "" }: { className?: string 
 
       <div className="relative grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
-          <p className="label">Calculator</p>
-          <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">When do I eat?</h2>
+          <div className="flex items-end gap-3 sm:gap-4">
+            <span className="outline-num -mb-1 font-display text-6xl font-extrabold leading-none sm:text-7xl" aria-hidden>
+              02
+            </span>
+            <div>
+              <p className="label">Calculator</p>
+              <h2 className="mt-2 font-display text-[1.7rem] font-extrabold leading-[1.05] tracking-tight sm:text-4xl">When do I eat?</h2>
+            </div>
+          </div>
 
           <label htmlFor="earn-usd" className="mt-6 block text-sm text-muted">
             If I hold this much ${site.ticker}…

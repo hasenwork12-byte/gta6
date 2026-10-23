@@ -34,11 +34,12 @@ const quests = [
 export default function HowItWorks() {
   return (
     <div className="space-y-6">
-      <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Phones: swipeable row of cards. sm+: grid. */}
+      <ol className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 pt-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
         {quests.map((q, i) => (
-          <li key={q.title} className="card card-hover relative flex flex-col p-5">
+          <li key={q.title} className="card card-hover relative flex w-[78%] shrink-0 snap-center flex-col p-5 sm:w-auto">
             <div className="flex items-center justify-between">
-              <span className="label">Quest {String(i + 1).padStart(2, "0")}</span>
+              <span className="font-display text-4xl font-extrabold leading-none text-line/[0.12]">{String(i + 1).padStart(2, "0")}</span>
               <span className="grid h-10 w-10 place-items-center rounded-xl border-2 border-accent/25 bg-accent/10 text-accent">
                 <q.icon className="h-5 w-5" strokeWidth={2} aria-hidden />
               </span>
@@ -50,9 +51,11 @@ export default function HowItWorks() {
         ))}
       </ol>
 
+      <p className="-mt-2 text-center font-mono text-[11px] text-muted sm:hidden">Swipe for all four quests</p>
+
       <div className="card p-5 sm:p-7">
         <p className="label">The rules · no cap</p>
-        <dl className="mt-5 grid gap-6 text-sm md:grid-cols-3">
+        <dl className="mt-4 grid gap-4 text-sm sm:mt-5 sm:gap-6 md:grid-cols-3">
           <div>
             <dt className="font-semibold">Earning XP</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">

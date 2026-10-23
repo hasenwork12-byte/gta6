@@ -83,3 +83,6 @@ export type PlatformId = "ps5" | "xbox";
 /** Codes are region-locked, so stock is kept per platform + region. */
 export const stockKey = (platform: string, region: string) => `${platform}|${region}`;
 export const platformLabel = (id: string) => points.platforms.find((p) => p.id === id)?.label ?? id;
+
+/** GTA 6 launch, for the hero countdown. Rockstar's announced date: Nov 19 2026 (local midnight, shown as UTC). */
+export const gta6Launch = { iso: "2026-11-19T00:00:00Z", label: "Nov 19, 2026" };
