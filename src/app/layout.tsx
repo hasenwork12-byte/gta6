@@ -5,6 +5,7 @@ import { site } from "@/config";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import WalletProviders from "@/components/WalletProviders";
+import ThemeMusic from "@/components/ThemeMusic";
 
 const sans = Space_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen font-sans">
         <WalletProviders>
           <Nav />
+          <ThemeMusic />
           {/* bottom padding clears the phone tab bar */}
           <div className="pb-24 lg:pb-0">
             <main>{children}</main>
