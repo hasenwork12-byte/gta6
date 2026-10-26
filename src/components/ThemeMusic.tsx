@@ -2,61 +2,47 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const MUTE_KEY = "pig-music-muted";
+// Events browsers count as a real interaction that unlocks sound.
+const UNLOCK_EVENTS = ["pointerdown", "mousedown", "click", "touchend", "keydown"] as const;
 
 /**
- * Site theme song: starts on load and loops forever. Browsers block sound until the visitor
+ * Site theme song: on by default and loops forever. Browsers block sound until the visitor
  * interacts, so if autoplay is refused it starts on the first click, tap or key press.
- * The corner button mutes it, and the choice is remembered.
+ * The corner button lets visitors mute it.
  */
 export default function ThemeMusic() {
   const audio = useRef<HTMLAudioElement>(null);
-  const [muted, setMuted] = useState(false);
-  const [playing, setPlaying] = useState(false);
+  const muted = useRef(false);
+  const [on, setOn] = useState(true);
 
   useEffect(() => {
     const el = audio.current;
     if (!el) return;
-    el.volume = 0.5;
-    let off = false;
-    try {
-      off = localStorage.getItem(MUTE_KEY) === "1";
-    } catch {}
-    setMuted(off);
-    if (off) return;
+    el.volume = 1;
 
-    const events = ["pointerdown", "keydown", "touchstart"] as const;
     const unlock = () => {
-      el.play().then(() => events.forEach((e) => window.removeEventListener(e, unlock))).catch(() => {});
+      if (muted.current) return stop();
+      el.play().then(stop).catch(() => {});
     };
-    el.play().catch(() => events.forEach((e) => window.addEventListener(e, unlock)));
-    return () => events.forEach((e) => window.removeEventListener(e, unlock));
+    const stop = () => UNLOCK_EVENTS.forEach((e) => window.removeEventListener(e, unlock, true));
+
+    UNLOCK_EVENTS.forEach((e) => window.addEventListener(e, unlock, true));
+    el.play().then(stop).catch(() => {});
+    return stop;
   }, []);
 
   const toggle = () => {
     const el = audio.current;
     if (!el) return;
-    const next = !(muted || !playing);
-    if (next) el.pause();
+    muted.current = !muted.current;
+    if (muted.current) el.pause();
     else el.play().catch(() => {});
-    setMuted(next);
-    try {
-      localStorage.setItem(MUTE_KEY, next ? "1" : "0");
-    } catch {}
+    setOn(!muted.current);
   };
-
-  const on = playing && !muted;
 
   return (
     <>
-      <audio
-        ref={audio}
-        src="/audio/theme.mp3"
-        loop
-        preload="auto"
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-      />
+      <audio ref={audio} src="/audio/theme.mp3" loop autoPlay preload="auto" />
       <button
         type="button"
         onClick={toggle}
