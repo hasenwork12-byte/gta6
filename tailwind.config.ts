@@ -23,6 +23,10 @@ const config: Config = {
         display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
       },
       keyframes: {
+        eq: {
+          "0%, 100%": { transform: "scaleY(0.3)" },
+          "50%": { transform: "scaleY(1)" },
+        },
         marquee: {
           from: { transform: "translateX(0)" },
           to: { transform: "translateX(-50%)" },
@@ -69,6 +73,7 @@ const config: Config = {
         },
       },
       animation: {
+        eq: "eq 0.9s ease-in-out infinite",
         float: "float 6s ease-in-out infinite",
         shadowPulse: "shadowPulse 6s ease-in-out infinite",
         coinDrop: "coinDrop 2.4s cubic-bezier(0.5, 0, 0.75, 0) infinite",
