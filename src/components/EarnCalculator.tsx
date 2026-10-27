@@ -27,7 +27,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
     <div className={`card relative overflow-hidden p-5 sm:p-7 ${className}`}>
       <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
 
-      <div className="relative grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-center">
+      <div className="relative grid grid-cols-1 gap-8 md:grid-cols-[1.1fr_1fr] md:items-center">
         <div>
           <div className="flex items-end gap-3 sm:gap-4">
             <span className="outline-num -mb-1 font-display text-6xl font-extrabold leading-none sm:text-7xl" aria-hidden>

@@ -154,7 +154,7 @@ export default function AdminPanel() {
                   )}
                 </p>
               )}
-              <div className="mt-2 grid gap-1 text-muted sm:grid-cols-4">
+              <div className="mt-2 grid grid-cols-1 gap-1 text-muted sm:grid-cols-4">
                 <span>
                   <span className="text-fg">
                     {r.platform ? platformLabel(r.platform) : r.kind === "team" ? "Team's choice" : "Not claimed yet"}

@@ -11,8 +11,8 @@ export default function Hero() {
     <section className="relative overflow-hidden">
       <SunsetScene />
 
-      <div className="section relative grid items-center gap-8 pb-6 pt-8 sm:gap-10 sm:pt-14 lg:grid-cols-[1.1fr_0.9fr] lg:pb-14 lg:pt-16">
-        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+      <div className="section relative grid grid-cols-1 items-center gap-8 pb-6 pt-8 sm:gap-10 sm:pt-14 lg:grid-cols-[1.1fr_0.9fr] lg:pb-14 lg:pt-16">
+        <div className="flex min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
           <span className="chip bg-bg/80 uppercase tracking-[0.14em] text-muted backdrop-blur">
             <span className={`h-1.5 w-1.5 animate-pulseDot rounded-full ${TOKEN_LIVE ? "bg-good" : "bg-accent2"}`} />
             {TOKEN_LIVE ? "Live on Solana · gm" : "Launching soon on Solana"}
@@ -63,7 +63,7 @@ export default function Hero() {
           </p>
         </div>
 
-        <div className="pt-2 lg:pt-4">
+        <div className="min-w-0 pt-2 lg:pt-4">
           <div className="mb-3 flex justify-center">
             <span className="tag">The Pig Bank · live treasury</span>
           </div>

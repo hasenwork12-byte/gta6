@@ -70,10 +70,10 @@ export default function ThemeMusic() {
         onClick={toggle}
         aria-label={on ? "Mute music" : "Play music"}
         title={on ? "Mute music" : "Play music"}
-        className="fixed bottom-28 left-4 z-40 flex h-11 items-center gap-2 rounded-full border border-accent/40 bg-black/70 pl-1.5 pr-3.5 text-white/90 shadow-[0_0_24px_rgb(var(--accent-1)/0.35)] backdrop-blur transition hover:border-accent hover:text-white lg:bottom-5 lg:left-5"
+        className="fixed bottom-28 left-4 z-40 flex h-11 items-center gap-2 rounded-full border border-accent/40 bg-black/70 pl-1.5 pr-3 sm:pr-3.5 text-white/90 shadow-[0_0_24px_rgb(var(--accent-1)/0.35)] backdrop-blur transition hover:border-accent hover:text-white lg:bottom-5 lg:left-5"
       >
         <LogoMark className="h-8 w-8" />
-        <span className="font-display text-sm font-extrabold tracking-tight">
+        <span className="hidden font-display text-sm font-extrabold tracking-tight sm:inline">
           Paid<span className="text-accent">In</span>Games
         </span>
         {on ? (

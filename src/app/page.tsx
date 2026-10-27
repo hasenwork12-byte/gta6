@@ -40,7 +40,7 @@ export default async function Home() {
         <EarnCalculator />
       </div>
 
-      <div className="section gap-section grid items-start gap-8 lg:grid-cols-[1.25fr_1fr]">
+      <div className="section gap-section grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.25fr_1fr]">
         <div>
           <div className="flex items-end justify-between gap-3">
             <SectionHeading index={3} eyebrow="Leaderboard" title="Top oinkers" />

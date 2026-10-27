@@ -21,7 +21,7 @@ export default async function TreasuryPage() {
   return (
     <DashboardProvider initial={dashboard}>
       <div className="section pt-12">
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_1fr]">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_1fr]">
           <div>
             <SectionHeading
               eyebrow="The Pig Bank"

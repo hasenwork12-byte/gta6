@@ -21,7 +21,7 @@ export default function RedeemPage() {
 
       <RedeemFlow />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
         <div className="card p-5 sm:p-7">
           <p className="label">How XP is earned</p>
           <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">

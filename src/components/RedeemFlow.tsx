@@ -116,7 +116,7 @@ export default function RedeemFlow() {
             : null;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_1fr]">
       {/* Left: wallet + points */}
       <div className="card p-5 sm:p-7">
         <div className="flex flex-wrap items-center justify-between gap-3">

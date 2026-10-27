@@ -34,7 +34,7 @@ export default async function RedemptionsPage() {
       {rows.length === 0 ? (
         <div className="card p-10 text-center text-sm text-muted">No loot dropped yet. Be the first.</div>
       ) : (
-        <div className="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {rows.map((r) => (
             <RedemptionCard key={r.id} r={r} now={now} paidSol={r.tx ? solBySig.get(r.tx) : undefined} />
           ))}

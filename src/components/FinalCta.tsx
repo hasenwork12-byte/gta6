@@ -6,7 +6,7 @@ import HeroPig from "./HeroPig";
 export default function FinalCta() {
   return (
     <div className="card relative overflow-hidden border-accent/30 bg-gradient-to-br from-accent/20 via-surface to-accent2/10 p-5 sm:p-10">
-      <div className="grid items-center gap-6 md:grid-cols-[1fr_auto]">
+      <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_auto]">
         <div className="text-center md:text-left">
           {/* end-of-mission stamp, the payoff every holder is playing for */}
           <div className="mb-4 inline-flex -rotate-3 flex-col items-center rounded-xl border-2 border-gold/70 px-4 py-1.5 text-gold">

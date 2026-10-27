@@ -55,7 +55,7 @@ export default function HowItWorks() {
 
       <div className="card p-5 sm:p-7">
         <p className="label">The rules · no cap</p>
-        <dl className="mt-4 grid gap-4 text-sm sm:mt-5 sm:gap-6 md:grid-cols-3">
+        <dl className="mt-4 grid grid-cols-1 gap-4 text-sm sm:mt-5 sm:gap-6 md:grid-cols-3">
           <div>
             <dt className="font-semibold">Earning XP</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">

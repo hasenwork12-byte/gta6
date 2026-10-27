@@ -26,7 +26,7 @@ export default function HonestLimits() {
   return (
     <div>
       <SectionHeading index={6} eyebrow="Before you ape in" title="The honest limits. No cap." />
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         {LIMITS.map(([title, body]) => (
           <div key={title} className="card p-4 sm:p-6">
             <p className="flex items-center gap-2 font-display text-lg font-extrabold">

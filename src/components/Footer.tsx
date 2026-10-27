@@ -38,7 +38,7 @@ const columns: { title: string; items: Item[] }[] = [
 export default function Footer() {
   return (
     <footer className="mt-28 border-t-2 border-line/[0.07] bg-bg/80">
-      <div className="section grid gap-12 py-14 md:grid-cols-[1.3fr_2fr]">
+      <div className="section grid grid-cols-1 gap-12 py-14 md:grid-cols-[1.3fr_2fr]">
         <div className="space-y-5">
           <Logo />
           <p className="max-w-xs text-sm leading-relaxed text-muted">
