@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import SectionHeading from "./SectionHeading";
 
-/** Silent product film. The type carries the rules, so it can play under the site song. */
+/** Silent card-wall loop showing how $PIG works. Plays under the site song. */
 export default function Film() {
   const video = useRef<HTMLVideoElement>(null);
 
@@ -28,16 +27,11 @@ export default function Film() {
 
   return (
     <section id="film" className="section mt-2 scroll-mt-24 sm:mt-4">
-      <SectionHeading
-        eyebrow="The loop"
-        title="How $PIG pays."
-        sub="The rules, in one pass."
-      />
-      <div className="card overflow-hidden">
+      <div className="overflow-hidden rounded-3xl border border-line/10">
         <video
           ref={video}
-          className="aspect-video w-full bg-black"
-          src="/video/explainer.mp4?v=2"
+          className="aspect-video w-full bg-[#0b0710]"
+          src="/video/wall.mp4"
           muted
           loop
           autoPlay
