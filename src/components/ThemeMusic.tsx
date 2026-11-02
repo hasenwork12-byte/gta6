@@ -32,15 +32,24 @@ export default function ThemeMusic() {
       });
     }
 
-    const unlock = () => {
-      if (muted.current) return stop();
+    const tryPlay = () => {
+      if (muted.current) return;
       el.play().then(stop).catch(() => {});
     };
-    const stop = () => UNLOCK_EVENTS.forEach((e) => window.removeEventListener(e, unlock, true));
+    const stop = () => UNLOCK_EVENTS.forEach((e) => window.removeEventListener(e, tryPlay, true));
 
-    UNLOCK_EVENTS.forEach((e) => window.addEventListener(e, unlock, true));
-    el.play().then(stop).catch(() => {});
-    return stop;
+    UNLOCK_EVENTS.forEach((e) => window.addEventListener(e, tryPlay, true));
+    el.addEventListener("canplay", tryPlay);
+    el.addEventListener("loadeddata", tryPlay);
+    tryPlay();
+    const retries = [150, 600, 1400, 2800].map((ms) => window.setTimeout(tryPlay, ms));
+
+    return () => {
+      stop();
+      el.removeEventListener("canplay", tryPlay);
+      el.removeEventListener("loadeddata", tryPlay);
+      retries.forEach((id) => window.clearTimeout(id));
+    };
   }, []);
 
   const toggle = () => {

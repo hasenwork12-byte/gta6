@@ -15,10 +15,10 @@ export default function Hero() {
         <div className="flex min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
           <span className="chip bg-bg/80 uppercase tracking-[0.14em] text-muted backdrop-blur">
             <span className={`h-1.5 w-1.5 animate-pulseDot rounded-full ${TOKEN_LIVE ? "bg-good" : "bg-accent2"}`} />
-            {TOKEN_LIVE ? "Live on Solana · gm" : "Launching soon on Solana"}
+            {TOKEN_LIVE ? "Live on Solana" : "Launching soon on Solana"}
           </span>
 
-          <h1 className="mt-5 max-w-3xl text-balance font-display text-[3.1rem] font-extrabold leading-[0.92] tracking-tight drop-shadow-[0_4px_0_rgb(0_0_0/0.35)] sm:text-7xl xl:text-[5.4rem]">
+          <h1 className="mt-5 max-w-3xl text-balance font-display text-[3.1rem] font-extrabold leading-[0.92] tracking-tight sm:text-7xl xl:text-[5.4rem]">
             Hold ${site.ticker}.
             <br />
             Stack XP.
@@ -32,14 +32,14 @@ export default function Hero() {
             </span>
           </h1>
           <p className="mt-7 max-w-xl text-pretty text-base text-muted sm:text-lg">
-            Every trade feeds the pig. The pig buys GTA 6. Hold, don&apos;t jeet, hit{" "}
-            <span className="font-semibold text-fg">{fmtNum(points.redeemCost)} XP</span> and your copy is on us. Simple as oink.
+            Part of every trading fee goes into the Pig Bank, and the Pig Bank buys GTA 6. Hold $PIG, reach{" "}
+            <span className="font-semibold text-fg">{fmtNum(points.redeemCost)} XP</span> and you get a free copy.
           </p>
 
           <div className="mt-7 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             {TOKEN_LIVE ? (
               <a className="btn-primary !px-6 !py-3.5 text-base" href={site.buyUrl(TOKEN_MINT)} target="_blank" rel="noreferrer">
-                Ape into ${site.ticker}
+                Buy ${site.ticker}
               </a>
             ) : (
               <Link className="btn-primary !px-6 !py-3.5 text-base" href="/how-it-works">

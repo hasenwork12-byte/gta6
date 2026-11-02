@@ -54,7 +54,7 @@ export default function RedemptionCard({ r, now, paidSol }: { r: PublicRedemptio
           <Row k="Type" v={r.kind === "self" ? "For themselves" : r.kind === "gift" ? "Gift to a wallet" : "Donated to the team"} />
           <Row k="XP spent" v={`${fmtNum(points.redeemCost)} by ${shortAddr(r.wallet, 4)}`} />
           {r.kind === "gift" && <Row k="Recipient" v={r.recipient ? shortAddr(r.recipient, 5) : "—"} />}
-          <Row k="Paid by the pig" v={paidSol ? `${fmtNum(paidSol, 4)} SOL` : "—"} />
+          <Row k="Paid by the Pig Bank" v={paidSol ? `${fmtNum(paidSol, 4)} SOL` : "—"} />
           <Row k="Platform" v={r.platform ? platformLabel(r.platform) : r.kind === "team" ? "Chosen by team" : "Chosen when claimed"} />
           <Row k="Requested" v={fmtDateTime(r.createdAt / 1000)} />
           <Row k="Status" v={status.label} />

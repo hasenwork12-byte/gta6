@@ -10,15 +10,15 @@ const columns: { title: string; items: Item[] }[] = [
     title: "Play",
     items: [
       { label: "Claim GTA 6", href: "/redeem" },
-      { label: "Leaderboard", href: "/points" },
-      { label: "Loot drops", href: "/redemptions" },
-      { label: "How to play", href: "/how-it-works" },
+      { label: "Check your XP", href: "/points" },
+      { label: "Claims", href: "/redemptions" },
+      { label: "How it works", href: "/how-it-works" },
     ],
   },
   {
     title: "Pig Bank",
     items: [
-      { label: "The pig", href: "/treasury" },
+      { label: "Pig Bank", href: "/treasury" },
       { label: "Receipts", href: "/ledger" },
       { label: "Buybacks", href: "/treasury#buybacks" },
       ...(TREASURY_LIVE ? [{ label: "Wallet on Solscan", href: site.explorerAccount(TREASURY_WALLET), external: true }] : []),
@@ -42,8 +42,8 @@ export default function Footer() {
         <div className="space-y-5">
           <Logo />
           <p className="max-w-xs text-sm leading-relaxed text-muted">
-            Every trade feeds a public, on-chain piggy bank that buys games for holders who stack XP. Memecoins are
-            highly speculative. NFA, DYOR.
+            Part of every trading fee goes into a public wallet that buys games for holders who earn XP. Memecoins are
+            highly risky. This is not financial advice. Do your own research.
           </p>
           {socials.length > 0 && (
             <div className="flex gap-2">

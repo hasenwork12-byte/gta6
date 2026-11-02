@@ -12,7 +12,7 @@ export default function BigStats() {
   const s = data.snapshot;
   const stats = [
     {
-      label: "In the pig",
+      label: "In the Pig Bank",
       value: s.balanceSol,
       fmt: (n: number) => fmtNum(n, 3),
       unit: "SOL",

@@ -17,7 +17,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Why do I have to hold for the whole day?",
-    a: "You earn on the lower of your balances at two consecutive daily snapshots, so buying right before a snapshot and selling right after earns nothing. The price used is also the lower of the two, so short price spikes don't inflate XP. Jeeting right after the drop earns nothing.",
+    a: "You earn on the lower of your balances at two consecutive daily snapshots, so buying right before a snapshot and selling right after earns nothing. The price used is also the lower of the two, so short price spikes don't inflate XP.",
   },
   {
     q: "How do I claim my copy?",
@@ -26,7 +26,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
         Go to the <Link href="/redeem" className="link">claim page</Link>, connect your wallet, choose PlayStation 5 or
         Xbox Series X|S and your store region, and sign a free message. If a code is in stock it&apos;s delivered
         instantly — press <em>Reveal code</em> and sign again to see it. If not, you join the queue and get a code
-        automatically as soon as the pig restocks. The purchase transaction shows up in the loot feed.
+        automatically as soon as the Pig Bank has the money. The purchase shows up on the Claims page.
       </>
     ),
   },

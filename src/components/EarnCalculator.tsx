@@ -109,14 +109,14 @@ export default function EarnCalculator({ className = "" }: { className?: string 
           {days !== null && days < points.cooldownDays && (
             <p className="mt-4 text-xs leading-relaxed text-muted">
               You can claim one copy for yourself every {points.cooldownDays} days. Extra XP can be{" "}
-              <Link href="/redeem" className="link">gifted to a fren</Link>.
+              <Link href="/redeem" className="link">gifted to a friend</Link>.
             </p>
           )}
         </div>
       </div>
 
       <p className="relative mt-5 text-xs leading-relaxed text-muted">
-        Estimate only (NFA). Assumes the ${site.ticker} price stays flat. You earn on the lower of your balance and price at
+        Estimate only, not financial advice. Assumes the ${site.ticker} price stays flat. You earn on the lower of your balance and price at
         two daily snapshots, so the count starts at the first snapshot after you buy ({points.snapshotTime}). XP has no cash value.
       </p>
     </div>

@@ -22,8 +22,8 @@ export default async function LedgerPage() {
     <div className="section pt-14">
       <SectionHeading
         eyebrow="Receipts"
-        title="Every SOL in and out of the pig"
-        sub="Every SOL that enters or leaves the Pig Bank, each linked to its transaction on Solscan. Don't trust, verify."
+        title="Every SOL in and out of the Pig Bank"
+        sub="Every SOL that enters or leaves the Pig Bank, each linked to its transaction on Solscan. Check any of them yourself."
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-3">

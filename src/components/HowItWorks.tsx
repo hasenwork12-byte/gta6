@@ -12,13 +12,13 @@ const quests = [
   },
   {
     icon: Gem,
-    title: "Hold. Don't jeet.",
-    body: `Every ${fmtUsd(points.usdPerPointDay, 0)} you hold for a full day earns 1 XP. Paper hands earn nothing.`,
+    title: "Hold $PIG",
+    body: `Every ${fmtUsd(points.usdPerPointDay, 0)} you hold for a full day earns 1 XP. If you sell, you stop earning.`,
     reward: `+1 XP / ${fmtUsd(points.usdPerPointDay, 0)} / day`,
   },
   {
     icon: Coins,
-    title: "Feed the pig",
+    title: "Trading fees fill the Pig Bank",
     body: `Every trade drops creator fees into the Pig Bank, a public wallet anyone can check. ${Math.round((1 - buyback.share) * 100)}% buys games, ${Math.round(buyback.share * 100)}% buys $${site.ticker} back${buyback.burn ? " and burns it" : ""}.`,
     reward: buyback.burn ? "Pig gets fat · supply burns" : "Pig gets fat",
   },
@@ -54,7 +54,7 @@ export default function HowItWorks() {
       <p className="-mt-2 text-center font-mono text-[11px] text-muted sm:hidden">Swipe for all four quests</p>
 
       <div className="card p-5 sm:p-7">
-        <p className="label">The rules · no cap</p>
+        <p className="label">The rules</p>
         <dl className="mt-4 grid grid-cols-1 gap-4 text-sm sm:mt-5 sm:gap-6 md:grid-cols-3">
           <div>
             <dt className="font-semibold">Earning XP</dt>
@@ -69,7 +69,7 @@ export default function HowItWorks() {
             <dd className="mt-1.5 leading-relaxed text-muted">
               Spend {fmtNum(points.redeemCost)} XP on the <Link href="/redeem" className="link">claim page</Link>. Pick
               PlayStation 5 or Xbox Series X|S and sign a free message. Your code drops right there, instantly if
-              it&apos;s in stock, or automatically when the pig restocks. Got extra XP? Gift a copy to a fren or donate
+              it&apos;s in stock, or automatically when the Pig Bank has money again. Got extra XP? Gift a copy to a friend or donate
               one to the team.
             </dd>
           </div>
@@ -77,7 +77,7 @@ export default function HowItWorks() {
             <dt className="font-semibold">Limits</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">
               One copy for yourself every {points.cooldownDays} days, plus up to {points.maxDonationsPerWindow} gifts or
-              donations in the same window. Claims are filled in order while the pig can pay. If one can&apos;t be
+              donations in the same window. Claims are filled in order while the Pig Bank can pay. If one can&apos;t be
               filled, you get your XP back. XP has no cash value.
             </dd>
           </div>

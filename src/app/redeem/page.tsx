@@ -31,7 +31,7 @@ export default function RedeemPage() {
             </li>
             <li>
               You earn on the <span className="text-fg">lower</span> of your balance at this snapshot and the previous
-              one, valued at the lower of the two prices. So hold through the whole day. No jeeting.
+              one, valued at the lower of the two prices. So hold through the whole day.
             </li>
             <li>XP isn&apos;t retroactive: earning starts at the first snapshot after you buy.</li>
             <li>

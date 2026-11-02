@@ -1,7 +1,7 @@
 import { createHash, createPublicKey, randomUUID, verify } from "crypto";
 import { PublicKey } from "@solana/web3.js";
 import { points, stockKey, TREASURY_WALLET } from "@/config";
-import { demoPoints, demoRedemptions, demoTopHolders } from "./demo";
+import { demoPoints, demoRedemptions } from "./demo";
 import { decryptCode, encryptCode } from "./keyvault";
 import { buildClaimMessage, buildRedeemMessage, buildRevealMessage } from "./redeem-message";
 import { holderBalances, isValidAddress, tokenPriceUsd, walletTokenBalance } from "./solana";
@@ -53,17 +53,6 @@ export async function listPublicRedemptions(): Promise<{ rows: PublicRedemption[
       demo: Boolean(demo) || !POINTS_LIVE,
     }));
   return { rows, demo: !POINTS_LIVE };
-}
-
-export type TopHolder = { wallet: string; points: number; lastDay: number };
-
-/** Top wallets by XP, with what each earned at the latest snapshot (for "today" and rank changes). */
-export async function getTopHolders(limit = 20): Promise<{ rows: TopHolder[]; demo: boolean }> {
-  if (!POINTS_LIVE) return { rows: demoTopHolders(limit), demo: true };
-  const top = await store().topPoints(limit);
-  const last = await store().lastDays(top.map((x) => x.wallet));
-  const rows = top.map((x, i) => ({ wallet: x.wallet, points: x.centi / 100, lastDay: (last[i] ?? 0) / 100 }));
-  return { rows, demo: false };
 }
 
 export async function getPointsInfo(wallet: string): Promise<PointsInfo> {

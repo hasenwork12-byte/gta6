@@ -10,7 +10,7 @@ export default function CopyAddress({ address, label = "CA" }: { address: string
     return (
       <div className="inline-flex max-w-full items-center gap-3 rounded-full border border-dashed border-accent2/30 bg-bg/85 px-4 backdrop-blur py-2 font-mono text-xs text-muted">
         <span className="text-fg/60">{label}</span>
-        <span className="truncate">Oink soon. The contract address drops here at launch.</span>
+        <span className="truncate">Coming soon. The contract address will be posted here at launch.</span>
       </div>
     );
   }

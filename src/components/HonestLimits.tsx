@@ -22,10 +22,10 @@ const LIMITS: [string, string][] = [
 ];
 
 /** Plain-spoken risks, shown before people buy. Credibility beats hype. */
-export default function HonestLimits() {
+export default function HonestLimits({ index = 6 }: { index?: number }) {
   return (
     <div>
-      <SectionHeading index={6} eyebrow="Before you ape in" title="The honest limits. No cap." />
+      <SectionHeading index={index} eyebrow="Before you buy" title="The honest limits." />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         {LIMITS.map(([title, body]) => (
           <div key={title} className="card p-4 sm:p-6">

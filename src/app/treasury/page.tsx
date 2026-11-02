@@ -25,7 +25,7 @@ export default async function TreasuryPage() {
           <div>
             <SectionHeading
               eyebrow="The Pig Bank"
-              title="Every trade feeds the pig"
+              title="Every trade adds to the Pig Bank"
               sub={`Creator fees from every $${site.ticker} trade land in one public wallet. ${Math.round(buyback.share * 100)}% is set aside to buy $${site.ticker} back${buyback.burn ? " and burn it" : ""}. When the rest holds ${fmtUsd(points.gamePriceUsd, 0)}, that's another GTA 6 for a holder. Read straight from Solana, no trust me bro.`}
             />
             <div className="flex flex-wrap items-center gap-3">
@@ -50,20 +50,20 @@ export default async function TreasuryPage() {
           <SectionHeading
             eyebrow={buyback.burn ? "Buyback & burn" : "Buyback"}
             title={`${Math.round(buyback.share * 100)}% of every fee buys $${site.ticker} back`}
-            sub={`The pig sets aside ${Math.round(buyback.share * 100)}% of every creator fee and uses it to buy $${site.ticker} on the open market${buyback.burn ? ", then burns it so supply only goes down" : ""}. The other ${Math.round((1 - buyback.share) * 100)}% buys games. Each buyback is read from the chain, so you can check every one.`}
+            sub={`The Pig Bank sets aside ${Math.round(buyback.share * 100)}% of every creator fee and uses it to buy $${site.ticker} on the open market${buyback.burn ? ", then burns it so supply only goes down" : ""}. The other ${Math.round((1 - buyback.share) * 100)}% buys games. Each buyback is read from the chain, so you can check every one.`}
           />
           <BuybackPanel full />
         </div>
 
         <div className="mt-16">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl font-extrabold tracking-tight">Latest feedings</h2>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight">Latest transactions</h2>
             <Link href="/ledger" className="text-xs font-semibold text-muted transition hover:text-fg">
               Full receipts →
             </Link>
           </div>
           {entries.length === 0 ? (
-            <div className="card p-10 text-center text-sm text-muted">The pig is hungry. No transactions yet.</div>
+            <div className="card p-10 text-center text-sm text-muted">No transactions yet.</div>
           ) : (
             <ul className="card divide-y-2 divide-line/[0.05] overflow-hidden">
               {entries.map((e) => {

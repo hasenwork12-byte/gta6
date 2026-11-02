@@ -30,9 +30,8 @@ html {
 
 body {
   background-color: rgb(var(--bg));
-  /* faint arcade dot grid */
-  background-image: radial-gradient(rgb(var(--line) / 0.045) 1px, transparent 1px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(rgb(var(--line) / 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
   color: rgb(var(--fg));
   -webkit-font-smoothing: antialiased;
 }
@@ -42,12 +41,11 @@ body {
 }
 
 @layer components {
-  /* "Sticker" card: thick border + hard drop shadow */
   .card {
-    @apply rounded-3xl border-2 border-line/[0.09] bg-surface shadow-[0_6px_0_0_rgb(0_0_0/0.45)];
+    @apply rounded-3xl border border-line/10 bg-surface/95 shadow-[0_30px_80px_-40px_rgb(0_0_0/0.85)];
   }
   .card-hover {
-    @apply transition duration-150 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_10px_0_0_rgb(0_0_0/0.45)];
+    @apply transition duration-200 hover:-translate-y-0.5 hover:border-line/25;
   }
   .label {
     @apply font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-muted;
@@ -56,21 +54,17 @@ body {
     @apply bg-gradient-to-r from-accent to-accent2 bg-clip-text text-transparent;
   }
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border-2 border-line/10 bg-bg/60 px-2.5 py-0.5 font-mono text-[11px] font-semibold;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line/10 bg-bg/60 px-2.5 py-0.5 font-mono text-[11px] font-semibold;
   }
-  /* Pressable 3D buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-bold transition-all duration-100
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-50
-      active:translate-y-[3px];
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold tracking-tight transition duration-200
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-gradient-to-r from-accent to-accent2 text-[#1d0612] shadow-[0_4px_0_0_#9e1d52] hover:brightness-110
-      active:shadow-[0_1px_0_0_#9e1d52];
+    @apply btn bg-gradient-to-r from-accent to-accent2 text-[#1d0612] shadow-[0_10px_30px_-12px_rgb(var(--accent-1)/0.9)] hover:brightness-110;
   }
   .btn-ghost {
-    @apply btn border-2 border-line/15 bg-surface text-fg shadow-[0_4px_0_0_rgb(0_0_0/0.5)] hover:border-line/30
-      active:shadow-[0_1px_0_0_rgb(0_0_0/0.5)];
+    @apply btn border border-line/15 bg-white/[0.03] text-fg hover:border-line/30 hover:bg-white/[0.06];
   }
   .section {
     @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
@@ -79,13 +73,11 @@ body {
   .gap-section {
     @apply mt-14 sm:mt-20 lg:mt-24;
   }
-  /* Game-HUD panel: dark glass, gold hairline, hard shadow */
   .hud {
-    @apply border-2 border-gold/25 bg-surface/80 shadow-[0_5px_0_0_rgb(0_0_0/0.45)] backdrop-blur-md;
+    @apply rounded-2xl border border-gold/20 bg-surface/80 shadow-[0_24px_50px_-32px_rgb(0_0_0/0.85)] backdrop-blur-md;
   }
-  /* Slanted sticker tag, like a price label slapped on a game box */
   .tag {
-    @apply inline-flex -rotate-2 items-center gap-1.5 rounded-lg bg-gold px-2.5 py-1 font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-[#2a1800] shadow-[0_3px_0_0_rgb(0_0_0/0.5)];
+    @apply inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-gold;
   }
   .link {
     @apply text-accent2 underline-offset-4 hover:underline;
@@ -104,15 +96,15 @@ body {
   opacity: 0.5;
 }
 
-/* Film grain over everything: flat colours feel printed instead of default */
+/* A very light grain. Heavy noise was sitting on top of the film and the type. */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.06;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Giant outlined numerals beside section titles */

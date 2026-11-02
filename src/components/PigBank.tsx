@@ -127,7 +127,7 @@ export default function PigBank({ className = "" }: { className?: string }) {
 
         {/* Balance in the belly. Positioned over the body centre (x 30, y 35 in the viewBox). */}
         <div className="absolute left-[47.4%] top-[65%] -translate-x-1/2 -translate-y-1/2">
-          <div className="rounded-2xl border-2 border-line/10 bg-bg/85 px-3 py-1.5 text-center shadow-[0_4px_0_0_rgb(0_0_0/0.4)] backdrop-blur sm:px-4 sm:py-2">
+          <div className="rounded-2xl border border-line/10 bg-bg/80 px-3 py-1.5 text-center shadow-[0_16px_40px_-24px_rgb(0_0_0/0.8)] backdrop-blur sm:px-4 sm:py-2">
             <RollingNumber
               value={pot}
               format={(n) => fmtNum(n, 3)}
@@ -149,6 +149,12 @@ export default function PigBank({ className = "" }: { className?: string }) {
         </span>
         {s?.demo && <DemoBadge className="!py-0.5" />}
       </div>
+      <p className="mx-auto mt-3 max-w-sm text-center text-xs leading-relaxed text-muted">
+        {funded > 0
+          ? `The pot already covers ${fmtNum(funded)} ${funded === 1 ? "copy" : "copies"}. The bar is only the next one.`
+          : "The bar is progress toward the first copy."}{" "}
+        Buyback money is kept out of this pot.
+      </p>
     </div>
   );
 }

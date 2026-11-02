@@ -15,7 +15,7 @@ export default function LootFeed({ rows, demo, now }: { rows: PublicRedemption[]
       <div className="flex items-center justify-between gap-3 border-b-2 border-line/[0.06] px-5 py-3.5">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 animate-pulseDot rounded-full bg-good" />
-          <p className="label">Loot drops</p>
+          <p className="label">Latest claims</p>
           {demo && <DemoBadge className="!px-2 !py-0.5" />}
         </div>
         <Link href="/redemptions" className="text-xs font-semibold text-muted transition hover:text-fg">
@@ -23,7 +23,7 @@ export default function LootFeed({ rows, demo, now }: { rows: PublicRedemption[]
         </Link>
       </div>
       {rows.length === 0 ? (
-        <p className="p-8 text-center text-sm text-muted">No loot dropped yet. Be the first.</p>
+        <p className="p-8 text-center text-sm text-muted">No games claimed yet.</p>
       ) : (
         <ul className="divide-y-2 divide-line/[0.05]">
           {rows.map((r) => {
@@ -44,7 +44,7 @@ export default function LootFeed({ rows, demo, now }: { rows: PublicRedemption[]
                   </p>
                 </div>
                 <StatusPill tone={done ? "good" : r.status === "rejected" ? "muted" : "warn"}>
-                  {done ? "Looted" : r.status === "unclaimed" ? "Unclaimed" : "In queue"}
+                  {done ? "Delivered" : r.status === "unclaimed" ? "Unclaimed" : "In queue"}
                 </StatusPill>
               </li>
             );

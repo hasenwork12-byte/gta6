@@ -35,10 +35,6 @@ export interface Store {
   /** Recipient claims a gift: fills in delivery details and moves it into the queue. */
   claimGift(id: string, wallet: string, d: { platform: string; region: string; email: string; claimedAt: number }): Promise<ClaimOutcome>;
   listRedemptions(): Promise<Redemption[]>;
-  /** Wallets with the most points, highest first. */
-  topPoints(limit: number): Promise<{ wallet: string; centi: number }[]>;
-  /** Points each wallet earned at the latest snapshot (centi), in the same order. */
-  lastDays(wallets: string[]): Promise<number[]>;
   getRedemption(id: string): Promise<Redemption | null>;
   /**
    * Fulfils a pending redemption, or rejects a pending/unclaimed one.
@@ -234,22 +230,6 @@ class RedisStore implements Store {
       .sort((a, b) => b.createdAt - a.createdAt);
   }
 
-  async topPoints(limit: number) {
-    // Fine for thousands of holders; switch to a sorted set if the hash grows very large.
-    const all = (await this.r.hgetall<Record<string, string>>(K.points)) ?? {};
-    return Object.entries(all)
-      .map(([wallet, c]) => ({ wallet, centi: Number(c) }))
-      .filter((x) => x.centi > 0)
-      .sort((a, b) => b.centi - a.centi)
-      .slice(0, limit);
-  }
-
-  async lastDays(wallets: string[]) {
-    if (!wallets.length) return [];
-    const got = (await this.r.hmget<Record<string, string | null>>(K.lastDay, ...wallets)) ?? {};
-    return wallets.map((w) => Number(got[w] ?? 0));
-  }
-
   async getRedemption(id: string) {
     const v = await this.r.hget<string>(K.redemptions, id);
     return v ? (JSON.parse(v) as Redemption) : null;
@@ -389,16 +369,6 @@ class MemoryStore implements Store {
   }
   async getRedemption(id: string) {
     return this.m.redemptions.get(id) ?? null;
-  }
-  async lastDays(wallets: string[]) {
-    return wallets.map((w) => this.m.lastDay.get(w) ?? Math.round(this.pts(w) / 40));
-  }
-  async topPoints(limit: number) {
-    return [...this.m.points.entries()]
-      .map(([wallet, centi]) => ({ wallet, centi }))
-      .filter((x) => x.centi > 0)
-      .sort((a, b) => b.centi - a.centi)
-      .slice(0, limit);
   }
   async resolveRedemption(id: string, status: "fulfilled" | "rejected", tx: string | null, note: string | null) {
     const r = this.m.redemptions.get(id);

@@ -155,11 +155,11 @@ export default function RedeemFlow() {
             <p className="font-display text-3xl font-extrabold tracking-tight text-good">
               {done.kind === "self"
                 ? done.delivered
-                  ? "Oink! Your code is ready"
-                  : "Oink! You're in the queue"
+                  ? "Your code is ready"
+                  : "You're in the queue"
                 : done.kind === "gift"
-                  ? "Oink! Gift sent"
-                  : "Oink! Thank you"}
+                  ? "Gift sent"
+                  : "Thank you"}
             </p>
             <p className="text-sm leading-relaxed text-muted">
               Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} XP were

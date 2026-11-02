@@ -28,7 +28,7 @@ export default function BuybackPanel({ full = false }: { full?: boolean }) {
     { label: `$${site.ticker} bought back`, value: fmtCompact(b.tokensBought), unit: "", sub: `${fmtNum(b.history.length)} buybacks` },
     b.burn
       ? { label: "Burned forever", value: fmtCompact(b.tokensBurned), unit: "", sub: pctOfSupply !== null ? `${fmtNum(pctOfSupply, pctOfSupply < 1 ? 3 : 2)}% of supply` : "sent to the void" }
-      : { label: "Held by the pig", value: fmtCompact(b.tokensBought), unit: "", sub: pctOfSupply !== null ? `${fmtNum(pctOfSupply, pctOfSupply < 1 ? 3 : 2)}% of supply` : "never sold" },
+      : { label: "Held by the Pig Bank", value: fmtCompact(b.tokensBought), unit: "", sub: pctOfSupply !== null ? `${fmtNum(pctOfSupply, pctOfSupply < 1 ? 3 : 2)}% of supply` : "never sold" },
     { label: "Next buyback", value: fmtNum(b.owedSol, 3), unit: "SOL", sub: "set aside, not for games" },
   ];
 
