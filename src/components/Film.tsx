@@ -31,7 +31,7 @@ export default function Film() {
         <video
           ref={video}
           className="aspect-video w-full bg-[#0b0710]"
-          src="/video/wall.mp4"
+          src="/video/wall.mp4?v=2"
           muted
           loop
           autoPlay
