@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-/** Silent card-wall loop showing how $PIG works. Plays under the site song. */
+/** Silent trailer-style film: hold, stack XP, avoid WASTED, mission passed. Plays under the site song. */
 export default function Film() {
   const video = useRef<HTMLVideoElement>(null);
 
@@ -31,7 +31,7 @@ export default function Film() {
         <video
           ref={video}
           className="aspect-video w-full bg-[#0b0710]"
-          src="/video/wall.mp4?v=2"
+          src="/video/film.mp4"
           muted
           loop
           autoPlay
