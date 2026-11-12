@@ -28,7 +28,7 @@ export default function Gta6Countdown({ className = "" }: { className?: string }
   return (
     <div className={`hud rounded-2xl p-3 sm:p-4 ${className}`}>
       <div className="flex items-center justify-between gap-3">
-        <p className="label !text-gold">{out ? "GTA 6 is out" : "GTA 6 drops in"}</p>
+        <p className="label !text-gold">{out ? "GTA 6 is out" : "GTA 6 comes out in"}</p>
         <p className="font-mono text-[10px] uppercase tracking-wider text-muted">{gta6Launch.label}</p>
       </div>
       {out ? (

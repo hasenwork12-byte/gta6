@@ -9,7 +9,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "How does XP work?",
-    a: `Every ${fmtUsd(points.usdPerPointDay, 0)} worth of $${site.ticker} you hold for a full day earns 1 XP. Hold $1,000 and you earn ${fmtNum(1000 / points.usdPerPointDay)} XP a day, so ${fmtNum(points.redeemCost)} XP takes about ${fmtNum(points.redeemCost / (1000 / points.usdPerPointDay))} days. XP drops once a day at ${points.snapshotTime}.`,
+    a: `Every ${fmtUsd(points.usdPerPointDay, 0)} worth of $${site.ticker} you hold for a full day earns 1 XP. Hold $1,000 and you earn ${fmtNum(1000 / points.usdPerPointDay)} XP a day, so ${fmtNum(points.redeemCost)} XP takes about ${fmtNum(points.redeemCost / (1000 / points.usdPerPointDay))} days. XP is added once a day at ${points.snapshotTime}.`,
   },
   {
     q: "What is the buyback?",

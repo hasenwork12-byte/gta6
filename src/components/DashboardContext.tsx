@@ -5,6 +5,8 @@ import type { Dashboard, LedgerEntry } from "@/lib/types";
 
 const POLL_MS = 30_000;
 const DEMO_TICK_MS = 4_500;
+/** SOL/USD is rechecked this often, in demo and live mode. */
+const SOL_POLL_MS = 5 * 60_000;
 
 type Value = { data: Dashboard | null; error: boolean };
 const Ctx = createContext<Value>({ data: null, error: false });
@@ -39,6 +41,31 @@ export function DashboardProvider({ initial, children }: { initial: Dashboard | 
       clearInterval(id);
     };
   }, [demo, initial]);
+
+  // Live SOL price, on its own timer so demo mode gets it too. Also rechecks when the tab comes back.
+  useEffect(() => {
+    let alive = true;
+    let last = Date.now();
+    const load = async () => {
+      last = Date.now();
+      try {
+        const r = await fetch("/api/sol-price", { cache: "no-store" });
+        if (!r.ok) return;
+        const { usd } = (await r.json()) as { usd: number };
+        if (alive && usd > 0) setData((d) => (d && d.snapshot.solUsd !== usd ? { ...d, snapshot: { ...d.snapshot, solUsd: usd } } : d));
+      } catch {}
+    };
+    const id = setInterval(load, SOL_POLL_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && Date.now() - last >= SOL_POLL_MS) load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   // Demo: simulate small incoming fees so the rolling numbers can be seen.
   useEffect(() => {

@@ -19,7 +19,7 @@ export default function BigStats() {
       sub: `≈ ${fmtUsd(s.balanceSol * s.solUsd)}`,
     },
     {
-      label: s.feesPartial ? "Pig fed (recent)" : "Pig fed, all time",
+      label: s.feesPartial ? "Fees received (recent)" : "Fees received, all time",
       value: s.totalFeesSol,
       fmt: (n: number) => fmtNum(n, 3),
       unit: "SOL",
@@ -52,6 +52,9 @@ export default function BigStats() {
           </div>
         ))}
       </div>
+      {s.solUsd > 0 && (
+        <p className="mt-3 font-mono text-xs text-muted">1 SOL ≈ {fmtUsd(s.solUsd)} · live price, rechecked every 5 min</p>
+      )}
       {!s.demo && TREASURY_WALLET && (
         <p className="mt-3 text-xs text-muted">
           Totalled straight from the Pig Bank wallet&apos;s on-chain transactions.{" "}

@@ -12,7 +12,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 // Chunky display face for headlines only; body text stays Space Grotesk.
 const display = Bricolage_Grotesque({ subsets: ["latin"], weight: ["600", "800"], variable: "--font-display" });
 
-const title = `${site.name} ($${site.ticker}): hold, stack XP, claim GTA 6`;
+const title = `${site.name} ($${site.ticker}): hold, earn XP, claim GTA 6`;
 
 // Favicon, iOS icon and share images are file-based: app/icon.svg, app/apple-icon.tsx,
 // app/opengraph-image.tsx and app/twitter-image.tsx.

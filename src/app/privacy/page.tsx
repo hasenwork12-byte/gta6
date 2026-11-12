@@ -28,7 +28,7 @@ export default function Privacy() {
       <section>
         <h2>Third parties</h2>
         <p>
-          Blockchain data is fetched from Solana RPC providers, prices from CoinGecko and DexScreener. Data is stored
+          Blockchain data is fetched from Solana RPC providers, prices from Jupiter, CoinGecko, Coinbase, Binance and DexScreener. Data is stored
           with Upstash (Redis) and the site is hosted by Vercel, which may keep standard server logs.
         </p>
       </section>

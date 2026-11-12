@@ -35,7 +35,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
             </span>
             <div>
               <p className="label">Calculator</p>
-              <h2 className="mt-2 font-display text-[1.7rem] font-extrabold leading-[1.05] tracking-tight sm:text-4xl">When do I eat?</h2>
+              <h2 className="mt-2 font-display text-[1.7rem] font-extrabold leading-[1.05] tracking-tight sm:text-4xl">How long until I get GTA 6?</h2>
             </div>
           </div>
 

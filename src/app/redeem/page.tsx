@@ -26,7 +26,7 @@ export default function RedeemPage() {
           <p className="label">How XP is earned</p>
           <ul className="mt-4 space-y-3 text-sm leading-relaxed text-muted">
             <li>
-              <span className="text-fg">{fmtUsd(perPoint, 0)} held for a full day = 1 XP.</span> XP drops
+              <span className="text-fg">{fmtUsd(perPoint, 0)} held for a full day = 1 XP.</span> XP is added
               once a day at the {points.snapshotTime} snapshot.
             </li>
             <li>

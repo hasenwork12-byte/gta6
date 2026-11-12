@@ -22,7 +22,7 @@ export const PUBLIC_RPC_URL =
 export const site = {
   name: "Paid In Games",
   ticker: "PIG",
-  tagline: "Hold $PIG, stack XP, claim GTA 6. Part of every trading fee goes into a public Pig Bank wallet.",
+  tagline: "Hold $PIG, earn XP, claim GTA 6. Part of every trading fee goes into a public Pig Bank wallet.",
   /** Public URL, used for share images. Set NEXT_PUBLIC_SITE_URL once you have a custom domain. */
   url:
     env(process.env.NEXT_PUBLIC_SITE_URL) ||

@@ -13,7 +13,7 @@ const LIMITS: [string, string][] = [
   ],
   [
     `$${site.ticker} can go down`,
-    "Holding to stack XP is still holding a memecoin. The price can fall by more than a game is worth.",
+    "Holding to earn XP is still holding a memecoin. The price can fall by more than a game is worth.",
   ],
   [
     "Run by people, not a contract",

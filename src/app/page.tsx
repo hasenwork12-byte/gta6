@@ -34,7 +34,7 @@ export default async function Home() {
       <Film />
 
       <div className="section mt-4 sm:mt-8">
-        <SectionHeading index={1} eyebrow="How to play" title="Four quests. One GTA 6." />
+        <SectionHeading index={1} eyebrow="How it works" title="Four steps to a free GTA 6." />
         <HowItWorks />
       </div>
 
@@ -44,7 +44,7 @@ export default async function Home() {
 
       {showClaims && (
         <div className="section gap-section">
-          <SectionHeading index={3} eyebrow="Latest claims" title="Who just got paid" />
+          <SectionHeading index={3} eyebrow="Latest claims" title="Recent free copies" />
           <LootFeed rows={redemptions.rows.slice(0, 7)} demo={false} now={now} />
         </div>
       )}
@@ -57,7 +57,7 @@ export default async function Home() {
         <div className="flex items-end justify-between gap-3">
           <SectionHeading
             index={showClaims ? 4 : 3}
-            eyebrow={buyback.burn ? "The money machine · buyback & burn" : "The money machine · buyback"}
+            eyebrow={buyback.burn ? "Where the fees go · buyback & burn" : "Where the fees go · buyback"}
             title={`Fees in. Games out. ${Math.round(buyback.share * 100)}% buys $${site.ticker} back.`}
           />
           <Link href="/treasury#buybacks" className="mb-7 shrink-0 text-xs font-semibold text-muted transition hover:text-fg">

@@ -1,7 +1,7 @@
 /**
  * A quiet ticker under the hero. One line, the rules, no carnival tape.
  */
-const WORDS = ["Hold $PIG", "Stack XP", "Claim GTA 6", "80% games", "20% burn", "00:00 UTC", "100 XP", "Paid in games"];
+const WORDS = ["Hold $PIG", "Earn XP", "Claim GTA 6", "80% games", "20% burn", "00:00 UTC", "100 XP", "Paid in games"];
 
 function Strip({ reverse = false, tone }: { reverse?: boolean; tone: string }) {
   const run = [...WORDS, ...WORDS];

@@ -39,7 +39,7 @@ export default async function LedgerPage() {
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <Summary label="Pig fed (fees)" value={`+${fmtNum(totalIn, 3)} SOL`} tone="text-good" />
+        <Summary label="Fees received" value={`+${fmtNum(totalIn, 3)} SOL`} tone="text-good" />
         <Summary label="Spent on games" value={`−${fmtNum(totalOut, 3)} SOL`} tone="text-accent" />
         <Summary label="Spent on buybacks" value={`−${fmtNum(totalBuyback, 3)} SOL`} tone="text-gold" />
         <Summary label="Games delivered" value={String(delivered)} />

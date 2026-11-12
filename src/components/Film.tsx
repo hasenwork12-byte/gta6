@@ -37,7 +37,7 @@ export default function Film() {
           autoPlay
           playsInline
           preload="auto"
-          aria-label="How Paid In Games pays. Hold $PIG, stack XP, claim GTA 6."
+          aria-label="How Paid In Games pays. Hold $PIG, earn XP, claim GTA 6."
         />
       </div>
     </section>

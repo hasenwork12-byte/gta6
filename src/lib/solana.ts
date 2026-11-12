@@ -36,18 +36,56 @@ export function isValidAddress(a: string) {
   }
 }
 
-async function solUsd(): Promise<number> {
-  return cached("solusd", 60_000, async () => {
+/** How long a good SOL price is reused before checking again. */
+export const SOL_PRICE_TTL_MS = 5 * 60_000;
+/** After every source fails, wait this long before trying again (instead of a full TTL). */
+const SOL_PRICE_RETRY_MS = 30_000;
+const WSOL_MINT = "So11111111111111111111111111111111111111112";
+
+// Tried in order; the first sane number wins. Several sources, because free APIs rate-limit server IPs.
+const SOL_SOURCES: { name: string; url: string; read: (j: any) => unknown }[] = [
+  { name: "jupiter", url: `https://lite-api.jup.ag/price/v3?ids=${WSOL_MINT}`, read: (j) => j?.[WSOL_MINT]?.usdPrice },
+  { name: "coingecko", url: "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd", read: (j) => j?.solana?.usd },
+  { name: "coinbase", url: "https://api.coinbase.com/v2/prices/SOL-USD/spot", read: (j) => j?.data?.amount },
+  { name: "binance", url: "https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT", read: (j) => j?.price },
+];
+
+let solPrice: { usd: number; at: number; source: string } | null = null;
+let solCheckedAt = 0;
+let solInflight: Promise<void> | null = null;
+
+async function refreshSolUsd() {
+  for (const s of SOL_SOURCES) {
     try {
-      const r = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd", {
-        cache: "no-store",
-      });
-      const j = await r.json();
-      const p = Number(j?.solana?.usd);
-      if (p > 0) return p;
+      const r = await fetch(s.url, { cache: "no-store", signal: AbortSignal.timeout(4_000) });
+      if (!r.ok) continue;
+      const p = Number(s.read(await r.json()));
+      if (p > 1 && p < 100_000) {
+        solPrice = { usd: p, at: Date.now(), source: s.name };
+        return;
+      }
     } catch {}
-    return Number(process.env.SOL_USD_FALLBACK) || 0;
-  });
+  }
+}
+
+/**
+ * Live SOL/USD. Rechecked every 5 minutes; a failed check keeps the last good
+ * price (never caches a 0) and retries sooner.
+ */
+export async function getSolPrice(): Promise<{ usd: number; at: number; source: string }> {
+  const age = Date.now() - (solPrice?.at ?? 0);
+  const sinceCheck = Date.now() - solCheckedAt;
+  if (!solPrice || (age >= SOL_PRICE_TTL_MS && sinceCheck >= SOL_PRICE_RETRY_MS)) {
+    solCheckedAt = Date.now();
+    solInflight ??= refreshSolUsd().finally(() => (solInflight = null));
+    await solInflight;
+  }
+  if (solPrice) return solPrice;
+  return { usd: Number(process.env.SOL_USD_FALLBACK) || 0, at: 0, source: "fallback" };
+}
+
+async function solUsd(): Promise<number> {
+  return (await getSolPrice()).usd;
 }
 
 /** Token USD price from the deepest-liquidity Solana pair on DexScreener. */
@@ -246,9 +284,16 @@ async function botData() {
 
 export async function getSnapshot(): Promise<TreasurySnapshot> {
   if (!TREASURY_LIVE) {
-    const [h, counts, keys] = await Promise.all([holderCount(), redemptionCounts(), keysInStock()]);
+    const [h, counts, keys, sol] = await Promise.all([holderCount(), redemptionCounts(), keysInStock(), solUsd()]);
     const demo = demoSnapshot();
-    return { ...demo, ...counts, ...(h === null ? {} : { holders: h }), keysInStock: keys || demo.keysInStock };
+    // Demo SOL amounts are fake, but the USD they convert at should be the real price.
+    return {
+      ...demo,
+      ...counts,
+      ...(h === null ? {} : { holders: h }),
+      ...(sol > 0 ? { solUsd: sol } : {}),
+      keysInStock: keys || demo.keysInStock,
+    };
   }
   const [lamports, price, holders, ledger, counts, supply, keys, bot] = await Promise.all([
     cached("balance", 20_000, () => conn().getBalance(new PublicKey(TREASURY_WALLET))),

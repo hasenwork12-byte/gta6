@@ -26,7 +26,7 @@ export default async function TreasuryPage() {
             <SectionHeading
               eyebrow="The Pig Bank"
               title="Every trade adds to the Pig Bank"
-              sub={`Creator fees from every $${site.ticker} trade land in one public wallet. ${Math.round(buyback.share * 100)}% is set aside to buy $${site.ticker} back${buyback.burn ? " and burn it" : ""}. When the rest holds ${fmtUsd(points.gamePriceUsd, 0)}, that's another GTA 6 for a holder. Read straight from Solana, no trust me bro.`}
+              sub={`Creator fees from every $${site.ticker} trade land in one public wallet. ${Math.round(buyback.share * 100)}% is set aside to buy $${site.ticker} back${buyback.burn ? " and burn it" : ""}. When the rest holds ${fmtUsd(points.gamePriceUsd, 0)}, that's another GTA 6 for a holder. Read straight from Solana, so you don't have to take our word for it.`}
             />
             <div className="flex flex-wrap items-center gap-3">
               {TREASURY_LIVE && (
@@ -72,7 +72,7 @@ export default async function TreasuryPage() {
                 const pigMove = kind === "buyback" || kind === "burn";
                 const Icon = fed ? Coins : kind === "burn" ? Flame : kind === "buyback" ? RefreshCw : Gamepad2;
                 const title =
-                  kind === "fee" ? "Pig fed" : kind === "game" ? "GTA 6 copy bought" : kind === "buyback" ? `Bought back $${site.ticker}` : kind === "burn" ? `Burned $${site.ticker}` : "Sent out";
+                  kind === "fee" ? "Fee received" : kind === "game" ? "GTA 6 copy bought" : kind === "buyback" ? `Bought back $${site.ticker}` : kind === "burn" ? `Burned $${site.ticker}` : "Sent out";
                 return (
                   <li key={e.signature} className="flex items-center gap-3 px-5 py-3">
                     <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 ${fed || pigMove ? "border-gold/25 bg-gold/10 text-gold" : "border-accent/25 bg-accent/10 text-accent"}`}>

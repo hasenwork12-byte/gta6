@@ -6,12 +6,12 @@ import HowItWorks from "@/components/HowItWorks";
 import SectionHeading from "@/components/SectionHeading";
 import { site } from "@/config";
 
-export const metadata: Metadata = { title: `How to play — ${site.name}` };
+export const metadata: Metadata = { title: `How it works — ${site.name}` };
 
 export default function HowItWorksPage() {
   return (
     <div className="section pt-14">
-      <SectionHeading eyebrow="How to play" title="Four quests. One GTA 6." />
+      <SectionHeading eyebrow="How it works" title="Four steps to a free GTA 6." />
       <HowItWorks />
       <div className="mt-16">
         <EarnCalculator />

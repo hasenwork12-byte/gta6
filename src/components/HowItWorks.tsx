@@ -6,9 +6,9 @@ import { fmtNum, fmtUsd } from "@/lib/format";
 const quests = [
   {
     icon: Wallet,
-    title: `Grab $${site.ticker}`,
-    body: "Buy on Solana. That's your ticket into the game.",
-    reward: "Ticket in",
+    title: `Buy $${site.ticker}`,
+    body: "Buy it on Solana. Holding it is how you take part.",
+    reward: "You're in",
   },
   {
     icon: Gem,
@@ -19,13 +19,13 @@ const quests = [
   {
     icon: Coins,
     title: "Trading fees fill the Pig Bank",
-    body: `Every trade drops creator fees into the Pig Bank, a public wallet anyone can check. ${Math.round((1 - buyback.share) * 100)}% buys games, ${Math.round(buyback.share * 100)}% buys $${site.ticker} back${buyback.burn ? " and burns it" : ""}.`,
-    reward: buyback.burn ? "Pig gets fat · supply burns" : "Pig gets fat",
+    body: `Every trade sends creator fees to the Pig Bank, a public wallet anyone can check. ${Math.round((1 - buyback.share) * 100)}% buys games, ${Math.round(buyback.share * 100)}% buys $${site.ticker} back${buyback.burn ? " and burns it" : ""}.`,
+    reward: buyback.burn ? "Pig Bank grows · supply shrinks" : "Pig Bank grows",
   },
   {
     icon: Gamepad2,
     title: "Claim GTA 6",
-    body: `Hit ${fmtNum(points.redeemCost)} XP, pick PS5 or Xbox, sign once. Code drops instantly if it's in stock.`,
+    body: `Reach ${fmtNum(points.redeemCost)} XP, pick PS5 or Xbox, sign once. You get the code right away if it's in stock.`,
     reward: `${fmtNum(points.redeemCost)} XP → 1 copy`,
   },
 ];
@@ -51,7 +51,7 @@ export default function HowItWorks() {
         ))}
       </ol>
 
-      <p className="-mt-2 text-center font-mono text-[11px] text-muted sm:hidden">Swipe for all four quests</p>
+      <p className="-mt-2 text-center font-mono text-[11px] text-muted sm:hidden">Swipe to see all four steps</p>
 
       <div className="card p-5 sm:p-7">
         <p className="label">The rules</p>
@@ -59,16 +59,16 @@ export default function HowItWorks() {
           <div>
             <dt className="font-semibold">Earning XP</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">
-              {fmtUsd(points.usdPerPointDay, 0)} held for a full day = 1 XP, dropped daily at {points.snapshotTime}. You
+              {fmtUsd(points.usdPerPointDay, 0)} held for a full day = 1 XP, added daily at {points.snapshotTime}. You
               earn on the lower of your balance at two snapshots in a row, at the lower of the two prices, so buying
-              right before the drop doesn&apos;t pay. Treasury, pool, team and exchange wallets don&apos;t earn.
+              right before the daily snapshot doesn&apos;t pay. Treasury, pool, team and exchange wallets don&apos;t earn.
             </dd>
           </div>
           <div>
             <dt className="font-semibold">Claiming</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">
               Spend {fmtNum(points.redeemCost)} XP on the <Link href="/redeem" className="link">claim page</Link>. Pick
-              PlayStation 5 or Xbox Series X|S and sign a free message. Your code drops right there, instantly if
+              PlayStation 5 or Xbox Series X|S and sign a free message. Your code shows up right there, instantly if
               it&apos;s in stock, or automatically when the Pig Bank has money again. Got extra XP? Gift a copy to a friend or donate
               one to the team.
             </dd>

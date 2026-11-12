@@ -12,7 +12,7 @@ export default function FinalCta() {
           <h2 className="mt-2 font-display text-4xl font-extrabold leading-[0.95] tracking-tight sm:text-5xl">
             Stop scrolling.
             <br />
-            <span className="accent-text">Start stacking.</span>
+            <span className="accent-text">Start earning.</span>
           </h2>
           <p className="mt-4 max-w-md text-muted md:max-w-lg">
             Every day you hold earns XP. Every trade adds money to the Pig Bank. The games go to the holders. That&apos;s how it works.

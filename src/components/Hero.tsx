@@ -21,7 +21,7 @@ export default function Hero() {
           <h1 className="mt-5 max-w-3xl text-balance font-display text-[3.1rem] font-extrabold leading-[0.92] tracking-tight sm:text-7xl xl:text-[5.4rem]">
             Hold ${site.ticker}.
             <br />
-            Stack XP.
+            Earn XP.
             <br />
             <span className="relative inline-block">
               <span className="accent-text">Claim GTA&nbsp;6.</span>
@@ -43,11 +43,11 @@ export default function Hero() {
               </a>
             ) : (
               <Link className="btn-primary !px-6 !py-3.5 text-base" href="/how-it-works">
-                How to play
+                How it works
               </Link>
             )}
             <Link className="btn-ghost !px-6 !py-3.5 text-base" href="#calculator">
-              When do I eat?
+              How long does it take?
             </Link>
           </div>
 
@@ -58,7 +58,7 @@ export default function Hero() {
           <Gta6Countdown className="mt-7 w-full max-w-md text-left" />
 
           <p className="mt-3 font-mono text-[11px] text-muted">
-            1 XP = {fmtUsd(points.usdPerPointDay, 0)} held for a day · {fmtNum(points.redeemCost)} XP = 1 copy · XP drops{" "}
+            1 XP = {fmtUsd(points.usdPerPointDay, 0)} held for a day · {fmtNum(points.redeemCost)} XP = 1 copy · XP added daily at{" "}
             {points.snapshotTime}
           </p>
         </div>

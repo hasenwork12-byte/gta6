@@ -22,7 +22,7 @@ export default async function RedemptionsPage() {
     <div className="section pt-14">
       <SectionHeading
         eyebrow="Claims"
-        title="Every copy that dropped"
+        title="Every copy given out"
         sub={
           demo
             ? "Demo cut. Nothing here was paid out. Real claims show the Pig Bank's payment on Solscan."

@@ -37,7 +37,7 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
         <Item label={`$${site.ticker} held`} value={fmtNum(info.tokenBalance)} />
         <Item label="Value now" value={fmtUsd(info.usdValue)} />
         <Item label="Earning" value={`${fmtNum(info.perDay, 2)} XP/day`} />
-        <Item label="Last XP drop" value={`+${fmtNum(info.lastDay, 2)} XP`} />
+        <Item label="XP added last snapshot" value={`+${fmtNum(info.lastDay, 2)} XP`} />
       </dl>
 
       <p className="text-xs leading-relaxed text-muted">
@@ -45,7 +45,7 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
           ? "GTA 6 unlocked. Go claim it."
           : daysLeft !== null
             ? `At today's value, about ${fmtNum(daysLeft)} more ${daysLeft === 1 ? "day" : "days"} to reach ${fmtNum(info.cost)} XP. Earnings change with the token price.`
-            : `Hold $${site.ticker} to start stacking XP at the next daily drop.`}
+            : `Hold $${site.ticker} to start earning XP at the next daily snapshot.`}
         {info.cooldownUntil &&
           ` This wallet claimed for itself recently. Next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting and donating still work).`}
         {info.demo && " Demo mode: these numbers are placeholders, not read from the chain."}
