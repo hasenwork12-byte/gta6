@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { TREASURY_WALLET, site } from "@/config";
-import { getLedger } from "@/lib/solana";
+import { getDashboard, getLedger } from "@/lib/solana";
+import { DashboardProvider } from "@/components/DashboardContext";
+import ProtocolAnalytics from "@/components/ProtocolAnalytics";
 import { listRedemptions } from "@/lib/points";
 import { fmtCompact, fmtDateTime, fmtNum, shortAddr } from "@/lib/format";
 import DemoBadge, { LiveBadge } from "@/components/DemoBadge";
@@ -10,7 +12,11 @@ export const metadata: Metadata = { title: `Receipts — ${site.name}` };
 export const revalidate = 45;
 
 export default async function LedgerPage() {
-  const [ledger, redemptions] = await Promise.all([getLedger().catch(() => null), listRedemptions().catch(() => [])]);
+  const [ledger, redemptions, dashboard] = await Promise.all([
+    getLedger().catch(() => null),
+    listRedemptions().catch(() => []),
+    getDashboard().catch(() => null),
+  ]);
   const delivered = redemptions.filter((r) => r.status === "fulfilled").length;
 
   const totalIn = ledger?.entries.filter((e) => e.kind === "fee").reduce((a, e) => a + e.sol, 0) ?? 0;
@@ -36,6 +42,12 @@ export default async function LedgerPage() {
         {ledger?.partial && (
           <span className="text-xs text-muted">Showing the most recent {ledger.entries.length} transactions.</span>
         )}
+      </div>
+
+      <div className="mb-6">
+        <DashboardProvider initial={dashboard}>
+          <ProtocolAnalytics title="Receipts at a glance" />
+        </DashboardProvider>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">

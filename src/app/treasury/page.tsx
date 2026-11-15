@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Coins, Flame, Gamepad2, RefreshCw } from "lucide-react";
 import BigStats from "@/components/BigStats";
 import BuybackPanel from "@/components/BuybackPanel";
+import ProtocolAnalytics from "@/components/ProtocolAnalytics";
 import { DashboardProvider } from "@/components/DashboardContext";
 import PigBank from "@/components/PigBank";
 import SectionHeading from "@/components/SectionHeading";
@@ -52,6 +53,9 @@ export default async function TreasuryPage() {
             title={`${Math.round(buyback.share * 100)}% of every fee buys $${site.ticker} back`}
             sub={`The Pig Bank sets aside ${Math.round(buyback.share * 100)}% of every creator fee and uses it to buy $${site.ticker} on the open market${buyback.burn ? ", then burns it so supply only goes down" : ""}. The other ${Math.round((1 - buyback.share) * 100)}% buys games. Each buyback is read from the chain, so you can check every one.`}
           />
+          <div className="mb-4">
+            <ProtocolAnalytics />
+          </div>
           <BuybackPanel full />
         </div>
 

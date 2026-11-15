@@ -1,6 +1,7 @@
 // Deterministic DEMO data. Every surface that renders this shows a
 // "DEMO DATA" badge, and demo rows never link to real transactions.
 import { buyback, points } from "@/config";
+import { dailySeries, gamesSpentSol } from "./analytics";
 import { summarizeBuybacks } from "./buyback";
 import type { LedgerEntry, Redemption, TreasurySnapshot } from "./types";
 
@@ -76,9 +77,9 @@ export function demoLedger(): LedgerEntry[] {
   const r = rng(42);
   const out: LedgerEntry[] = [];
   let t = DEMO_NOW;
-  for (let i = 0; i < 48; i++) {
+  for (let i = 0; i < 130; i++) {
     t -= Math.floor(1800 + r() * 14000);
-    const isPurchase = i % 9 === 4;
+    const isPurchase = i % 19 === 4;
     out.push({
       signature: "DEMO" + fakeAddr(r, 60),
       time: t,
@@ -89,7 +90,17 @@ export function demoLedger(): LedgerEntry[] {
       kind: isPurchase ? "game" : "fee",
     });
   }
-  return [...out, ...demoBuybacks()].sort((a, b) => b.time - a.time);
+  // Scale the fees so they add up to the demo lifetime total (a bit more than 5x what the buybacks spent).
+  const bb = demoBuybacks();
+  const target = demoFeesSol(bb);
+  const feeSum = out.filter((e) => e.kind === "fee").reduce((a, e) => a + e.sol, 0);
+  for (const e of out) if (e.kind === "fee") e.sol = +((e.sol * target) / feeSum).toFixed(4);
+  return [...out, ...bb].sort((a, b) => b.time - a.time);
+}
+
+/** Lifetime demo fees: enough that a small amount is still owed to the next buyback. */
+function demoFeesSol(entries: LedgerEntry[]) {
+  return (entries.filter((e) => e.kind === "buyback").reduce((a, e) => a + e.sol, 0) + 0.05) / buyback.share;
 }
 
 /** About two weeks of buybacks, one every ~2 days, each followed by a burn. Price drifts up a little. */
@@ -112,13 +123,12 @@ function demoBuybacks(): LedgerEntry[] {
 
 export function demoSnapshot(): TreasurySnapshot {
   const delivered = 9;
-  const games = (delivered * points.gamePriceUsd) / DEMO_SOL_USD;
   const ledger = demoLedger();
   const spent = ledger.filter((e) => e.kind === "buyback").reduce((a, e) => a + e.sol, 0);
-  // Pick lifetime fees so a small amount is still owed to the next buyback,
-  // and whatever isn't spent on games or buybacks is the balance.
-  const fees = (spent + 0.05) / buyback.share;
-  const balanceSol = +(fees - games - spent).toFixed(4);
+  // Whatever isn't spent on games or buybacks is the balance.
+  const fees = demoFeesSol(ledger);
+  const bb = summarizeBuybacks(ledger, fees, DEMO_SUPPLY, false);
+  const balanceSol = +(fees - gamesSpentSol(ledger) - spent).toFixed(4);
   return {
     demo: true,
     treasuryWallet: "DEMO-TREASURY",
@@ -130,7 +140,7 @@ export function demoSnapshot(): TreasurySnapshot {
     gamesRedeemed: 11,
     gamesDelivered: delivered,
     updatedAt: DEMO_NOW,
-    buyback: summarizeBuybacks(ledger, fees, DEMO_SUPPLY, false),
+    buyback: bb,
     fees: {
       bot: true,
       earnedSol: +(fees + DEMO_UNCLAIMED).toFixed(4),
@@ -140,6 +150,8 @@ export function demoSnapshot(): TreasurySnapshot {
       lastClaimAt: Math.floor(Date.now() / 1000) - 754,
       lastRunAt: Math.floor(Date.now() / 1000) - 154,
     },
+    daily: dailySeries(ledger, bb.history, bb.burn, DEMO_NOW),
+    gamesSpentSol: gamesSpentSol(ledger),
     keysInStock: 7,
   };
 }

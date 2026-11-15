@@ -27,6 +27,10 @@ export type TreasurySnapshot = {
   updatedAt: number;
   buyback: BuybackSummary;
   fees: FeeSummary;
+  /** Last 14 UTC days, oldest first. */
+  daily: DailyPoint[];
+  /** SOL spent on games, from the transactions scanned. */
+  gamesSpentSol: number;
   /** GTA 6 codes bought and ready to hand out. */
   keysInStock: number;
 };
@@ -144,3 +148,6 @@ export type FeeSummary = {
   lastClaimAt: number | null;
   lastRunAt: number | null;
 };
+
+/** One UTC day of protocol activity, for the analytics bars. `day` = unix seconds at 00:00 UTC. */
+export type DailyPoint = { day: number; feesSol: number; burnSol: number; burnTokens: number; gamesSol: number };

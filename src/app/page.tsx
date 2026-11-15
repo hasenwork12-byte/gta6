@@ -2,6 +2,7 @@ import Link from "next/link";
 import Hero from "@/components/Hero";
 import BigStats from "@/components/BigStats";
 import BuybackPanel from "@/components/BuybackPanel";
+import ProtocolAnalytics from "@/components/ProtocolAnalytics";
 import { DashboardProvider } from "@/components/DashboardContext";
 import EarnCalculator from "@/components/EarnCalculator";
 import FinalCta from "@/components/FinalCta";
@@ -63,6 +64,9 @@ export default async function Home() {
           <Link href="/treasury#buybacks" className="mb-7 shrink-0 text-xs font-semibold text-muted transition hover:text-fg">
             Every buyback →
           </Link>
+        </div>
+        <div className="mb-4">
+          <ProtocolAnalytics />
         </div>
         <BuybackPanel />
       </div>

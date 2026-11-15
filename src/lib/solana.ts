@@ -6,6 +6,7 @@ import { summarizeBuybacks } from "./buyback";
 import { demoBalance, demoLedger, demoSnapshot, DEMO_TOKEN_USD } from "./demo";
 import { getStockCounts, listRedemptions } from "./points";
 import type { Dashboard, LedgerEntry, TreasurySnapshot } from "./types";
+import { dailySeries, gamesSpentSol } from "./analytics";
 
 const RPC_URL = (process.env.SOLANA_RPC_URL || "").trim() || "https://api.mainnet-beta.solana.com";
 const LEDGER_LIMIT = Math.min(Math.max(Number(process.env.LEDGER_TX_LIMIT) || 60, 1), 1000);
@@ -335,6 +336,8 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
       lastClaimAt: bot.totals?.lastClaimAt ?? null,
       lastRunAt: bot.totals?.lastRunAt ?? null,
     },
+    daily: dailySeries(ledger.entries, buybackSummary.history, buybackSummary.burn, Date.now() / 1000, bot.runs),
+    gamesSpentSol: gamesSpentSol(ledger.entries),
     keysInStock: keys,
   };
 }
