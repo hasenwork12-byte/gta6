@@ -33,7 +33,7 @@ export function summarizeBuybacks(
 
   const fromBot: BuybackPoint[] = (bot?.runs ?? [])
     .filter((r) => r.swapTx)
-    .map((r) => ({ time: r.at, sol: r.buybackSol ?? 0, tokens: r.tokensBought ?? 0, signature: r.swapTx!, burnTx: r.burnTx }));
+    .map((r) => ({ time: r.at, sol: r.buybackSol ?? 0, tokens: r.tokensBought ?? 0, signature: r.swapTx!, burnTx: r.burnTx, bot: true }));
   const botSigs = new Set(fromBot.map((p) => p.signature));
   const history = [...fromBot, ...fromLedger.filter((p) => !botSigs.has(p.signature))].sort((a, b) => a.time - b.time);
 
@@ -42,6 +42,10 @@ export function summarizeBuybacks(
     (bot?.totals.tokensBurned ?? 0) + ledgerBurns.filter((b) => !botBurnSigs.has(b.signature)).reduce((a, e) => a + (e.tokens ?? 0), 0);
 
   const solSpent = history.reduce((a, p) => a + p.sol, 0);
+  // Bot burns: lifetime tokens burned at their average buy cost (its run list is trimmed, the totals aren't).
+  const t = bot?.totals;
+  const botBurnedSol = t && t.tokensBought > 0 ? (t.tokensBurned * t.buybackSol) / t.tokensBought : 0;
+  const ledgerBurnedSol = history.filter((p) => !p.bot && (!buyback.burn || p.burnTx)).reduce((a, p) => a + p.sol, 0);
   // With the bot, it tracks what's owed itself; otherwise owed = share of fees seen minus what's been spent.
   const owedSol = bot ? bot.totals.owedSol : Math.max(0, feesSol * buyback.share - solSpent);
   return {
@@ -50,6 +54,7 @@ export function summarizeBuybacks(
     solSpent,
     tokensBought: history.reduce((a, p) => a + p.tokens, 0),
     tokensBurned,
+    burnedSol: buyback.burn ? botBurnedSol + ledgerBurnedSol : solSpent,
     owedSol,
     reservedSol: bot && !bot.sameWallet ? 0 : owedSol,
     supply,

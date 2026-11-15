@@ -1,7 +1,7 @@
 // Deterministic DEMO data. Every surface that renders this shows a
 // "DEMO DATA" badge, and demo rows never link to real transactions.
 import { buyback, points } from "@/config";
-import { dailySeries, gamesSpentSol } from "./analytics";
+import { dailySeries, dayStarts } from "./analytics";
 import { summarizeBuybacks } from "./buyback";
 import type { LedgerEntry, Redemption, TreasurySnapshot } from "./types";
 
@@ -122,13 +122,13 @@ function demoBuybacks(): LedgerEntry[] {
 }
 
 export function demoSnapshot(): TreasurySnapshot {
-  const delivered = 9;
   const ledger = demoLedger();
   const spent = ledger.filter((e) => e.kind === "buyback").reduce((a, e) => a + e.sol, 0);
   // Whatever isn't spent on games or buybacks is the balance.
   const fees = demoFeesSol(ledger);
   const bb = summarizeBuybacks(ledger, fees, DEMO_SUPPLY, false);
-  const balanceSol = +(fees - gamesSpentSol(ledger) - spent).toFixed(4);
+  const games = ledger.filter((e) => e.kind === "game");
+  const balanceSol = +(fees - games.reduce((a, e) => a + e.sol, 0) - spent).toFixed(4);
   return {
     demo: true,
     treasuryWallet: "DEMO-TREASURY",
@@ -137,8 +137,8 @@ export function demoSnapshot(): TreasurySnapshot {
     totalFeesSol: +fees.toFixed(4),
     feesPartial: false,
     holders: 1843,
-    gamesRedeemed: 11,
-    gamesDelivered: delivered,
+    gamesRedeemed: games.length + 2,
+    gamesDelivered: games.length,
     updatedAt: DEMO_NOW,
     buyback: bb,
     fees: {
@@ -150,8 +150,7 @@ export function demoSnapshot(): TreasurySnapshot {
       lastClaimAt: Math.floor(Date.now() / 1000) - 754,
       lastRunAt: Math.floor(Date.now() / 1000) - 154,
     },
-    daily: dailySeries(ledger, bb.history, bb.burn, DEMO_NOW),
-    gamesSpentSol: gamesSpentSol(ledger),
+    daily: dailySeries(dayStarts(DEMO_NOW), ledger, bb.history, bb.burn, games.map((e) => e.time)),
     keysInStock: 7,
   };
 }

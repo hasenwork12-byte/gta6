@@ -96,3 +96,34 @@ export async function releaseLock() {
   if (!redis) m().lockUntil = 0;
   else await redis.del(K.lock);
 }
+
+/** Per-UTC-day sums kept for good (the run list above is trimmed), for the analytics bars. */
+export type BotDay = { claimedSol: number; burnSol: number; burnTokens: number };
+const dayKey = (unix: number) => `bot:day:${new Date(unix * 1000).toISOString().slice(0, 10)}`;
+const memDays = globalThis as unknown as { __pigBotDays?: Record<string, BotDay> };
+const md = () => (memDays.__pigBotDays ??= {});
+
+/** Adds to the day's sums. `burnSol` = what the burned tokens cost to buy. */
+export async function addToDay(unix: number, add: Partial<BotDay>) {
+  const key = dayKey(unix);
+  const fields = Object.entries(add).filter(([, v]) => v && v > 0) as [keyof BotDay, number][];
+  if (!fields.length) return;
+  if (!redis) {
+    const d = (md()[key] ??= { claimedSol: 0, burnSol: 0, burnTokens: 0 });
+    for (const [k, v] of fields) d[k] += v;
+    return;
+  }
+  for (const [k, v] of fields) await redis.hincrbyfloat(key, k, v);
+}
+
+/** Sums for each day start (unix seconds at 00:00 UTC), in the same order. */
+export async function getDays(dayStarts: number[]): Promise<BotDay[]> {
+  const empty = (): BotDay => ({ claimedSol: 0, burnSol: 0, burnTokens: 0 });
+  if (!redis) return dayStarts.map((d) => ({ ...empty(), ...md()[dayKey(d)] }));
+  const rows = await Promise.all(dayStarts.map((d) => redis.hgetall<Record<string, string | number>>(dayKey(d))));
+  return rows.map((r) => ({
+    claimedSol: Number(r?.claimedSol ?? 0),
+    burnSol: Number(r?.burnSol ?? 0),
+    burnTokens: Number(r?.burnTokens ?? 0),
+  }));
+}

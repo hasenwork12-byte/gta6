@@ -1,12 +1,12 @@
 import { Connection, LAMPORTS_PER_SOL, PublicKey, type ParsedTransactionMeta, type TokenBalance } from "@solana/web3.js";
 import { CREATOR_WALLET, TOKEN_LIVE, TOKEN_MINT, TREASURY_LIVE, TREASURY_WALLET } from "@/config";
 import { BOT_LIVE, botAddress, readUnclaimed } from "./bot";
-import { getTotals, listRuns } from "./botlog";
+import { getDays, getTotals, listRuns } from "./botlog";
 import { summarizeBuybacks } from "./buyback";
 import { demoBalance, demoLedger, demoSnapshot, DEMO_TOKEN_USD } from "./demo";
 import { getStockCounts, listRedemptions } from "./points";
 import type { Dashboard, LedgerEntry, TreasurySnapshot } from "./types";
-import { dailySeries, gamesSpentSol } from "./analytics";
+import { dailySeries, dayStarts } from "./analytics";
 
 const RPC_URL = (process.env.SOLANA_RPC_URL || "").trim() || "https://api.mainnet-beta.solana.com";
 const LEDGER_LIMIT = Math.min(Math.max(Number(process.env.LEDGER_TX_LIMIT) || 60, 1), 1000);
@@ -267,6 +267,12 @@ async function redemptionCounts() {
   };
 }
 
+/** When each delivered copy went out (unix seconds), for the daily bars. */
+async function deliveredTimes() {
+  const all = await listRedemptions();
+  return all.filter((r) => r.status === "fulfilled").map((r) => Math.floor((r.fulfilledAt ?? r.createdAt) / 1000));
+}
+
 async function keysInStock(): Promise<number> {
   const counts = await getStockCounts().catch(() => ({}) as Record<string, number>);
   return Object.values(counts).reduce((a, n) => a + n, 0);
@@ -317,6 +323,8 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
   );
   // With the bot, it knows every claim. Without it, fees seen arriving in the Pig Bank count as claimed.
   const claimed = bot.totals ? bot.totals.claimedSol : fees;
+  const starts = dayStarts(Date.now() / 1000);
+  const [delivered, botDays] = await Promise.all([deliveredTimes(), BOT_LIVE ? getDays(starts) : null]);
   return {
     demo: false,
     treasuryWallet: TREASURY_WALLET,
@@ -336,8 +344,7 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
       lastClaimAt: bot.totals?.lastClaimAt ?? null,
       lastRunAt: bot.totals?.lastRunAt ?? null,
     },
-    daily: dailySeries(ledger.entries, buybackSummary.history, buybackSummary.burn, Date.now() / 1000, bot.runs),
-    gamesSpentSol: gamesSpentSol(ledger.entries),
+    daily: dailySeries(starts, ledger.entries, buybackSummary.history, buybackSummary.burn, delivered, botDays),
     keysInStock: keys,
   };
 }

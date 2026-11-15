@@ -16,7 +16,7 @@ import {
   VersionedTransaction,
 } from "@solana/web3.js";
 import { TOKEN_LIVE, TOKEN_MINT, TREASURY_WALLET, buyback } from "@/config";
-import { getTotals, releaseLock, saveRun, saveTotals, takeLock, type BotRun, type BotTotals } from "./botlog";
+import { addToDay, getTotals, releaseLock, saveRun, saveTotals, takeLock, type BotRun, type BotTotals } from "./botlog";
 
 const RPC_URL = (process.env.SOLANA_RPC_URL || "").trim() || "https://api.mainnet-beta.solana.com";
 const conn = new Connection(RPC_URL, "confirmed");
@@ -309,6 +309,7 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
       totals.claimedSol += claimed;
       totals.owedSol += claimed * buyback.share;
       totals.lastClaimAt = now();
+      await addToDay(run.at, { claimedSol: claimed });
       await persist();
     }
 
@@ -330,6 +331,9 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
       if (burned) {
         Object.assign(run, { burnTx: burned.sig, tokensBurned: burned.tokens });
         totals.tokensBurned += burned.tokens;
+        // Value the burn at what those tokens cost on average, so leftovers from a failed burn count too.
+        const avgCost = totals.tokensBought > 0 ? totals.buybackSol / totals.tokensBought : 0;
+        await addToDay(run.at, { burnSol: burned.tokens * avgCost, burnTokens: burned.tokens });
         await persist();
       }
     }

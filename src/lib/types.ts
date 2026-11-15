@@ -29,8 +29,6 @@ export type TreasurySnapshot = {
   fees: FeeSummary;
   /** Last 14 UTC days, oldest first. */
   daily: DailyPoint[];
-  /** SOL spent on games, from the transactions scanned. */
-  gamesSpentSol: number;
   /** GTA 6 codes bought and ready to hand out. */
   keysInStock: number;
 };
@@ -115,7 +113,7 @@ export type PointsInfo = {
   lastSnapshotAt: number | null;
 };
 
-export type BuybackPoint = { time: number; sol: number; tokens: number; signature: string; burnTx?: string };
+export type BuybackPoint = { time: number; sol: number; tokens: number; signature: string; burnTx?: string; /** From the fee bot log (its daily sums are kept separately). */ bot?: boolean };
 
 export type BuybackSummary = {
   /** Share of fees reserved for buybacks (0.2 = 20%). */
@@ -125,6 +123,8 @@ export type BuybackSummary = {
   solSpent: number;
   tokensBought: number;
   tokensBurned: number;
+  /** What the burned tokens cost to buy back, in SOL. Lifetime when the bot runs. */
+  burnedSol: number;
   /** SOL reserved for buybacks that hasn't been spent yet. Not available for games. */
   owedSol: number;
   /** Part of the Pig Bank balance held back for buybacks (0 when the bot keeps it in its own wallet). */
@@ -150,4 +150,4 @@ export type FeeSummary = {
 };
 
 /** One UTC day of protocol activity, for the analytics bars. `day` = unix seconds at 00:00 UTC. */
-export type DailyPoint = { day: number; feesSol: number; burnSol: number; burnTokens: number; gamesSol: number };
+export type DailyPoint = { day: number; feesSol: number; burnSol: number; burnTokens: number; games: number };

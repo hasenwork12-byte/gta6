@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { site } from "@/config";
+import { points, site } from "@/config";
 import { fmtCompact, fmtNum, fmtUsd } from "@/lib/format";
 import type { DailyPoint } from "@/lib/types";
 import { useDashboard } from "./DashboardContext";
@@ -23,8 +23,9 @@ export default function ProtocolAnalytics({ title = "Protocol analytics" }: { ti
   const usd = (sol: number) => sol * s.solUsd;
   const b = s.buyback;
 
-  const feesSol = s.fees.claimedSol || s.totalFeesSol;
-  const burnSol = b.history.filter((h) => !b.burn || h.burnTx).reduce((a, h) => a + h.sol, 0);
+  const feesSol = s.totalFeesSol;
+  const burnSol = b.burnedSol;
+  const game = points.gamePriceUsd;
   const burnTokens = b.burn ? b.tokensBurned : b.tokensBought;
   const pctSupply = b.supply ? (burnTokens / b.supply) * 100 : null;
   const burnWord = b.burn ? "burned" : "bought back";
@@ -46,10 +47,10 @@ export default function ProtocolAnalytics({ title = "Protocol analytics" }: { ti
     },
     {
       label: "Spent on GTA 6",
-      total: usd(s.gamesSpentSol),
-      note: `${fmtNum(s.gamesDelivered)} copies delivered · last ${s.daily.length} days shown.`,
-      pick: (d: DailyPoint) => usd(d.gamesSol),
-      tip: (d: DailyPoint) => `${fmtNum(d.gamesSol, 3)} SOL on games`,
+      total: s.gamesDelivered * game,
+      note: `${fmtNum(s.gamesDelivered)} copies × ${fmtUsd(game, 0)} · last ${s.daily.length} days shown.`,
+      pick: (d: DailyPoint) => d.games * game,
+      tip: (d: DailyPoint) => `${fmtNum(d.games)} ${d.games === 1 ? "copy" : "copies"} delivered`,
     },
   ];
 
@@ -76,7 +77,7 @@ export default function ProtocolAnalytics({ title = "Protocol analytics" }: { ti
         ))}
       </div>
       <p className="font-mono text-[11px] text-muted">
-        Dollar values use today&apos;s SOL price ({fmtUsd(s.solUsd)}). Every number links back to a transaction in the receipts.
+        Fees and burns are SOL amounts shown at today&apos;s SOL price ({fmtUsd(s.solUsd)}); burns count what the burned ${site.ticker} cost to buy.
       </p>
     </div>
   );
