@@ -105,7 +105,7 @@ export default function ThemeMusic() {
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
       />
-      <div className="fixed bottom-28 left-4 z-40 flex h-11 items-center gap-2.5 rounded-full border border-accent/40 bg-black/70 pl-1.5 pr-3.5 text-white/90 shadow-[0_0_24px_rgb(var(--accent-1)/0.35)] backdrop-blur transition hover:border-accent lg:bottom-5 lg:left-5">
+      <div className="fixed bottom-28 left-4 z-40 group flex h-11 items-center rounded-full border border-accent/40 bg-black/70 pl-1.5 pr-3.5 text-white/90 shadow-[0_0_24px_rgb(var(--accent-1)/0.35)] backdrop-blur transition hover:border-accent lg:bottom-5 lg:left-5">
       <button
         type="button"
         onClick={toggle}
@@ -134,6 +134,9 @@ export default function ThemeMusic() {
           </svg>
         )}
       </button>
+      {/* On PCs (anything with a mouse) the slider slides out only while the cursor is on the
+          pill or it has keyboard focus; on touch screens there is no hover, so it stays visible. */}
+      <span className="flex h-6 max-w-[8rem] items-center overflow-hidden pl-2.5 pr-1 transition-all duration-300 ease-out [@media(hover:hover)]:max-w-0 [@media(hover:hover)]:pl-0 [@media(hover:hover)]:pr-0 [@media(hover:hover)]:opacity-0 group-hover:max-w-[8rem] group-hover:pl-2.5 group-hover:pr-1 group-hover:opacity-100 group-focus-within:max-w-[8rem] group-focus-within:pl-2.5 group-focus-within:pr-1 group-focus-within:opacity-100">
       <input
         type="range"
         min={0}
@@ -143,9 +146,10 @@ export default function ThemeMusic() {
         onChange={(e) => changeVolume(Number(e.target.value) / 100)}
         aria-label="Music volume"
         title={`Volume ${shown}%`}
-        className="vol-range w-20 sm:w-24"
+        className="vol-range w-20 shrink-0 sm:w-24"
         style={{ ["--vol" as string]: `${shown}%` }}
       />
+      </span>
       </div>
     </>
   );
