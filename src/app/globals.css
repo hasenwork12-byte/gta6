@@ -40,6 +40,37 @@ body {
   background: rgb(var(--accent-1) / 0.35);
 }
 
+/* Music volume slider: pink fill up to the thumb (--vol is 0-100%). */
+.vol-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  cursor: pointer;
+  background: linear-gradient(90deg, rgb(var(--accent-1)) var(--vol), rgb(255 255 255 / 0.2) var(--vol));
+}
+.vol-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid rgb(var(--accent-1));
+  box-shadow: 0 0 10px rgb(var(--accent-1) / 0.7);
+}
+.vol-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 2px solid rgb(var(--accent-1));
+  box-shadow: 0 0 10px rgb(var(--accent-1) / 0.7);
+}
+.vol-range:focus-visible {
+  outline: 2px solid rgb(var(--accent-1));
+  outline-offset: 4px;
+}
+
 @layer components {
   .card {
     @apply rounded-3xl border border-line/10 bg-surface/95 shadow-[0_30px_80px_-40px_rgb(0_0_0/0.85)];
