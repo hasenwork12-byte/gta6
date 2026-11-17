@@ -5,7 +5,8 @@
 
 const env = (v: string | undefined) => (v ?? "").trim();
 
-export const TOKEN_MINT = env(process.env.NEXT_PUBLIC_TOKEN_MINT);
+/** The $PIG coin. NEXT_PUBLIC_TOKEN_MINT overrides it. */
+export const TOKEN_MINT = env(process.env.NEXT_PUBLIC_TOKEN_MINT) || "Hx354rj2nXqKn271RFrs66fhjuQ6sJPxgnkXejrApump";
 export const TREASURY_WALLET = env(process.env.NEXT_PUBLIC_TREASURY_WALLET);
 /** The coin's creator wallet (where pump.fun creator fees build up). Public address only. Defaults to the Pig Bank. */
 export const CREATOR_WALLET = env(process.env.NEXT_PUBLIC_CREATOR_WALLET) || TREASURY_WALLET;
