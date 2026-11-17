@@ -7,7 +7,8 @@ const env = (v: string | undefined) => (v ?? "").trim();
 
 /** The $PIG coin. NEXT_PUBLIC_TOKEN_MINT overrides it. */
 export const TOKEN_MINT = env(process.env.NEXT_PUBLIC_TOKEN_MINT) || "Hx354rj2nXqKn271RFrs66fhjuQ6sJPxgnkXejrApump";
-export const TREASURY_WALLET = env(process.env.NEXT_PUBLIC_TREASURY_WALLET);
+/** The Pig Bank: the coin's creator wallet. NEXT_PUBLIC_TREASURY_WALLET overrides it. */
+export const TREASURY_WALLET = env(process.env.NEXT_PUBLIC_TREASURY_WALLET) || "AxKRBW4v6RdJbiSdcVkaJctFmECx2TKTT2jftw9xSXyD";
 /** The coin's creator wallet (where pump.fun creator fees build up). Public address only. Defaults to the Pig Bank. */
 export const CREATOR_WALLET = env(process.env.NEXT_PUBLIC_CREATOR_WALLET) || TREASURY_WALLET;
 const FORCE_DEMO = env(process.env.NEXT_PUBLIC_FORCE_DEMO) === "true";
