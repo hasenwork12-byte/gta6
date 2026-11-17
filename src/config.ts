@@ -37,7 +37,7 @@ export const site = {
   xHandle: "",
   telegram: "",
   /** Where the "Buy" button sends people once TOKEN_MINT is set. */
-  buyUrl: (mint: string) => `https://jup.ag/swap/SOL-${mint}`,
+  buyUrl: (mint: string) => `https://pump.fun/coin/${mint}`,
   explorerTx: (sig: string) => `https://solscan.io/tx/${sig}`,
   explorerAccount: (addr: string) => `https://solscan.io/account/${addr}`,
 };
