@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import LegalPage from "@/components/LegalPage";
-import { site } from "@/config";
+import { site, TOKEN_LIVE, TREASURY_LIVE } from "@/config";
 
 export const metadata: Metadata = { title: `Risk disclosures — ${site.name}` };
 
@@ -41,11 +41,16 @@ export default function Disclosures() {
         </p>
       </section>
       <section>
-        <h2>On-chain data and demo mode</h2>
+        <h2>{TOKEN_LIVE && TREASURY_LIVE ? "On-chain data" : "On-chain data and demo mode"}</h2>
         <p>
-          Figures on this site are read from public Solana RPC endpoints and may be delayed or temporarily wrong. Any
-          section marked <strong>DEMO DATA</strong> shows placeholder numbers, not real activity. Always verify on a
-          block explorer.
+          Figures on this site are read from public Solana RPC endpoints and may be delayed or temporarily wrong.
+          {/* Only shown before launch, while the site still runs on placeholder numbers. */}
+          {!(TOKEN_LIVE && TREASURY_LIVE) && (
+            <>
+              {" "}Any section marked <strong>DEMO DATA</strong> shows placeholder numbers, not real activity.
+            </>
+          )}{" "}
+          Always verify on a block explorer.
         </p>
       </section>
       <section>
