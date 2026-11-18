@@ -75,12 +75,6 @@ export const points = {
   excluded: [] as string[],
 };
 
-/**
- * Demo mode only: a song that plays when a code appears.
- * youtubeId: the part after "v=" in the YouTube link. start: the second to start at.
- */
-export const demoRevealSong = { youtubeId: "pCBWs6wzVgQ", start: 34 };
-
 export type PlatformId = "ps5" | "xbox";
 /** Codes are region-locked, so stock is kept per platform + region. */
 export const stockKey = (platform: string, region: string) => `${platform}|${region}`;

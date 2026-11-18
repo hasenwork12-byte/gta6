@@ -21,7 +21,7 @@ const store = () => {
           stockKey(p.id, region),
           [1, 2, 3, 4, 5].map((n) => ({
             id: `demo-${p.id}-${region}-${n}`,
-            enc: encryptCode("لابو علي"),
+            enc: encryptCode(`DEMO-${p.id.toUpperCase()}-${n}-NOT-REAL`),
             tx: `DEMO-PURCHASE-${p.id}`,
             addedAt: Date.now(),
           })),
