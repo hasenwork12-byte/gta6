@@ -29,26 +29,28 @@ export default function PointsChecker() {
 
   return (
     <div className="card p-5 sm:p-7">
-      <form onSubmit={onSubmit} className="flex flex-col gap-3 sm:flex-row">
-        <label htmlFor="wallet" className="sr-only">
-          Solana wallet address
-        </label>
-        <input
-          id="wallet"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Paste a Solana wallet address"
-          spellCheck={false}
-          autoComplete="off"
-          className="h-[42px] min-w-0 flex-1 rounded-full border border-line/15 bg-bg/60 px-5 font-mono text-sm outline-none placeholder:text-muted focus:border-accent/60"
-        />
-        <div className="flex gap-3">
-          <button className="btn-primary flex-1 sm:flex-none" disabled={loading || !input.trim()}>
+      {/* The wallet button sits outside the form: inside it, it doubled as the form's submit
+          button and the connect failed (Phantom "Unexpected error"); outside, like on /redeem, it works. */}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <form onSubmit={onSubmit} className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row">
+          <label htmlFor="wallet" className="sr-only">
+            Solana wallet address
+          </label>
+          <input
+            id="wallet"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Paste a Solana wallet address"
+            spellCheck={false}
+            autoComplete="off"
+            className="h-[42px] min-w-0 flex-1 rounded-full border border-line/15 bg-bg/60 px-5 font-mono text-sm outline-none placeholder:text-muted focus:border-accent/60"
+          />
+          <button className="btn-primary sm:flex-none" disabled={loading || !input.trim()}>
             {loading ? "Checking…" : "Check XP"}
           </button>
-          <WalletButton />
-        </div>
-      </form>
+        </form>
+        <WalletButton />
+      </div>
 
       <div className="mt-6 min-h-[120px]" aria-live="polite">
         {error && <p className="text-sm text-accent">{error}</p>}
