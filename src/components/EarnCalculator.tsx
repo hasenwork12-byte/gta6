@@ -108,7 +108,7 @@ export default function EarnCalculator({ className = "" }: { className?: string 
           </dl>
           {days !== null && days < points.cooldownDays && (
             <p className="mt-4 text-xs leading-relaxed text-muted">
-              You can claim one copy for yourself every {points.cooldownDays} days. Extra XP can be{" "}
+              You can claim one copy for yourself every {points.cooldownLabel}. Extra XP can be{" "}
               <Link href="/redeem" className="link">gifted to a friend</Link>.
             </p>
           )}

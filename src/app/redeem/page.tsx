@@ -69,7 +69,7 @@ export default function RedeemPage() {
 
       <div className="card mt-4 p-5 text-sm leading-relaxed text-muted sm:p-7">
         <p className="label mb-3">Fair-use limits</p>
-        One claim per wallet every {points.cooldownDays} days. Claims are filled in order as the Pig Bank can
+        One claim per wallet every {points.cooldownLabel}. Claims are filled in order as the Pig Bank can
         afford them; new requests pause while {points.maxPendingRedemptions} are waiting. If a request can&apos;t be
         filled, the XP is returned. Claims are not guaranteed. See the{" "}
         <Link href="/terms" className="link">terms</Link> and <Link href="/disclosures" className="link">disclosures</Link>.

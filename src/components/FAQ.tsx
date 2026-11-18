@@ -36,14 +36,14 @@ const faqs: { q: string; a: React.ReactNode }[] = [
       <>
         Yes. On the <Link href="/redeem" className="link">claim page</Link>, choose <em>Gift a wallet</em> to send a copy to
         someone else&apos;s wallet — they connect that wallet on the same page, pick PS5 or Xbox and claim it. Gifts are
-        listed in the public feed. You can gift up to {points.maxDonationsPerWindow} copies every {points.cooldownDays} days, on top of
+        listed in the public feed. You can gift up to {points.maxDonationsPerWindow} copies every {points.cooldownLabel}, on top of
         one copy for yourself.
       </>
     ),
   },
   {
     q: "Is a game guaranteed?",
-    a: `No. Claims are filled in order while the Pig Bank can pay for them. If trading volume drops, fees drop and claims slow down. If we can't fill a request, your XP is returned. Each wallet can claim one copy for itself every ${points.cooldownDays} days.`,
+    a: `No. Claims are filled in order while the Pig Bank can pay for them. If trading volume drops, fees drop and claims slow down. If we can't fill a request, your XP is returned. Each wallet can claim one copy for itself every ${points.cooldownLabel}.`,
   },
   {
     q: "Can I sell or transfer XP?",

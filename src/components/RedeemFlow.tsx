@@ -101,9 +101,9 @@ export default function RedeemFlow() {
       : !enoughPoints
         ? `You need ${fmtNum(points.redeemCost)} XP to claim. Keep holding to earn more.`
         : kind === "self" && info.cooldownUntil
-          ? `You've claimed for yourself in the last ${points.cooldownDays} days. You can still gift a copy.`
+          ? `You've claimed for yourself in the last ${points.cooldownLabel}. You can still gift a copy.`
           : kind !== "self" && donationsLeft === 0
-            ? `You've used all ${info.donationsMax} gifts for this ${points.cooldownDays}-day window.`
+            ? `You've used all ${info.donationsMax} gifts in the last ${points.cooldownLabel}.`
             : null;
 
   return (

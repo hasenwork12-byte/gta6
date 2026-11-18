@@ -58,8 +58,10 @@ export const points = {
   /** USD price of one copy — used for the treasury progress bar. */
   gamePriceUsd: 70,
   /** A wallet can redeem a copy for itself at most once per this many days. */
-  cooldownDays: 30,
-  /** On top of that, gifts + team donations allowed per wallet in the same window. */
+  cooldownDays: 1,
+  /** The cooldown in words, for the site text. */
+  cooldownLabel: "24 hours",
+  /** On top of that, gifts allowed per wallet in the same window. */
   maxDonationsPerWindow: 5,
   /** New redemptions pause while this many are still waiting to be fulfilled. */
   maxPendingRedemptions: 25,
