@@ -14,7 +14,7 @@ export default function PointsPage() {
       <SectionHeading
         eyebrow="Your XP"
         title="How much XP do you have?"
-        sub={`Paste any wallet or connect yours. ${fmtNum(points.redeemCost)} XP gets you one copy of GTA 6.`}
+        sub={`Paste any wallet address to see its XP. ${fmtNum(points.redeemCost)} XP gets you one copy of GTA 6.`}
       />
       <PointsChecker />
       <p className="mt-4 text-xs text-muted">
