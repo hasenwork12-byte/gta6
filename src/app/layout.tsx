@@ -6,7 +6,6 @@ import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import WalletProviders from "@/components/WalletProviders";
 import ThemeMusic from "@/components/ThemeMusic";
-import EntryGate from "@/components/EntryGate";
 
 const sans = Space_Grotesk({ subsets: ["latin"], variable: "--font-sans" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
@@ -30,13 +29,8 @@ export const viewport: Viewport = { themeColor: "#0e0814" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} ${display.variable}`} suppressHydrationWarning>
-      <head>
-        {/* Visitors who already tapped "enter" this session skip the entry screen with no flash. */}
-        <script dangerouslySetInnerHTML={{ __html: `try{if(sessionStorage.getItem("pig-entered"))document.documentElement.setAttribute("data-entered","")}catch(e){}` }} />
-      </head>
+    <html lang="en" className={`${sans.variable} ${mono.variable} ${display.variable}`}>
       <body className="min-h-screen font-sans">
-        <EntryGate />
         <WalletProviders>
           <Nav />
           <ThemeMusic />
