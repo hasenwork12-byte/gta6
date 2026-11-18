@@ -223,3 +223,9 @@ body::after {
     scroll-behavior: auto;
   }
 }
+
+/* Entry screen: hidden before paint for visitors who already entered this session. */
+html[data-entered] .entry-gate { display: none; }
+@keyframes entry-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.entry-pulse { animation: entry-pulse 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .entry-pulse { animation: none; } }

@@ -61,7 +61,7 @@ export default function HowItWorks() {
             <dd className="mt-1.5 leading-relaxed text-muted">
               {fmtUsd(points.usdPerPointDay, 0)} held for a full day = 1 XP, added daily at {points.snapshotTime}. You
               earn on the lower of your balance at two snapshots in a row, at the lower of the two prices, so buying
-              right before the daily snapshot doesn&apos;t pay. Treasury, pool, team and exchange wallets don&apos;t earn.
+              right before the daily snapshot doesn&apos;t pay. The dev wallet, treasury, pool and exchange wallets don&apos;t earn.
             </dd>
           </div>
           <div>

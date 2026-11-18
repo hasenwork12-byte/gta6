@@ -16,7 +16,7 @@ export default function Terms() {
           Wallets holding ${site.ticker} earn 1 point per {fmtUsd(points.usdPerPointDay, 0)} of value held for a full
           day. Points are calculated at a daily snapshot ({points.snapshotTime}) using the lower of the wallet&apos;s
           balance at that snapshot and the previous one, valued at the lower of the two token prices. Points are not
-          retroactive. Treasury, liquidity-pool, team and exchange wallets do not earn. We may exclude wallets that
+          retroactive. The dev (creator) wallet, treasury, liquidity-pool and exchange wallets do not earn points or redeem. We may exclude wallets that
           attempt to manipulate snapshots or prices.
         </p>
       </section>
