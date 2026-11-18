@@ -130,7 +130,11 @@ export async function holderBalances(): Promise<Record<string, number>> {
       const data = a.account.data;
       const amount = Number(data.readBigUInt64LE(32)) / scale;
       if (amount <= 0) continue;
-      const owner = new PublicKey(data.subarray(0, 32)).toBase58();
+      const ownerKey = new PublicKey(data.subarray(0, 32));
+      // Skip program-owned addresses (PDAs): pump.fun's bonding curve, the PumpSwap pool,
+      // other pools and vaults. Only real wallets (keys on the ed25519 curve) earn XP.
+      if (!PublicKey.isOnCurve(ownerKey.toBytes())) continue;
+      const owner = ownerKey.toBase58();
       out[owner] = (out[owner] ?? 0) + amount;
       found = true;
     }
