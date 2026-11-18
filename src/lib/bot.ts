@@ -123,30 +123,36 @@ async function sendIxs(kp: Keypair, ixs: TransactionInstruction[]) {
 
 // ── Safety checks: nothing is signed unless it provably touches only our coin ─
 let _verifiedMint: string | null = null;
+
+/** The creator wallet pump.fun recorded for TOKEN_MINT, read from its bonding curve. */
+export async function coinCreator(): Promise<{ creator: PublicKey; cashback: boolean }> {
+  const mint = new PublicKey(TOKEN_MINT);
+  const curve = await conn.getAccountInfo(pda([Buffer.from("bonding-curve"), mint.toBuffer()], PUMP));
+  if (!curve || !curve.owner.equals(PUMP)) throw new Error(`Refusing: ${TOKEN_MINT} is not a pump.fun coin.`);
+  // BondingCurve layout (pump IDL): 8 discriminator, 5 × u64, complete (bool), creator (pubkey) at 49,
+  // then is_mayhem_mode (81), is_cashback_coin (82).
+  return { creator: new PublicKey(curve.data.subarray(49, 81)), cashback: curve.data[82] === 1 };
+}
+
 /**
  * Proves TOKEN_MINT is the coin this bot wallet launched: pump.fun's bonding
  * curve for that mint (an account only pump.fun can write) records the bot
  * wallet as creator. A wrong or swapped contract address can never pass.
  */
-async function assertOurCoin(kp: Keypair) {
+async function assertOurCoin(me: PublicKey) {
   if (_verifiedMint === TOKEN_MINT) return;
-  const mint = new PublicKey(TOKEN_MINT);
-  const curve = await conn.getAccountInfo(pda([Buffer.from("bonding-curve"), mint.toBuffer()], PUMP));
-  if (!curve || !curve.owner.equals(PUMP)) throw new Error(`Refusing: ${TOKEN_MINT} is not a pump.fun coin.`);
-  // BondingCurve layout (pump IDL): 8 discriminator, 5 × u64, complete (bool), creator (pubkey) at 49.
-  const creator = new PublicKey(curve.data.subarray(49, 81));
-  if (!creator.equals(kp.publicKey)) {
-    throw new Error(`Refusing: ${TOKEN_MINT} was created by ${creator.toBase58()}, not the bot wallet ${kp.publicKey.toBase58()}.`);
+  const { creator, cashback } = await coinCreator();
+  if (!creator.equals(me)) {
+    throw new Error(`Refusing: ${TOKEN_MINT} was created by ${creator.toBase58()}, not the bot wallet ${me.toBase58()}.`);
   }
-  // then is_mayhem_mode (81), is_cashback_coin (82).
-  if (curve.data[82] === 1) throw new Error("Refusing: this coin was launched in cashback mode, so it has no creator fees.");
+  if (cashback) throw new Error("Refusing: this coin was launched in cashback mode, so it has no creator fees.");
   _verifiedMint = TOKEN_MINT;
 }
 
 /** Throws unless every instruction runs one of the allowed programs and the bot pays the fee. */
-function assertPrograms(tx: VersionedTransaction, kp: Keypair, allowed: PublicKey[], what: string) {
+function assertPrograms(tx: VersionedTransaction, me: PublicKey, allowed: PublicKey[], what: string) {
   const keys = tx.message.staticAccountKeys;
-  if (!keys[0]?.equals(kp.publicKey)) throw new Error(`Refusing ${what}: fee payer is not the bot wallet.`);
+  if (!keys[0]?.equals(me)) throw new Error(`Refusing ${what}: fee payer is not the bot wallet.`);
   if (tx.message.addressTableLookups.length) throw new Error(`Refusing ${what}: unexpected lookup tables.`);
   for (const ix of tx.message.compiledInstructions) {
     const program = keys[ix.programIdIndex];
@@ -183,19 +189,24 @@ const CLAIM_PROGRAMS = [
  * Before signing: only pump.fun / token / system programs, and a dry run must
  * show the bot wallet not losing more than the network fee.
  */
-async function claimFees(kp: Keypair): Promise<string> {
+async function buildClaim(me: PublicKey): Promise<{ tx: VersionedTransaction; gainSol: number }> {
   const r = await fetch("https://pumpportal.fun/api/trade-local", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ publicKey: kp.publicKey.toBase58(), action: "collectCreatorFee", priorityFee: 0.00001 }),
+    body: JSON.stringify({ publicKey: me.toBase58(), action: "collectCreatorFee", priorityFee: 0.00001 }),
     cache: "no-store",
   });
   if (!r.ok) throw new Error(`Fee claim build failed (${r.status}): ${(await r.text()).slice(0, 200)}`);
   const tx = VersionedTransaction.deserialize(new Uint8Array(await r.arrayBuffer()));
-  assertPrograms(tx, kp, CLAIM_PROGRAMS, "fee claim");
-  const before = await conn.getBalance(kp.publicKey, "confirmed");
-  const [after] = await simulate(tx, [kp.publicKey], "fee claim");
+  assertPrograms(tx, me, CLAIM_PROGRAMS, "fee claim");
+  const before = await conn.getBalance(me, "confirmed");
+  const [after] = await simulate(tx, [me], "fee claim");
   if (!after || after.lamports < before - 0.005 * LAMPORTS_PER_SOL) throw new Error("Refusing fee claim: dry run shows SOL leaving the bot wallet.");
+  return { tx, gainSol: (after.lamports - before) / LAMPORTS_PER_SOL };
+}
+
+async function claimFees(kp: Keypair): Promise<string> {
+  const { tx } = await buildClaim(kp.publicKey);
   tx.sign([kp]);
   return sendAndWait(tx);
 }
@@ -206,13 +217,15 @@ async function tokenDecimals(): Promise<number> {
 }
 
 /** Jupiter Swap API v2: /order returns a ready transaction, /execute lands it. */
-async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tokens: number }> {
-  const headers: Record<string, string> = process.env.JUP_API_KEY ? { "x-api-key": process.env.JUP_API_KEY } : {};
+const jupHeaders = (): Record<string, string> => (process.env.JUP_API_KEY ? { "x-api-key": process.env.JUP_API_KEY } : {});
+
+async function buildSwap(me: PublicKey, lamports: number) {
+  const headers = jupHeaders();
   const q = new URLSearchParams({
     inputMint: WSOL.toBase58(),
     outputMint: TOKEN_MINT,
     amount: String(lamports),
-    taker: kp.publicKey.toBase58(),
+    taker: me.toBase58(),
     // web3.js v1 can only sign v0 transactions.
     maxSupportedTransactionVersion: "0",
   });
@@ -223,19 +236,23 @@ async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tok
     throw new Error(`Refusing swap: Jupiter quoted ${order.inputMint} → ${order.outputMint}, expected SOL → ${TOKEN_MINT}.`);
   }
   const tx = VersionedTransaction.deserialize(Buffer.from(order.transaction, "base64"));
-  if (!tx.message.staticAccountKeys[0]?.equals(kp.publicKey)) throw new Error("Refusing swap: fee payer is not the bot wallet.");
+  if (!tx.message.staticAccountKeys[0]?.equals(me)) throw new Error("Refusing swap: fee payer is not the bot wallet.");
 
   // Dry run: our coin's balance must go up, and the bot must not lose more SOL than it meant to spend.
   const mint = new PublicKey(TOKEN_MINT);
   const tokenProgram = (await conn.getAccountInfo(mint))!.owner;
-  const ata = pda([kp.publicKey.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()], ATA_PROGRAM);
-  const [solBefore, ataBefore] = await Promise.all([conn.getBalance(kp.publicKey, "confirmed"), conn.getAccountInfo(ata)]);
-  const [solAfter, ataAfter] = await simulate(tx, [kp.publicKey, ata], "swap");
+  const ata = pda([me.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()], ATA_PROGRAM);
+  const [solBefore, ataBefore] = await Promise.all([conn.getBalance(me, "confirmed"), conn.getAccountInfo(ata)]);
+  const [solAfter, ataAfter] = await simulate(tx, [me, ata], "swap");
   const gained = tokenAmountOf(ataAfter ? Buffer.from(ataAfter.data[0], "base64") : null) - tokenAmountOf(ataBefore?.data);
   if (gained <= 0n) throw new Error(`Refusing swap: dry run shows no ${TOKEN_MINT} arriving in the bot wallet.`);
   // Allow the spend plus network fees and the one-time token account rent.
   if (!solAfter || solAfter.lamports < solBefore - lamports - 0.01 * LAMPORTS_PER_SOL) throw new Error("Refusing swap: dry run spends more SOL than the buyback amount.");
+  return { tx, order, headers, gained, spentSol: (solBefore - solAfter.lamports) / LAMPORTS_PER_SOL };
+}
 
+async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tokens: number }> {
+  const { tx, order, headers } = await buildSwap(kp.publicKey, lamports);
   tx.sign([kp]);
   const res = await (
     await fetch("https://api.jup.ag/swap/v2/execute", {
@@ -251,8 +268,8 @@ async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tok
 }
 
 /** Burns every $PIG in the bot wallet (BurnChecked works for both token programs). */
-async function burnAll(kp: Keypair): Promise<{ sig: string; tokens: number } | null> {
-  const { value } = await conn.getParsedTokenAccountsByOwner(kp.publicKey, { mint: new PublicKey(TOKEN_MINT) });
+async function burnIxs(me: PublicKey): Promise<{ ixs: TransactionInstruction[]; tokens: number }> {
+  const { value } = await conn.getParsedTokenAccountsByOwner(me, { mint: new PublicKey(TOKEN_MINT) });
   const ixs: TransactionInstruction[] = [];
   let tokens = 0;
   for (const acc of value) {
@@ -269,15 +286,60 @@ async function burnAll(kp: Keypair): Promise<{ sig: string; tokens: number } | n
         keys: [
           { pubkey: acc.pubkey, isSigner: false, isWritable: true },
           { pubkey: new PublicKey(TOKEN_MINT), isSigner: false, isWritable: true },
-          { pubkey: kp.publicKey, isSigner: true, isWritable: false },
+          { pubkey: me, isSigner: true, isWritable: false },
         ],
         data,
       }),
     );
     tokens += Number(info.uiAmount ?? 0);
   }
+  return { ixs, tokens };
+}
+
+async function burnAll(kp: Keypair): Promise<{ sig: string; tokens: number } | null> {
+  const { ixs, tokens } = await burnIxs(kp.publicKey);
   if (!ixs.length) return null;
   return { sig: await sendIxs(kp, ixs), tokens };
+}
+
+/**
+ * Dry run of a whole bot run for any wallet: builds the real claim, swap and burn
+ * transactions and simulates each against mainnet. Nothing is signed or sent, so
+ * it needs no secret key. `me` must be TOKEN_MINT's creator for the claim to mean
+ * anything; `burnHolder` (any wallet holding the coin) is used for the burn check.
+ */
+export async function dryRunBot(me: PublicKey, buybackSol = 0.001, burnHolder: PublicKey = me) {
+  const report: Record<string, unknown> = { wallet: me.toBase58(), mint: TOKEN_MINT };
+  const step = async (name: string, fn: () => Promise<unknown>) => {
+    try {
+      report[name] = { ok: true, ...((await fn()) as object) };
+    } catch (e) {
+      report[name] = { ok: false, error: e instanceof Error ? e.message : String(e) };
+    }
+  };
+  await step("ourCoin", async () => {
+    await assertOurCoin(me);
+    return {};
+  });
+  await step("unclaimed", async () => ({ sol: await readUnclaimed(me) }));
+  await step("claim", async () => ({ dryRunGainSol: (await buildClaim(me)).gainSol }));
+  await step("swap", async () => {
+    const s = await buildSwap(me, Math.floor(buybackSol * LAMPORTS_PER_SOL));
+    return { spentSol: s.spentSol, tokensRaw: s.gained.toString(), router: s.order?.router ?? s.order?.swapType ?? null };
+  });
+  await step("burn", async () => {
+    const { ixs, tokens } = await burnIxs(burnHolder);
+    if (!ixs.length) throw new Error(`${burnHolder.toBase58()} holds none of the coin`);
+    const { blockhash } = await conn.getLatestBlockhash("confirmed");
+    const tx = new VersionedTransaction(new TransactionMessage({ payerKey: burnHolder, recentBlockhash: blockhash, instructions: ixs }).compileToV0Message());
+    const mint = new PublicKey(TOKEN_MINT);
+    const supplyBefore = (await conn.getTokenSupply(mint)).value.amount;
+    const [mintAfter] = await simulate(tx, [mint], "burn");
+    // SPL mint layout: supply is a u64 at byte 36.
+    const supplyAfter = Buffer.from(mintAfter!.data[0], "base64").readBigUInt64LE(36);
+    return { holder: burnHolder.toBase58(), tokens, supplyBefore, supplyAfter: supplyAfter.toString() };
+  });
+  return report;
 }
 
 const balanceSol = async (pk: PublicKey) => (await conn.getBalance(pk, "confirmed")) / LAMPORTS_PER_SOL;
@@ -296,7 +358,7 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
 
   try {
     // 0. Prove the contract address is the coin this wallet launched. Nothing runs otherwise.
-    await assertOurCoin(kp);
+    await assertOurCoin(kp.publicKey);
 
     // 1. Claim
     const unclaimed = await readUnclaimed(kp.publicKey);
