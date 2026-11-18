@@ -1,6 +1,7 @@
 import { createHash, createPublicKey, randomUUID, verify } from "crypto";
 import { PublicKey } from "@solana/web3.js";
-import { points, stockKey, TREASURY_WALLET } from "@/config";
+import { CREATOR_WALLET, points, stockKey, TOKEN_LIVE, TREASURY_WALLET } from "@/config";
+import { botAddress, coinCreator } from "./bot";
 import { demoPoints, demoRedemptions } from "./demo";
 import { decryptCode, encryptCode } from "./keyvault";
 import { buildClaimMessage, buildRedeemMessage, buildRevealMessage } from "./redeem-message";
@@ -32,7 +33,26 @@ const store = () => {
   return s;
 };
 
-const isExcluded = (w: string) => w === TREASURY_WALLET || points.excluded.includes(w);
+let _excluded: { at: number; set: Set<string> } | null = null;
+/**
+ * Wallets that never earn XP, redeem or receive gifts: the Pig Bank, the dev wallet
+ * (the coin's creator, read from pump.fun's bonding curve, so it can't be missed),
+ * the bot wallet and anything in points.excluded.
+ */
+export async function excludedWallets(): Promise<Set<string>> {
+  if (_excluded && Date.now() - _excluded.at < 10 * 60_000) return _excluded.set;
+  const set = new Set([TREASURY_WALLET, CREATOR_WALLET, botAddress() ?? "", ...points.excluded].filter(Boolean));
+  if (TOKEN_LIVE) {
+    try {
+      set.add((await coinCreator()).creator.toBase58());
+    } catch {
+      // Not readable right now (RPC hiccup): the configured wallets above still apply.
+    }
+  }
+  _excluded = { at: Date.now(), set };
+  return set;
+}
+const isExcluded = async (w: string) => (await excludedWallets()).has(w);
 
 export async function listRedemptions(): Promise<Redemption[]> {
   return store().listRedemptions();
@@ -92,7 +112,7 @@ export async function getPointsInfo(wallet: string): Promise<PointsInfo> {
     usdValue,
     points: p.centi / 100,
     lastDay: p.lastDayCenti / 100,
-    perDay: isExcluded(wallet) ? 0 : usdValue / points.usdPerPointDay,
+    perDay: (await isExcluded(wallet)) ? 0 : usdValue / points.usdPerPointDay,
     cost: points.redeemCost,
     cooldownUntil,
     donationsUsed,
@@ -123,8 +143,9 @@ export async function runSnapshot(now = Date.now()) {
   const awardsCenti: Record<string, number> = {};
   let issued = 0;
   if (meta) {
+    const excluded = await excludedWallets();
     for (const [owner, bal] of Object.entries(balances)) {
-      if (isExcluded(owner) || !prev[owner]) continue;
+      if (excluded.has(owner) || !prev[owner]) continue;
       const held = Math.min(prev[owner], bal);
       const centi = Math.floor(((held * usePrice) / points.usdPerPointDay) * 100);
       if (centi > 0) {
@@ -219,7 +240,7 @@ export type RedeemRequest = {
 export async function redeem(req: RedeemRequest): Promise<Result> {
   const kind = req.kind;
   if (kind !== "self" && kind !== "gift" && kind !== "team") return bad("Choose who the copy is for.");
-  if (isExcluded(req.wallet)) return bad("This wallet can't redeem.", 403);
+  if (await isExcluded(req.wallet)) return bad("This wallet can't redeem.", 403);
   if (kind === "self") {
     const err = checkDelivery(req.platform, req.region, req.email);
     if (err) return err;
@@ -227,7 +248,7 @@ export async function redeem(req: RedeemRequest): Promise<Result> {
   if (kind === "gift") {
     if (!isValidAddress(req.recipient)) return bad("Enter a valid recipient wallet address.");
     if (req.recipient === req.wallet) return bad("To redeem for yourself, choose “For me”.");
-    if (isExcluded(req.recipient)) return bad("That wallet can't receive gifts.");
+    if (await isExcluded(req.recipient)) return bad("That wallet can't receive gifts.");
   }
 
   const message = buildRedeemMessage({ ...req, kind });
