@@ -239,7 +239,7 @@ export type RedeemRequest = {
 
 export async function redeem(req: RedeemRequest): Promise<Result> {
   const kind = req.kind;
-  if (kind !== "self" && kind !== "gift" && kind !== "team") return bad("Choose who the copy is for.");
+  if (kind !== "self" && kind !== "gift") return bad("Choose who the copy is for.");
   if (await isExcluded(req.wallet)) return bad("This wallet can't redeem.", 403);
   if (kind === "self") {
     const err = checkDelivery(req.platform, req.region, req.email);
@@ -287,9 +287,9 @@ export async function redeem(req: RedeemRequest): Promise<Result> {
     case "insufficient":
       return bad(`You need ${points.redeemCost.toLocaleString()} points to redeem.`, 402);
     case "cooldown":
-      return bad(`You can redeem a copy for yourself once every ${points.cooldownDays} days — you can still gift or donate.`, 429);
+      return bad(`You can redeem a copy for yourself once every ${points.cooldownDays} days — you can still gift a copy.`, 429);
     case "donation_limit":
-      return bad(`Each wallet can gift or donate up to ${points.maxDonationsPerWindow} copies every ${points.cooldownDays} days.`, 429);
+      return bad(`Each wallet can gift up to ${points.maxDonationsPerWindow} copies every ${points.cooldownDays} days.`, 429);
     case "queue_full":
       return bad("The redemption queue is full while the treasury catches up. Your points are safe — try again soon.", 503);
   }

@@ -35,9 +35,8 @@ const faqs: { q: string; a: React.ReactNode }[] = [
     a: (
       <>
         Yes. On the <Link href="/redeem" className="link">claim page</Link>, choose <em>Gift a wallet</em> to send a copy to
-        someone else&apos;s wallet — they connect that wallet on the same page, pick PS5 or Xbox and claim it. Or choose{" "}
-        <em>Donate to the team</em> and the copy is used for community giveaways and videos. Both are listed in the public
-        feed. You can gift or donate up to {points.maxDonationsPerWindow} copies every {points.cooldownDays} days, on top of
+        someone else&apos;s wallet — they connect that wallet on the same page, pick PS5 or Xbox and claim it. Gifts are
+        listed in the public feed. You can gift up to {points.maxDonationsPerWindow} copies every {points.cooldownDays} days, on top of
         one copy for yourself.
       </>
     ),

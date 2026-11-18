@@ -21,11 +21,6 @@ import WalletButton from "./WalletButton";
 const KINDS: { id: RedemptionKind; label: string; hint: string }[] = [
   { id: "self", label: "For me", hint: "Get a code for your own PS5 or Xbox." },
   { id: "gift", label: "Gift a wallet", hint: "Send a copy to someone else’s wallet. They claim it here and pick their platform." },
-  {
-    id: "team",
-    label: "Donate to the team",
-    hint: `Give the copy to the ${site.name} team for community giveaways and videos. It shows in the public feed with its receipt.`,
-  },
 ];
 
 const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -36,9 +31,7 @@ function shareUrl(kind: RedemptionKind) {
   const text =
     kind === "gift"
       ? `Just gifted a friend a copy of GTA 6 with my $${site.ticker} XP${tag}`
-      : kind === "team"
-        ? `Just donated a copy of GTA 6 to the ${site.name} community with my $${site.ticker} XP${tag}`
-        : `Just got GTA 6 for holding $${site.ticker}. Paid in games.${tag}`;
+      : `Just got GTA 6 for holding $${site.ticker}. Paid in games.${tag}`;
   // Only rendered after a redeem, so always on the client. (site.url's Vercel fallback is server-only.)
   return `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.origin)}`;
 }
@@ -49,7 +42,6 @@ export default function RedeemFlow() {
   const [kind, setKind] = useState<RedemptionKind>("self");
   const [platform, setPlatform] = useState("");
   const [region, setRegion] = useState("");
-  const [email, setEmail] = useState("");
   const [recipient, setRecipient] = useState("");
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -91,7 +83,6 @@ export default function RedeemFlow() {
         recipient: to,
         platform,
         region,
-        email,
         issuedAt,
       });
       setDone({ id: j.id, kind, delivered: Boolean(j.delivered), code: j.code });
@@ -110,9 +101,9 @@ export default function RedeemFlow() {
       : !enoughPoints
         ? `You need ${fmtNum(points.redeemCost)} XP to claim. Keep holding to earn more.`
         : kind === "self" && info.cooldownUntil
-          ? `You've claimed for yourself in the last ${points.cooldownDays} days. You can still gift or donate.`
+          ? `You've claimed for yourself in the last ${points.cooldownDays} days. You can still gift a copy.`
           : kind !== "self" && donationsLeft === 0
-            ? `You've used all ${info.donationsMax} gifts/donations for this ${points.cooldownDays}-day window.`
+            ? `You've used all ${info.donationsMax} gifts for this ${points.cooldownDays}-day window.`
             : null;
 
   return (
@@ -139,7 +130,7 @@ export default function RedeemFlow() {
           {info && <PointsPanel info={info} />}
           {info && (
             <p className="font-mono text-xs text-muted">
-              Gifts/donations left this window: <span className="text-fg">{donationsLeft}</span> / {info.donationsMax}
+              Gifts left this window: <span className="text-fg">{donationsLeft}</span> / {info.donationsMax}
             </p>
           )}
         </div>
@@ -157,9 +148,7 @@ export default function RedeemFlow() {
                 ? done.delivered
                   ? "Your code is ready"
                   : "You're in the queue"
-                : done.kind === "gift"
-                  ? "Gift sent"
-                  : "Thank you"}
+                : "Gift sent"}
             </p>
             <p className="text-sm leading-relaxed text-muted">
               Reference <span className="font-mono text-fg">{done.id}</span>. {fmtNum(points.redeemCost)} XP were
@@ -186,7 +175,6 @@ export default function RedeemFlow() {
                   never claimed, the team can cancel it and return your XP.
                 </>
               )}
-              {done.kind === "team" && <>The team will use this copy for a community giveaway or video.</>}{" "}
               Requests are filled in order, and the purchase receipt will appear in the public feed.
             </p>
             {done.code && <RevealedCode code={done.code} demo={info?.demo} />}
@@ -206,7 +194,7 @@ export default function RedeemFlow() {
           <form onSubmit={submit} className="mt-6 space-y-5">
             <div>
               <p className="mb-2 text-sm font-medium">Who is it for?</p>
-              <div role="radiogroup" aria-label="Who is it for?" className="grid grid-cols-3 gap-1 rounded-xl border border-line/10 p-1">
+              <div role="radiogroup" aria-label="Who is it for?" className="grid grid-cols-2 gap-1 rounded-xl border border-line/10 p-1">
                 {KINDS.map((k) => (
                   <button
                     key={k.id}
@@ -237,8 +225,6 @@ export default function RedeemFlow() {
                   setPlatform={setPlatform}
                   region={region}
                   setRegion={setRegion}
-                  email={email}
-                  setEmail={setEmail}
                 />
               )}
 
@@ -263,14 +249,6 @@ export default function RedeemFlow() {
                 </div>
               )}
 
-              {kind === "team" && (
-                <div className="rounded-xl border border-line/[0.08] bg-bg/40 p-4 text-sm leading-relaxed text-muted">
-                  The copy goes to the {site.name} team and is used only for community giveaways and videos — never
-                  resold. It&apos;s listed in the public feed as a team donation from your wallet, with the purchase
-                  receipt once bought.
-                </div>
-              )}
-
               <label className="flex items-start gap-3 text-xs leading-relaxed text-muted">
                 <input
                   type="checkbox"
@@ -292,9 +270,7 @@ export default function RedeemFlow() {
                   ? "Waiting for signature…"
                   : kind === "self"
                     ? "Sign & claim"
-                    : kind === "gift"
-                      ? "Sign & send gift"
-                      : "Sign & donate"}
+                    : "Sign & send gift"}
               </button>
             </fieldset>
 

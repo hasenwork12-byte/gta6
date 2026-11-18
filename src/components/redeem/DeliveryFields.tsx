@@ -3,15 +3,13 @@
 import Image from "next/image";
 import { points, stockKey } from "@/config";
 
-/** Platform cards (cover art, platform colour), store region and delivery email. */
+/** Platform cards (cover art, platform colour) and store region. */
 export default function DeliveryFields({
   idPrefix,
   platform,
   setPlatform,
   region,
   setRegion,
-  email,
-  setEmail,
   stock,
 }: {
   stock: Record<string, number>;
@@ -20,8 +18,6 @@ export default function DeliveryFields({
   setPlatform: (v: string) => void;
   region: string;
   setRegion: (v: string) => void;
-  email: string;
-  setEmail: (v: string) => void;
 }) {
   return (
     <>
@@ -102,24 +98,6 @@ export default function DeliveryFields({
               : "Out of stock right now — you'll join the queue and get a code automatically when stock arrives."}
           </p>
         )}
-      </div>
-
-      <div>
-        <label htmlFor={`${idPrefix}-email`} className="mb-2 block text-sm font-medium">
-          Email <span className="font-normal text-muted">(optional)</span>
-        </label>
-        <input
-          id={`${idPrefix}-email`}
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          className="h-[42px] w-full rounded-full border border-line/15 bg-bg/60 px-5 text-sm outline-none placeholder:text-muted focus:border-accent/60"
-        />
-        <p className="mt-1.5 text-xs text-muted">
-          Codes are shown here after you sign with your wallet. Add an email only if you&apos;d like a heads-up when a
-          queued code is ready. Kept private.
-        </p>
       </div>
     </>
   );

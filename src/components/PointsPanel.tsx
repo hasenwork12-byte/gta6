@@ -47,7 +47,7 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
             ? `At today's value, about ${fmtNum(daysLeft)} more ${daysLeft === 1 ? "day" : "days"} to reach ${fmtNum(info.cost)} XP. Earnings change with the token price.`
             : `Hold $${site.ticker} to start earning XP at the next daily snapshot.`}
         {info.cooldownUntil &&
-          ` This wallet claimed for itself recently. Next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting and donating still work).`}
+          ` This wallet claimed for itself recently. Next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting still works).`}
         {info.demo && " Demo mode: these numbers are placeholders, not read from the chain."}
       </p>
     </div>

@@ -69,15 +69,14 @@ export default function HowItWorks() {
             <dd className="mt-1.5 leading-relaxed text-muted">
               Spend {fmtNum(points.redeemCost)} XP on the <Link href="/redeem" className="link">claim page</Link>. Pick
               PlayStation 5 or Xbox Series X|S and sign a free message. Your code shows up right there, instantly if
-              it&apos;s in stock, or automatically when the Pig Bank has money again. Got extra XP? Gift a copy to a friend or donate
-              one to the team.
+              it&apos;s in stock, or automatically when the Pig Bank has money again. Got extra XP? Gift a copy to a friend.
             </dd>
           </div>
           <div>
             <dt className="font-semibold">Limits</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">
-              One copy for yourself every {points.cooldownDays} days, plus up to {points.maxDonationsPerWindow} gifts or
-              donations in the same window. Claims are filled in order while the Pig Bank can pay. If one can&apos;t be
+              One copy for yourself every {points.cooldownDays} days, plus up to {points.maxDonationsPerWindow} gifts in the
+              same window. Claims are filled in order while the Pig Bank can pay. If one can&apos;t be
               filled, you get your XP back. XP has no cash value.
             </dd>
           </div>

@@ -36,14 +36,12 @@ export default function Terms() {
         </p>
       </section>
       <section>
-        <h2>Gifts and team donations</h2>
+        <h2>Gifts</h2>
         <p>
           Instead of redeeming for yourself, you can spend {fmtNum(points.redeemCost)} points to gift a copy to another
-          wallet, or donate it to the {site.name} team. Each wallet may make up to {points.maxDonationsPerWindow} gifts or
-          donations every {points.cooldownDays} days. A gift can only be claimed by the recipient wallet, which chooses
+          wallet. Each wallet may make up to {points.maxDonationsPerWindow} gifts every {points.cooldownDays} days. A gift can only be claimed by the recipient wallet, which chooses
           the platform and region; unclaimed gifts may be cancelled after 30 days and the points returned to the
-          sender. Team donations are used only for community giveaways and content, are never resold, and appear in the
-          public feed. Gifts and donations are voluntary and give the sender nothing in return. Points themselves still
+          sender. Gifts appear in the public feed. Gifts are voluntary and give the sender nothing in return. Points themselves still
           cannot be transferred.
         </p>
       </section>

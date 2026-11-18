@@ -22,7 +22,6 @@ export default function ClaimGift({
   const { publicKey, signMessage } = useWallet();
   const [platform, setPlatform] = useState("");
   const [region, setRegion] = useState("");
-  const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +34,7 @@ export default function ClaimGift({
     try {
       const issuedAt = new Date().toISOString();
       const message = buildClaimMessage({ id: gift.id, wallet, platform, region, issuedAt });
-      await signAndPost(signMessage, "/api/claim", message, { id: gift.id, wallet, platform, region, email, issuedAt });
+      await signAndPost(signMessage, "/api/claim", message, { id: gift.id, wallet, platform, region, issuedAt });
       onClaimed(); // the gift moves to "Your codes" (ready to reveal, or queued)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Claim failed");
@@ -61,8 +60,6 @@ export default function ClaimGift({
           setPlatform={setPlatform}
           region={region}
           setRegion={setRegion}
-          email={email}
-          setEmail={setEmail}
         />
         <button className="btn-primary w-full" disabled={busy || !platform || !region}>
           {busy ? "Waiting for signature…" : "Sign & claim gift"}
