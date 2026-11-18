@@ -62,7 +62,7 @@ export const points = {
   /** The cooldown in words, for the site text. */
   cooldownLabel: "24 hours",
   /** On top of that, gifts allowed per wallet in the same window. */
-  maxDonationsPerWindow: 5,
+  maxDonationsPerWindow: 1,
   /** New redemptions pause while this many are still waiting to be fulfilled. */
   maxPendingRedemptions: 25,
   /** Keep in sync with the schedule in vercel.json. */

@@ -289,7 +289,7 @@ export async function redeem(req: RedeemRequest): Promise<Result> {
     case "cooldown":
       return bad(`You can redeem a copy for yourself once every ${points.cooldownLabel} — you can still gift a copy.`, 429);
     case "donation_limit":
-      return bad(`Each wallet can gift up to ${points.maxDonationsPerWindow} copies every ${points.cooldownLabel}.`, 429);
+      return bad(`Each wallet can send one gift every ${points.cooldownLabel}.`, 429);
     case "queue_full":
       return bad("The redemption queue is full while the treasury catches up. Your points are safe — try again soon.", 503);
   }

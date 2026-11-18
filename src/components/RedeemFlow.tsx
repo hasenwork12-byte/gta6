@@ -103,7 +103,7 @@ export default function RedeemFlow() {
         : kind === "self" && info.cooldownUntil
           ? `You've claimed for yourself in the last ${points.cooldownLabel}. You can still gift a copy.`
           : kind !== "self" && donationsLeft === 0
-            ? `You've used all ${info.donationsMax} gifts in the last ${points.cooldownLabel}.`
+            ? `You've already sent a gift in the last ${points.cooldownLabel}.`
             : null;
 
   return (

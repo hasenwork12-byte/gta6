@@ -75,7 +75,7 @@ export default function HowItWorks() {
           <div>
             <dt className="font-semibold">Limits</dt>
             <dd className="mt-1.5 leading-relaxed text-muted">
-              One copy for yourself every {points.cooldownLabel}, plus up to {points.maxDonationsPerWindow} gifts in the
+              One copy for yourself every {points.cooldownLabel}, plus one gift in the
               same window. Claims are filled in order while the Pig Bank can pay. If one can&apos;t be
               filled, you get your XP back. XP has no cash value.
             </dd>

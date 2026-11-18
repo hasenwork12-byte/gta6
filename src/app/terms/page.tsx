@@ -39,7 +39,7 @@ export default function Terms() {
         <h2>Gifts</h2>
         <p>
           Instead of redeeming for yourself, you can spend {fmtNum(points.redeemCost)} points to gift a copy to another
-          wallet. Each wallet may make up to {points.maxDonationsPerWindow} gifts every {points.cooldownLabel}. A gift can only be claimed by the recipient wallet, which chooses
+          wallet. Each wallet may send one gift every {points.cooldownLabel}. A gift can only be claimed by the recipient wallet, which chooses
           the platform and region; unclaimed gifts may be cancelled after 30 days and the points returned to the
           sender. Gifts appear in the public feed. Gifts are voluntary and give the sender nothing in return. Points themselves still
           cannot be transferred.
