@@ -60,12 +60,12 @@ export default async function TreasuryPage() {
 
         <div className="mt-16">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="font-display text-2xl font-extrabold tracking-tight">Latest transactions</h2>
+            <h2 className="font-display text-2xl font-extrabold tracking-tight">Latest burns</h2>
             <Link href="/ledger" className="text-xs font-semibold text-muted transition hover:text-fg">
               Full receipts →
             </Link>
           </div>
-          <TxList entries={ledger?.entries ?? []} solUsd={dashboard?.snapshot.solUsd ?? 0} demo={demo} />
+          <TxList entries={ledger?.entries ?? []} solUsd={dashboard?.snapshot.solUsd ?? 0} demo={demo} burnsOnly />
         </div>
       </div>
     </DashboardProvider>

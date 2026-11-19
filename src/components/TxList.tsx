@@ -153,9 +153,25 @@ function PlainRow({ e, demo }: { e: LedgerEntry; demo: boolean }) {
 }
 
 /** Latest Pig Bank transactions; each buyback and its burn show as one expandable card. */
-export default function TxList({ entries, solUsd, demo, limit = 8 }: { entries: LedgerEntry[]; solUsd: number; demo: boolean; limit?: number }) {
-  const rows = group(entries).slice(0, limit);
-  if (rows.length === 0) return <div className="card p-10 text-center text-sm text-muted">No transactions yet.</div>;
+export default function TxList({
+  entries,
+  solUsd,
+  demo,
+  limit = 8,
+  burnsOnly = false,
+}: {
+  entries: LedgerEntry[];
+  solUsd: number;
+  demo: boolean;
+  limit?: number;
+  /** Only buyback-and-burn cards (no fees, transfers or game purchases). */
+  burnsOnly?: boolean;
+}) {
+  const rows = group(entries)
+    .filter((r) => !burnsOnly || r.type === "burn")
+    .slice(0, limit);
+  if (rows.length === 0)
+    return <div className="card p-10 text-center text-sm text-muted">{burnsOnly ? `No burns yet.` : "No transactions yet."}</div>;
   return (
     <ul className="card divide-y-2 divide-line/[0.05] overflow-hidden">
       {rows.map((r) =>
