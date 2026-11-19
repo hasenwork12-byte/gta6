@@ -51,7 +51,7 @@ export default function ProtocolAnalytics({ title = "Protocol analytics" }: { ti
     {
       label: "Spent on GTA 6",
       total: s.gamesDelivered * game,
-      note: `${fmtNum(s.gamesDelivered)} copies × ${fmtUsd(game, 0)} · ${span}.`,
+      note: `${fmtNum(s.gamesDelivered)} ${s.gamesDelivered === 1 ? "copy" : "copies"} · ${span}.`,
       pick: (d: DailyPoint) => d.games * game,
       tip: (d: DailyPoint) => `${fmtNum(d.games)} ${d.games === 1 ? "copy" : "copies"} delivered`,
     },
