@@ -76,7 +76,7 @@ export default async function TreasuryPage() {
                 const pigMove = kind === "buyback" || kind === "burn";
                 const Icon = fed ? Coins : kind === "burn" ? Flame : kind === "buyback" ? RefreshCw : Gamepad2;
                 const title =
-                  kind === "fee" ? "Fee received" : kind === "game" ? "GTA 6 copy bought" : kind === "buyback" ? `Bought back $${site.ticker}` : kind === "burn" ? `Burned $${site.ticker}` : "Sent out";
+                  kind === "fee" ? "Fee received" : kind === "game" ? "GTA 6 copy bought" : kind === "buyback" ? `Bought back $${site.ticker}` : kind === "burn" ? `Burned ${site.ticker}` : e.label;
                 return (
                   <li key={e.signature} className="flex items-center gap-3 px-5 py-3">
                     <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 ${fed || pigMove ? "border-gold/25 bg-gold/10 text-gold" : "border-accent/25 bg-accent/10 text-accent"}`}>

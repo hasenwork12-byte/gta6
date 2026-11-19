@@ -183,6 +183,9 @@ function pigDeltas(meta: ParsedTransactionMeta, treasury: string) {
 }
 
 /** Total $PIG supply (UI units). Burns lower it. */
+const PUMP_PROGRAM = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
+const PUMP_AMM_PROGRAM = "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA";
+
 async function tokenSupply(): Promise<number | null> {
   if (!TOKEN_LIVE) return null;
   return cached("supply", 5 * 60_000, async () => {
@@ -225,7 +228,16 @@ export async function getLedger(): Promise<{ entries: LedgerEntry[]; partial: bo
         const direction = d > 0 ? "in" : "out";
         const sig = chunk[k].signature;
         const time = tx.blockTime ?? chunk[k].blockTime ?? 0;
+        const logs = tx.meta.logMessages ?? [];
+        // The coin's own creation (and the dev buy inside it) is not a buyback.
+        const isCreate = logs.some((l) => /Instruction: Create(V2)?$/.test(l));
+        // Creator fees only ever come out of pump.fun / PumpSwap vaults.
+        const touchesPump = keys.includes(PUMP_PROGRAM) || keys.includes(PUMP_AMM_PROGRAM);
 
+        if (isCreate) {
+          entries.push({ signature: sig, time, direction: "out", sol: Math.abs(Math.min(d, 0)) / LAMPORTS_PER_SOL, counterparty: null, label: "Coin created (dev buy)", kind: "transfer", tokens: pig.treasury > 0 ? pig.treasury : undefined });
+          return;
+        }
         // Buyback: the pig spent SOL and received $PIG. Burn: $PIG left the pig and nobody received it.
         if (pig.treasury > 0 && d < 0) {
           entries.push({ signature: sig, time, direction: "out", sol: Math.abs(d) / LAMPORTS_PER_SOL, counterparty: null, label: "Buyback", kind: "buyback", tokens: pig.treasury });
@@ -233,6 +245,11 @@ export async function getLedger(): Promise<{ entries: LedgerEntry[]; partial: bo
         }
         if (pig.treasury < 0 && pig.othersGained === 0) {
           entries.push({ signature: sig, time, direction: "out", sol: Math.abs(Math.min(d, 0)) / LAMPORTS_PER_SOL, counterparty: null, label: "Burn", kind: "burn", tokens: -pig.treasury });
+          return;
+        }
+        // $PIG left the pig and someone else got it: a sale or a transfer, not a fee.
+        if (pig.treasury < 0) {
+          entries.push({ signature: sig, time, direction: d > 0 ? "in" : "out", sol: Math.abs(d) / LAMPORTS_PER_SOL, counterparty: null, label: d > 0 ? `Sold $PIG` : `Sent $PIG`, kind: "transfer" });
           return;
         }
         if (d === 0) return;
@@ -247,14 +264,15 @@ export async function getLedger(): Promise<{ entries: LedgerEntry[]; partial: bo
             cp = keys[j];
           }
         });
-        const kind = purchaseTx.has(sig) ? "game" : direction === "in" ? "fee" : "transfer";
+        // Money sent in by hand (funding the wallet) is not a creator fee.
+        const kind = purchaseTx.has(sig) ? "game" : direction === "in" ? (touchesPump ? "fee" : "transfer") : "transfer";
         entries.push({
           signature: sig,
           time,
           direction,
           sol: Math.abs(d) / LAMPORTS_PER_SOL,
           counterparty: cp,
-          label: kind === "game" ? "Game purchase" : kind === "fee" ? "Creator fee" : "Outgoing transfer",
+          label: kind === "game" ? "Game purchase" : kind === "fee" ? "Creator fee" : direction === "in" ? "Incoming transfer" : "Outgoing transfer",
           kind,
         });
       });

@@ -21,15 +21,13 @@ export function summarizeBuybacks(
   bot?: BotData,
 ): BuybackSummary {
   const ledgerBurns = entries.filter((e) => e.kind === "burn").sort((a, b) => a.time - b.time);
-  const fromLedger: BuybackPoint[] = entries
-    .filter((e) => e.kind === "buyback")
-    .map((e) => ({
-      time: e.time,
-      sol: e.sol,
-      tokens: e.tokens ?? 0,
-      signature: e.signature,
-      burnTx: ledgerBurns.find((b) => b.time >= e.time && b.time - e.time <= BURN_PAIR_SEC)?.signature,
-    }));
+  const ledgerBuys = entries.filter((e) => e.kind === "buyback").sort((a, b) => a.time - b.time);
+  // Each burn belongs to the latest buyback before it (one burn, one buyback).
+  const fromLedger: BuybackPoint[] = ledgerBuys.map((e, i) => {
+    const next = ledgerBuys[i + 1];
+    const burn = ledgerBurns.find((b) => b.time >= e.time && b.time - e.time <= BURN_PAIR_SEC && (!next || b.time < next.time));
+    return { time: e.time, sol: e.sol, tokens: e.tokens ?? 0, signature: e.signature, burnTx: burn?.signature };
+  });
 
   const fromBot: BuybackPoint[] = (bot?.runs ?? [])
     .filter((r) => r.swapTx)
