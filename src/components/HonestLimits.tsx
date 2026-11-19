@@ -16,8 +16,8 @@ const LIMITS: [string, string][] = [
     "Holding to earn XP is still holding a memecoin. The price can fall by more than a game is worth.",
   ],
   [
-    "Run by people, not a contract",
-    "XP is tracked by our server, and the team buys codes and makes buybacks by hand. Every purchase is on-chain, but the rules can be changed.",
+    "Automatic, but not a contract",
+    "Buybacks and burns are done automatically by our bot. XP is tracked by our server, and the team buys the GTA 6 codes. Every purchase is on-chain, but the rules can be changed.",
   ],
 ];
 
