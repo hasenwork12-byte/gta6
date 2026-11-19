@@ -69,7 +69,7 @@ export function DashboardProvider({ initial, children }: { initial: Dashboard | 
 
   // Demo: simulate small incoming fees so the rolling numbers can be seen.
   useEffect(() => {
-    if (!demo) return;
+    if (!demo || process.env.NEXT_PUBLIC_DEMO_DATA !== "true") return;
     const id = setInterval(() => {
       setData((d) => {
         if (!d) return d;
