@@ -18,9 +18,9 @@ const quests = [
   },
   {
     icon: Coins,
-    title: "Trading fees fill the Pig Bank",
-    body: `Every trade sends creator fees to the Pig Bank, a public wallet anyone can check. ${Math.round((1 - buyback.share) * 100)}% buys games, ${Math.round(buyback.share * 100)}% buys $${site.ticker} back${buyback.burn ? " and burns it" : ""}.`,
-    reward: buyback.burn ? "Pig Bank grows · supply shrinks" : "Pig Bank grows",
+    title: "Fees fill the Pig Bank",
+    body: `Every trade pays fees into the Pig Bank, a public wallet. ${Math.round((1 - buyback.share) * 100)}% buys games, ${Math.round(buyback.share * 100)}% buys $${site.ticker} back${buyback.burn ? " and burns it" : ""}.`,
+    reward: buyback.burn ? `${Math.round((1 - buyback.share) * 100)}% games · ${Math.round(buyback.share * 100)}% burn` : "Pig Bank grows",
   },
   {
     icon: Gamepad2,
@@ -45,8 +45,8 @@ export default function HowItWorks() {
               </span>
             </div>
             <h3 className="mt-4 font-display text-xl font-extrabold tracking-tight">{q.title}</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-muted">{q.body}</p>
-            <span className="chip mt-4 w-fit text-gold">{q.reward}</span>
+            <p className="mt-2 flex-1 pb-2 text-sm leading-relaxed text-muted">{q.body}</p>
+            <span className="chip mt-4 w-fit whitespace-nowrap text-gold">{q.reward}</span>
           </li>
         ))}
       </ol>
