@@ -33,7 +33,7 @@ export const site = {
    * Socials. Leave empty and the link is hidden everywhere on the site.
    * xHandle: e.g. "@paidingames"   telegram: group/channel name, e.g. "paidingames"
    */
-  xHandle: "",
+  xHandle: "@PaidInGames",
   telegram: "",
   /** Where the "Buy" button sends people once TOKEN_MINT is set. */
   buyUrl: (mint: string) => `https://pump.fun/coin/${mint}`,
