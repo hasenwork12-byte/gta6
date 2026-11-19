@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CircleHelp, Gauge, Gift, House, PiggyBank, ScrollText, type LucideIcon } from "lucide-react";
+import { CircleHelp, Gauge, Gift, House, PiggyBank, Rocket, ScrollText, type LucideIcon } from "lucide-react";
 import { site, xSocial } from "@/config";
 import { XIcon } from "./Icons";
 import { LogoMark } from "./Logo";
@@ -11,6 +11,7 @@ type Item = { href: string; label: string; short: string; icon: LucideIcon };
 
 const NAV: Item[] = [
   { href: "/", label: "Home", short: "Home", icon: House },
+  { href: "/launch", label: "Launch", short: "Launch", icon: Rocket },
   { href: "/treasury", label: "Pig Bank", short: "Pig Bank", icon: PiggyBank },
   { href: "/points", label: "My XP", short: "My XP", icon: Gauge },
   { href: "/redemptions", label: "Claims", short: "Claims", icon: Gift },
@@ -18,8 +19,8 @@ const NAV: Item[] = [
   { href: "/how-it-works", label: "How it works", short: "How", icon: CircleHelp },
 ];
 
-// Phones get the five most useful; Receipts stays reachable from the Pig Bank page and the footer.
-const TABS = NAV.filter((n) => n.href !== "/ledger");
+// Phones get five tabs; Receipts and How it works stay reachable from the footer.
+const TABS = NAV.filter((n) => n.href !== "/ledger" && n.href !== "/how-it-works");
 
 const isActive = (pathname: string, href: string) =>
   href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
