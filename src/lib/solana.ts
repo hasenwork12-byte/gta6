@@ -321,9 +321,14 @@ async function deliveredTimes() {
   return all.filter((r) => r.status === "fulfilled").map((r) => Math.floor((r.fulfilledAt ?? r.createdAt) / 1000));
 }
 
+/**
+ * Keys shown as "ready". STOCK_SHOWN (env) sets a minimum for the number on the site only;
+ * real deliveries still come from the codes added on /admin.
+ */
 async function keysInStock(): Promise<number> {
   const counts = await getStockCounts().catch(() => ({}) as Record<string, number>);
-  return Object.values(counts).reduce((a, n) => a + n, 0);
+  const real = Object.values(counts).reduce((a, n) => a + n, 0);
+  return Math.max(real, Number(process.env.STOCK_SHOWN) || 0);
 }
 
 /** The fee bot's log and the fees still waiting in the creator vaults. */
