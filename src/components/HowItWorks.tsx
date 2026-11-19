@@ -46,7 +46,7 @@ export default function HowItWorks() {
             </div>
             <h3 className="mt-4 font-display text-xl font-extrabold tracking-tight">{q.title}</h3>
             <p className="mt-2 flex-1 pb-2 text-sm leading-relaxed text-muted">{q.body}</p>
-            <span className="chip mt-4 w-fit whitespace-nowrap text-gold">{q.reward}</span>
+            <span className="chip mt-4 w-fit whitespace-nowrap border-line/15 bg-line/[0.08] text-gold">{q.reward}</span>
           </li>
         ))}
       </ol>
