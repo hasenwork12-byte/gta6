@@ -6,6 +6,7 @@
 // The bot wallet must be the coin's creator wallet. Its secret key lives only in
 // the BOT_SECRET_KEY env var on the server. Every step is logged with its tx id.
 import {
+  ComputeBudgetProgram,
   Connection,
   Keypair,
   LAMPORTS_PER_SOL,
@@ -45,6 +46,13 @@ const MIN_BUYBACK_SOL = 0.001;
 /** Always left in the bot wallet for transaction fees. */
 const GAS_RESERVE_SOL = num(process.env.BOT_GAS_RESERVE_SOL, 0.02);
 const MIN_SWEEP_SOL = 0.005;
+/**
+ * Priority fee per bot transaction, in SOL. Without one, transactions get dropped when
+ * the network is busy (seen on the 2026-11-19 test coin: the claim never landed at 0.00001).
+ */
+const PRIORITY_FEE_SOL = num(process.env.BOT_PRIORITY_FEE_SOL, 0.0001);
+/** Compute-unit price (micro-lamports) for our own transactions, sized so ~200k CU costs PRIORITY_FEE_SOL. */
+const CU_PRICE_MICRO = Math.round((PRIORITY_FEE_SOL * LAMPORTS_PER_SOL * 1_000_000) / 200_000);
 
 // ── Keys ──────────────────────────────────────────────────────────────────────
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -101,13 +109,20 @@ export async function readUnclaimed(creator: PublicKey): Promise<number> {
 
 // ── Sending ───────────────────────────────────────────────────────────────────
 async function sendAndWait(tx: VersionedTransaction, timeoutMs = 40_000): Promise<string> {
-  const sig = await conn.sendRawTransaction(tx.serialize(), { maxRetries: 3 });
+  const raw = tx.serialize();
+  const sig = await conn.sendRawTransaction(raw, { maxRetries: 0 });
   const until = Date.now() + timeoutMs;
+  let lastSend = Date.now();
   while (Date.now() < until) {
     const { value } = await conn.getSignatureStatuses([sig]);
     const st = value[0];
     if (st?.err) throw new Error(`Transaction ${sig} failed: ${JSON.stringify(st.err)}`);
     if (st?.confirmationStatus === "confirmed" || st?.confirmationStatus === "finalized") return sig;
+    // Re-broadcast every ~2s until it lands; the same signed tx can never run twice.
+    if (Date.now() - lastSend > 2_000) {
+      lastSend = Date.now();
+      await conn.sendRawTransaction(raw, { skipPreflight: true, maxRetries: 0 }).catch(() => {});
+    }
     await new Promise((r) => setTimeout(r, 1500));
   }
   throw new Error(`Transaction ${sig} not confirmed in time.`);
@@ -115,7 +130,8 @@ async function sendAndWait(tx: VersionedTransaction, timeoutMs = 40_000): Promis
 
 async function sendIxs(kp: Keypair, ixs: TransactionInstruction[]) {
   const { blockhash } = await conn.getLatestBlockhash("confirmed");
-  const msg = new TransactionMessage({ payerKey: kp.publicKey, recentBlockhash: blockhash, instructions: ixs }).compileToV0Message();
+  const withFee = [ComputeBudgetProgram.setComputeUnitPrice({ microLamports: CU_PRICE_MICRO }), ...ixs];
+  const msg = new TransactionMessage({ payerKey: kp.publicKey, recentBlockhash: blockhash, instructions: withFee }).compileToV0Message();
   const tx = new VersionedTransaction(msg);
   tx.sign([kp]);
   return sendAndWait(tx);
@@ -193,7 +209,7 @@ async function buildClaim(me: PublicKey): Promise<{ tx: VersionedTransaction; ga
   const r = await fetch("https://pumpportal.fun/api/trade-local", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ publicKey: me.toBase58(), action: "collectCreatorFee", priorityFee: 0.00001 }),
+    body: JSON.stringify({ publicKey: me.toBase58(), action: "collectCreatorFee", priorityFee: PRIORITY_FEE_SOL }),
     cache: "no-store",
   });
   if (!r.ok) throw new Error(`Fee claim build failed (${r.status}): ${(await r.text()).slice(0, 200)}`);
