@@ -7,6 +7,12 @@ import type { LedgerEntry, Redemption, TreasurySnapshot } from "./types";
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+/**
+ * Fake numbers only when NEXT_PUBLIC_DEMO_DATA=true (local testing). Otherwise, before the
+ * coin is live, every surface shows zeros and empty lists instead of made-up activity.
+ */
+export const SHOW_DEMO_DATA = process.env.NEXT_PUBLIC_DEMO_DATA === "true";
+
 function rng(seed: number) {
   let s = seed >>> 0;
   return () => {
@@ -32,6 +38,7 @@ export const DEMO_SOL_USD = 185;
 export const DEMO_TOKEN_USD = 0.0004;
 
 export function demoRedemptions(): Redemption[] {
+  if (!SHOW_DEMO_DATA) return [];
   const r = rng(7);
   return Array.from({ length: 11 }, (_, i): Redemption => {
     const wallet = fakeAddr(r);
@@ -63,6 +70,7 @@ export function demoPoints(addr: string) {
   // Local testing: give every wallet the same XP so the claim flow can be tried end to end.
   const start = Number(process.env.DEMO_START_XP);
   if (start > 0) return start;
+  if (!SHOW_DEMO_DATA) return 0;
   let h = 7;
   for (const c of addr) h = (h * 33 + c.charCodeAt(0)) >>> 0;
   return Math.floor(rng(h)() * points.redeemCost * 1.5);
@@ -74,6 +82,7 @@ export const DEMO_SUPPLY = 1_000_000_000;
 const DEMO_UNCLAIMED = 0.0842;
 
 export function demoLedger(): LedgerEntry[] {
+  if (!SHOW_DEMO_DATA) return [];
   const r = rng(42);
   const out: LedgerEntry[] = [];
   let t = DEMO_NOW;
@@ -122,6 +131,25 @@ function demoBuybacks(): LedgerEntry[] {
 }
 
 export function demoSnapshot(): TreasurySnapshot {
+  if (!SHOW_DEMO_DATA) {
+    const now = Math.floor(Date.now() / 1000);
+    return {
+      demo: true,
+      treasuryWallet: "",
+      balanceSol: 0,
+      solUsd: DEMO_SOL_USD,
+      totalFeesSol: 0,
+      feesPartial: false,
+      holders: 0,
+      gamesRedeemed: 0,
+      gamesDelivered: 0,
+      updatedAt: now,
+      buyback: summarizeBuybacks([], 0, null, false),
+      fees: { bot: true, earnedSol: 0, claimedSol: 0, unclaimedSol: 0, lastClaimAt: null, lastRunAt: null },
+      daily: dailySeries(dayStarts(now), [], [], buyback.burn, []),
+      keysInStock: 0,
+    };
+  }
   const ledger = demoLedger();
   const spent = ledger.filter((e) => e.kind === "buyback").reduce((a, e) => a + e.sol, 0);
   // Whatever isn't spent on games or buybacks is the balance.
@@ -157,6 +185,7 @@ export function demoSnapshot(): TreasurySnapshot {
 
 /** Demo token balance for any address — deterministic, clearly labelled in UI. */
 export function demoBalance(addr: string) {
+  if (!SHOW_DEMO_DATA) return 0;
   let h = 0;
   for (const c of addr) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   const r = rng(h);

@@ -48,7 +48,7 @@ export default function PointsPanel({ info }: { info: PointsInfo }) {
             : `Hold $${site.ticker} to start earning XP at the next daily snapshot.`}
         {info.cooldownUntil &&
           ` This wallet claimed for itself recently. Next copy for yourself from ${fmtDate(info.cooldownUntil / 1000)} (gifting still works).`}
-        {info.demo && " Demo mode: these numbers are placeholders, not read from the chain."}
+        {info.demo && (process.env.NEXT_PUBLIC_DEMO_DATA === "true" ? " Demo mode: these numbers are placeholders, not read from the chain." : " XP starts counting the moment $PIG launches.")}
       </p>
     </div>
   );

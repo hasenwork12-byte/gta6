@@ -1,11 +1,12 @@
 export default function DemoBadge({ className = "" }: { className?: string }) {
+  const fake = process.env.NEXT_PUBLIC_DEMO_DATA === "true";
   return (
     <span
-      title="Placeholder numbers shown until the real token mint and treasury wallet are configured."
+      title={fake ? "Placeholder numbers shown until the real token mint and treasury wallet are configured." : "Real numbers appear here the moment $PIG launches."}
       className={`inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-400/10 px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300 ${className}`}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-      Demo data
+      {fake ? "Demo data" : "Starts at launch"}
     </span>
   );
 }
