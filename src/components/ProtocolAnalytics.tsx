@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { points, site } from "@/config";
+import { ANALYTICS_DAYS } from "@/lib/analytics";
 import { fmtCompact, fmtNum, fmtUsd } from "@/lib/format";
 import type { DailyPoint } from "@/lib/types";
 import { useDashboard } from "./DashboardContext";
@@ -30,25 +31,27 @@ export default function ProtocolAnalytics({ title = "Protocol analytics" }: { ti
   const pctSupply = b.supply ? (burnTokens / b.supply) * 100 : null;
   const burnWord = b.burn ? "burned" : "bought back";
 
+  // Under 14 days of history means the coin is young: say "since launch".
+  const span = s.daily.length < ANALYTICS_DAYS ? "since launch" : `last ${s.daily.length} days shown`;
   const cards = [
     {
       label: "Fees",
       total: usd(feesSol),
-      note: `Daily in UTC · last ${s.daily.length} days shown.`,
+      note: `Daily in UTC · ${span}.`,
       pick: (d: DailyPoint) => usd(d.feesSol),
       tip: (d: DailyPoint) => `${fmtNum(d.feesSol, 3)} SOL claimed`,
     },
     {
       label: `$${site.ticker} ${burnWord}`,
       total: usd(burnSol),
-      note: `Daily in UTC · last ${s.daily.length} days shown.`,
+      note: `Daily in UTC · ${span}.`,
       pick: (d: DailyPoint) => usd(d.burnSol),
       tip: (d: DailyPoint) => `${fmtCompact(d.burnTokens)} $${site.ticker} ${burnWord}`,
     },
     {
       label: "Spent on GTA 6",
       total: s.gamesDelivered * game,
-      note: `${fmtNum(s.gamesDelivered)} copies × ${fmtUsd(game, 0)} · last ${s.daily.length} days shown.`,
+      note: `${fmtNum(s.gamesDelivered)} copies × ${fmtUsd(game, 0)} · ${span}.`,
       pick: (d: DailyPoint) => d.games * game,
       tip: (d: DailyPoint) => `${fmtNum(d.games)} ${d.games === 1 ? "copy" : "copies"} delivered`,
     },
@@ -142,7 +145,8 @@ function BarCard({
                 onMouseEnter={() => setHover(i)}
                 onFocus={() => setHover(i)}
                 onClick={() => setHover(i)}
-                className="flex h-full flex-1 items-end"
+                className="flex h-full shrink-0 items-end"
+                style={{ width: `calc((100% - ${(ANALYTICS_DAYS - 1) * 5}px) / ${ANALYTICS_DAYS})` }}
               >
                 <span
                   className={`block w-full rounded-[5px] transition-colors ${hover === i ? "bg-gold" : "bg-line/25"}`}
@@ -154,7 +158,7 @@ function BarCard({
         </div>
         <div className="mt-2 flex justify-between font-mono text-[10px] text-muted">
           <span>{dayLabel(days[0].day)}</span>
-          <span>{dayLabel(days[days.length - 1].day)}</span>
+          {days.length > 1 && <span>{dayLabel(days[days.length - 1].day)}</span>}
         </div>
       </div>
     </div>

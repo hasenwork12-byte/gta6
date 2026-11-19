@@ -186,6 +186,32 @@ function pigDeltas(meta: ParsedTransactionMeta, treasury: string) {
 const PUMP_PROGRAM = "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P";
 const PUMP_AMM_PROGRAM = "pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA";
 
+/**
+ * When the coin was created (unix seconds), so charts start on launch day.
+ * NEXT_PUBLIC_LAUNCH_DATE (e.g. 2026-11-19) overrides; otherwise the mint's first
+ * transaction, via Helius' oldest-first history call. Null if neither works.
+ */
+async function coinCreatedAt(): Promise<number | null> {
+  const fixed = Date.parse(process.env.NEXT_PUBLIC_LAUNCH_DATE || "");
+  if (fixed > 0) return Math.floor(fixed / 1000);
+  if (!TOKEN_LIVE) return null;
+  return cached("created", 24 * 3600_000, async () => {
+    try {
+      const r = await fetch(RPC_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTransactionsForAddress", params: [TOKEN_MINT, { transactionDetails: "signatures", sortOrder: "asc", limit: 1 }] }),
+        cache: "no-store",
+      });
+      const j = await r.json();
+      const t = j?.result?.data?.[0]?.blockTime;
+      return typeof t === "number" && t > 0 ? t : null;
+    } catch {
+      return null;
+    }
+  });
+}
+
 async function tokenSupply(): Promise<number | null> {
   if (!TOKEN_LIVE) return null;
   return cached("supply", 5 * 60_000, async () => {
@@ -345,7 +371,7 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
   );
   // With the bot, it knows every claim. Without it, fees seen arriving in the Pig Bank count as claimed.
   const claimed = bot.totals ? bot.totals.claimedSol : fees;
-  const starts = dayStarts(Date.now() / 1000);
+  const starts = dayStarts(Date.now() / 1000, undefined, await coinCreatedAt());
   const [delivered, botDays] = await Promise.all([deliveredTimes(), BOT_LIVE ? getDays(starts) : null]);
   return {
     demo: false,

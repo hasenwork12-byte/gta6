@@ -4,9 +4,16 @@ import type { BuybackPoint, DailyPoint, LedgerEntry } from "./types";
 export const ANALYTICS_DAYS = 14;
 const DAY = 86400;
 
-/** Unix seconds at 00:00 UTC for each of the last `days` days, oldest first. */
-export function dayStarts(now: number, days = ANALYTICS_DAYS) {
+/**
+ * Unix seconds at 00:00 UTC for each of the last `days` days, oldest first.
+ * With `since` (the coin's launch), the days start at launch day instead of showing empty days before it.
+ */
+export function dayStarts(now: number, days = ANALYTICS_DAYS, since?: number | null) {
   const today = Math.floor(now / DAY) * DAY;
+  if (since && since > 0) {
+    const sinceLaunch = Math.floor((today - Math.floor(since / DAY) * DAY) / DAY) + 1;
+    days = Math.max(1, Math.min(days, sinceLaunch));
+  }
   return Array.from({ length: days }, (_, i) => today - (days - 1 - i) * DAY);
 }
 
