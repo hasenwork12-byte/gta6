@@ -86,6 +86,30 @@ function botKeypair(): Keypair | null {
 }
 
 export const BOT_LIVE = TOKEN_LIVE && Boolean((process.env.BOT_SECRET_KEY || "").trim());
+const KEY_SET = Boolean((process.env.BOT_SECRET_KEY || "").trim()) && process.env.NEXT_PUBLIC_FORCE_DEMO !== "true";
+
+/**
+ * The coin the bot works on: NEXT_PUBLIC_TOKEN_MINT once the site is redeployed with it,
+ * or, until then, the newest pump.fun coin the bot wallet itself created. That lets the
+ * first claim happen seconds after launch instead of waiting for a redeploy.
+ * assertOurCoin still proves the creator on-chain before anything is signed.
+ */
+let MINT = TOKEN_MINT;
+
+async function findLaunchedMint(me: PublicKey): Promise<string> {
+  const sigs = await conn.getSignaturesForAddress(me, { limit: 50 });
+  for (const s of sigs) {
+    if (s.err) continue;
+    const tx = await conn.getParsedTransaction(s.signature, { maxSupportedTransactionVersion: 0 }).catch(() => null);
+    const logs = tx?.meta?.logMessages ?? [];
+    const keys = tx?.transaction.message.accountKeys.map((a) => a.pubkey.toBase58()) ?? [];
+    if (!keys.includes(PUMP.toBase58()) || !logs.some((l) => /Instruction: Create(V2)?$/.test(l))) continue;
+    const mints = [...new Set((tx?.meta?.postTokenBalances ?? []).map((b) => b.mint))];
+    const mint = mints.find((m) => m.endsWith("pump")) ?? mints[0];
+    if (mint) return mint;
+  }
+  return "";
+}
 export const botAddress = () => botKeypair()?.publicKey.toBase58() ?? null;
 
 // ── Reading unclaimed fees ────────────────────────────────────────────────────
@@ -140,29 +164,29 @@ async function sendIxs(kp: Keypair, ixs: TransactionInstruction[]) {
 // ── Safety checks: nothing is signed unless it provably touches only our coin ─
 let _verifiedMint: string | null = null;
 
-/** The creator wallet pump.fun recorded for TOKEN_MINT, read from its bonding curve. */
+/** The creator wallet pump.fun recorded for MINT, read from its bonding curve. */
 export async function coinCreator(): Promise<{ creator: PublicKey; cashback: boolean }> {
-  const mint = new PublicKey(TOKEN_MINT);
+  const mint = new PublicKey(MINT);
   const curve = await conn.getAccountInfo(pda([Buffer.from("bonding-curve"), mint.toBuffer()], PUMP));
-  if (!curve || !curve.owner.equals(PUMP)) throw new Error(`Refusing: ${TOKEN_MINT} is not a pump.fun coin.`);
+  if (!curve || !curve.owner.equals(PUMP)) throw new Error(`Refusing: ${MINT} is not a pump.fun coin.`);
   // BondingCurve layout (pump IDL): 8 discriminator, 5 × u64, complete (bool), creator (pubkey) at 49,
   // then is_mayhem_mode (81), is_cashback_coin (82).
   return { creator: new PublicKey(curve.data.subarray(49, 81)), cashback: curve.data[82] === 1 };
 }
 
 /**
- * Proves TOKEN_MINT is the coin this bot wallet launched: pump.fun's bonding
+ * Proves MINT is the coin this bot wallet launched: pump.fun's bonding
  * curve for that mint (an account only pump.fun can write) records the bot
  * wallet as creator. A wrong or swapped contract address can never pass.
  */
 async function assertOurCoin(me: PublicKey) {
-  if (_verifiedMint === TOKEN_MINT) return;
+  if (_verifiedMint === MINT) return;
   const { creator, cashback } = await coinCreator();
   if (!creator.equals(me)) {
-    throw new Error(`Refusing: ${TOKEN_MINT} was created by ${creator.toBase58()}, not the bot wallet ${me.toBase58()}.`);
+    throw new Error(`Refusing: ${MINT} was created by ${creator.toBase58()}, not the bot wallet ${me.toBase58()}.`);
   }
   if (cashback) throw new Error("Refusing: this coin was launched in cashback mode, so it has no creator fees.");
-  _verifiedMint = TOKEN_MINT;
+  _verifiedMint = MINT;
 }
 
 /** Throws unless every instruction runs one of the allowed programs and the bot pays the fee. */
@@ -228,7 +252,7 @@ async function claimFees(kp: Keypair): Promise<string> {
 }
 
 async function tokenDecimals(): Promise<number> {
-  const { value } = await conn.getTokenSupply(new PublicKey(TOKEN_MINT));
+  const { value } = await conn.getTokenSupply(new PublicKey(MINT));
   return value.decimals;
 }
 
@@ -239,7 +263,7 @@ async function buildSwap(me: PublicKey, lamports: number) {
   const headers = jupHeaders();
   const q = new URLSearchParams({
     inputMint: WSOL.toBase58(),
-    outputMint: TOKEN_MINT,
+    outputMint: MINT,
     amount: String(lamports),
     taker: me.toBase58(),
     // web3.js v1 can only sign v0 transactions.
@@ -248,20 +272,20 @@ async function buildSwap(me: PublicKey, lamports: number) {
   const order = await (await fetch(`https://api.jup.ag/swap/v2/order?${q}`, { headers, cache: "no-store" })).json();
   if (!order?.transaction) throw new Error(`Jupiter order failed: ${order?.errorMessage ?? order?.error ?? "no transaction"}`);
   // The quote must be SOL → exactly our mint.
-  if (order.outputMint !== TOKEN_MINT || order.inputMint !== WSOL.toBase58()) {
-    throw new Error(`Refusing swap: Jupiter quoted ${order.inputMint} → ${order.outputMint}, expected SOL → ${TOKEN_MINT}.`);
+  if (order.outputMint !== MINT || order.inputMint !== WSOL.toBase58()) {
+    throw new Error(`Refusing swap: Jupiter quoted ${order.inputMint} → ${order.outputMint}, expected SOL → ${MINT}.`);
   }
   const tx = VersionedTransaction.deserialize(Buffer.from(order.transaction, "base64"));
   if (!tx.message.staticAccountKeys[0]?.equals(me)) throw new Error("Refusing swap: fee payer is not the bot wallet.");
 
   // Dry run: our coin's balance must go up, and the bot must not lose more SOL than it meant to spend.
-  const mint = new PublicKey(TOKEN_MINT);
+  const mint = new PublicKey(MINT);
   const tokenProgram = (await conn.getAccountInfo(mint))!.owner;
   const ata = pda([me.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()], ATA_PROGRAM);
   const [solBefore, ataBefore] = await Promise.all([conn.getBalance(me, "confirmed"), conn.getAccountInfo(ata)]);
   const [solAfter, ataAfter] = await simulate(tx, [me, ata], "swap");
   const gained = tokenAmountOf(ataAfter ? Buffer.from(ataAfter.data[0], "base64") : null) - tokenAmountOf(ataBefore?.data);
-  if (gained <= 0n) throw new Error(`Refusing swap: dry run shows no ${TOKEN_MINT} arriving in the bot wallet.`);
+  if (gained <= 0n) throw new Error(`Refusing swap: dry run shows no ${MINT} arriving in the bot wallet.`);
   // Allow the spend plus network fees and the one-time token account rent.
   if (!solAfter || solAfter.lamports < solBefore - lamports - 0.01 * LAMPORTS_PER_SOL) throw new Error("Refusing swap: dry run spends more SOL than the buyback amount.");
   return { tx, order, headers, gained, spentSol: (solBefore - solAfter.lamports) / LAMPORTS_PER_SOL };
@@ -285,7 +309,7 @@ async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tok
 
 /** Burns every $PIG in the bot wallet (BurnChecked works for both token programs). */
 async function burnIxs(me: PublicKey): Promise<{ ixs: TransactionInstruction[]; tokens: number }> {
-  const { value } = await conn.getParsedTokenAccountsByOwner(me, { mint: new PublicKey(TOKEN_MINT) });
+  const { value } = await conn.getParsedTokenAccountsByOwner(me, { mint: new PublicKey(MINT) });
   const ixs: TransactionInstruction[] = [];
   let tokens = 0;
   for (const acc of value) {
@@ -301,7 +325,7 @@ async function burnIxs(me: PublicKey): Promise<{ ixs: TransactionInstruction[]; 
         programId: acc.account.owner,
         keys: [
           { pubkey: acc.pubkey, isSigner: false, isWritable: true },
-          { pubkey: new PublicKey(TOKEN_MINT), isSigner: false, isWritable: true },
+          { pubkey: new PublicKey(MINT), isSigner: false, isWritable: true },
           { pubkey: me, isSigner: true, isWritable: false },
         ],
         data,
@@ -321,11 +345,11 @@ async function burnAll(kp: Keypair): Promise<{ sig: string; tokens: number } | n
 /**
  * Dry run of a whole bot run for any wallet: builds the real claim, swap and burn
  * transactions and simulates each against mainnet. Nothing is signed or sent, so
- * it needs no secret key. `me` must be TOKEN_MINT's creator for the claim to mean
+ * it needs no secret key. `me` must be MINT's creator for the claim to mean
  * anything; `burnHolder` (any wallet holding the coin) is used for the burn check.
  */
 export async function dryRunBot(me: PublicKey, buybackSol = 0.001, burnHolder: PublicKey = me) {
-  const report: Record<string, unknown> = { wallet: me.toBase58(), mint: TOKEN_MINT };
+  const report: Record<string, unknown> = { wallet: me.toBase58(), mint: MINT };
   const step = async (name: string, fn: () => Promise<unknown>) => {
     try {
       report[name] = { ok: true, ...((await fn()) as object) };
@@ -348,7 +372,7 @@ export async function dryRunBot(me: PublicKey, buybackSol = 0.001, burnHolder: P
     if (!ixs.length) throw new Error(`${burnHolder.toBase58()} holds none of the coin`);
     const { blockhash } = await conn.getLatestBlockhash("confirmed");
     const tx = new VersionedTransaction(new TransactionMessage({ payerKey: burnHolder, recentBlockhash: blockhash, instructions: ixs }).compileToV0Message());
-    const mint = new PublicKey(TOKEN_MINT);
+    const mint = new PublicKey(MINT);
     const supplyBefore = (await conn.getTokenSupply(mint)).value.amount;
     const [mintAfter] = await simulate(tx, [mint], "burn");
     // SPL mint layout: supply is a u64 at byte 36.
@@ -362,10 +386,17 @@ const balanceSol = async (pk: PublicKey) => (await conn.getBalance(pk, "confirme
 
 // ── The run ───────────────────────────────────────────────────────────────────
 export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals?: BotTotals }> {
-  if (!BOT_LIVE) return { skipped: "Bot not configured (needs NEXT_PUBLIC_TOKEN_MINT and BOT_SECRET_KEY)." };
+  if (!KEY_SET) return { skipped: "Bot not configured (needs BOT_SECRET_KEY)." };
+  const kp = botKeypair()!;
+  if (!MINT) {
+    // Remembered in the bot log, so later runs don't have to find it again.
+    const t = await getTotals();
+    MINT = t.mint || (await findLaunchedMint(kp.publicKey).catch(() => ""));
+    if (MINT && !t.mint) await saveTotals({ ...t, mint: MINT });
+  }
+  if (!MINT) return { skipped: "No coin launched from the bot wallet yet." };
   if (!(await takeLock(58))) return { skipped: "Another run is in progress." };
 
-  const kp = botKeypair()!;
   const now = () => Math.floor(Date.now() / 1000);
   const run: BotRun = { at: now() };
   const totals = await getTotals();

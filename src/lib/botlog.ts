@@ -36,6 +36,8 @@ export type BotTotals = {
   owedSol: number;
   lastClaimAt: number | null;
   lastRunAt: number | null;
+  /** Coin the bot found on its own before NEXT_PUBLIC_TOKEN_MINT was deployed. */
+  mint?: string;
 };
 
 const EMPTY: BotTotals = {
