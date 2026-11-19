@@ -5,7 +5,7 @@ import { gta6Launch } from "@/config";
 
 const LAUNCH = Date.parse(gta6Launch.iso);
 
-/** Ticking days / hours / minutes / seconds until GTA 6 launches. Turns into "Out now" after. */
+/** Ticking days / hours / minutes / seconds until GTA 6 launches. Hides itself once that time has passed. */
 export default function Gta6Countdown({ className = "" }: { className?: string }) {
   // Time only after mount, so server and client render the same HTML.
   const [now, setNow] = useState<number | null>(null);
@@ -17,6 +17,7 @@ export default function Gta6Countdown({ className = "" }: { className?: string }
 
   const left = now === null ? null : Math.max(0, LAUNCH - now);
   const out = left === 0;
+  if (out) return null;
   const s = left === null ? 0 : Math.floor(left / 1000);
   const parts: [string, number | null][] = [
     ["days", left === null ? null : Math.floor(s / 86400)],
