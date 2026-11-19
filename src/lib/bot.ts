@@ -1,7 +1,7 @@
 // The fee bot. Each run:
 //   1. claims pump.fun creator fees (bonding curve + PumpSwap) into the bot wallet,
 //   2. spends the buyback share of what it claimed on $PIG via Jupiter,
-//   3. burns every $PIG the bot wallet holds (when buyback.burn is on),
+//   3. burns exactly the $PIG it just bought (never the dev's own tokens),
 //   4. sends the rest to the Pig Bank, if the Pig Bank is a different wallet.
 // The bot wallet must be the coin's creator wallet. Its secret key lives only in
 // the BOT_SECRET_KEY env var on the server. Every step is logged with its tx id.
@@ -291,7 +291,7 @@ async function buildSwap(me: PublicKey, lamports: number) {
   return { tx, order, headers, gained, spentSol: (solBefore - solAfter.lamports) / LAMPORTS_PER_SOL };
 }
 
-async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tokens: number }> {
+async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tokens: number; raw: bigint }> {
   const { tx, order, headers } = await buildSwap(kp.publicKey, lamports);
   tx.sign([kp]);
   const res = await (
@@ -304,18 +304,29 @@ async function buyPig(kp: Keypair, lamports: number): Promise<{ sig: string; tok
   ).json();
   if (res?.status !== "Success") throw new Error(`Jupiter swap failed: ${res?.error ?? res?.code ?? "unknown"}${res?.signature ? ` (${res.signature})` : ""}`);
   const raw = Number(res.totalOutputAmount ?? res.outputAmountResult ?? order.outAmount ?? 0);
-  return { sig: res.signature, tokens: raw / 10 ** (await tokenDecimals()) };
+  return { sig: res.signature, tokens: raw / 10 ** (await tokenDecimals()), raw: BigInt(Math.floor(raw)) };
 }
 
-/** Burns every $PIG in the bot wallet (BurnChecked works for both token programs). */
-async function burnIxs(me: PublicKey): Promise<{ ixs: TransactionInstruction[]; tokens: number }> {
+/**
+ * Burns up to `maxRaw` of the bot wallet's $PIG (BurnChecked works for both token programs).
+ * The bot only ever passes what it bought itself, so the dev's own tokens are never touched.
+ */
+async function burnIxs(me: PublicKey, maxRaw?: bigint): Promise<{ ixs: TransactionInstruction[]; tokens: number; raw: bigint }> {
   const { value } = await conn.getParsedTokenAccountsByOwner(me, { mint: new PublicKey(MINT) });
   const ixs: TransactionInstruction[] = [];
   let tokens = 0;
+  let left = maxRaw ?? -1n;
+  let total = 0n;
   for (const acc of value) {
     const info = acc.account.data.parsed?.info?.tokenAmount;
-    const amount = BigInt(info?.amount ?? "0");
+    let amount = BigInt(info?.amount ?? "0");
+    if (left >= 0n) {
+      if (left === 0n) break;
+      if (amount > left) amount = left;
+      left -= amount;
+    }
     if (amount <= 0n) continue;
+    total += amount;
     const data = Buffer.alloc(10);
     data.writeUInt8(15, 0); // BurnChecked
     data.writeBigUInt64LE(amount, 1);
@@ -331,15 +342,17 @@ async function burnIxs(me: PublicKey): Promise<{ ixs: TransactionInstruction[]; 
         data,
       }),
     );
-    tokens += Number(info.uiAmount ?? 0);
+    tokens += Number(amount) / 10 ** Number(info.decimals ?? 0);
   }
-  return { ixs, tokens };
+  return { ixs, tokens, raw: total };
 }
 
-async function burnAll(kp: Keypair): Promise<{ sig: string; tokens: number } | null> {
-  const { ixs, tokens } = await burnIxs(kp.publicKey);
+/** Burns only the tokens the bot bought (`owedRaw`), never anything else in the wallet. */
+async function burnBought(kp: Keypair, owedRaw: bigint): Promise<{ sig: string; tokens: number; raw: bigint } | null> {
+  if (owedRaw <= 0n) return null;
+  const { ixs, tokens, raw } = await burnIxs(kp.publicKey, owedRaw);
   if (!ixs.length) return null;
-  return { sig: await sendIxs(kp, ixs), tokens };
+  return { sig: await sendIxs(kp, ixs), tokens, raw };
 }
 
 /**
@@ -426,18 +439,21 @@ export async function runBot(): Promise<{ skipped?: string; run?: BotRun; totals
     // Exactly the buyback share of everything claimed: no cap.
     const spend = Math.min(totals.owedSol, (await balanceSol(kp.publicKey)) - GAS_RESERVE_SOL);
     if (spend >= MIN_BUYBACK_SOL) {
-      const { sig, tokens } = await buyPig(kp, Math.floor(spend * LAMPORTS_PER_SOL));
+      const { sig, tokens, raw } = await buyPig(kp, Math.floor(spend * LAMPORTS_PER_SOL));
       Object.assign(run, { swapTx: sig, buybackSol: spend, tokensBought: tokens });
       totals.buybackSol += spend;
       totals.tokensBought += tokens;
+      totals.burnOwedRaw = (BigInt(totals.burnOwedRaw ?? "0") + raw).toString();
       totals.owedSol = Math.max(0, totals.owedSol - spend);
       await persist();
     }
 
-    // 3. Burn (also retries tokens left over from an earlier failed burn)
+    // 3. Burn exactly what the bot bought (also retries a burn that failed earlier).
+    //    Tokens the dev holds in this wallet are never burned.
     if (buyback.burn) {
-      const burned = await burnAll(kp);
+      const burned = await burnBought(kp, BigInt(totals.burnOwedRaw ?? "0"));
       if (burned) {
+        totals.burnOwedRaw = (BigInt(totals.burnOwedRaw ?? "0") - burned.raw).toString();
         Object.assign(run, { burnTx: burned.sig, tokensBurned: burned.tokens });
         totals.tokensBurned += burned.tokens;
         // Value the burn at what those tokens cost on average, so leftovers from a failed burn count too.

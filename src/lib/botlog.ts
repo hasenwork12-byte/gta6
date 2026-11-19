@@ -36,6 +36,8 @@ export type BotTotals = {
   owedSol: number;
   lastClaimAt: number | null;
   lastRunAt: number | null;
+  /** Raw token units the bot bought and hasn't burned yet. Only these are ever burned. */
+  burnOwedRaw?: string;
   /** Coin the bot found on its own before NEXT_PUBLIC_TOKEN_MINT was deployed. */
   mint?: string;
 };
