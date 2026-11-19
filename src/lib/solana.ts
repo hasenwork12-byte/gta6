@@ -370,7 +370,10 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
     bot.totals && bot.runs ? { totals: bot.totals, runs: bot.runs, sameWallet } : undefined,
   );
   // With the bot, it knows every claim. Without it, fees seen arriving in the Pig Bank count as claimed.
-  const claimed = bot.totals ? bot.totals.claimedSol : fees;
+  // The bot's log knows every claim it made; claims it didn't log (made from another
+  // computer, or before the log existed) still show up as fees in the Pig Bank ledger.
+  const claimed = Math.max(bot.totals?.claimedSol ?? 0, fees);
+  const lastFeeAt = ledger.entries.filter((e) => e.kind === "fee").reduce((a, e) => Math.max(a, e.time), 0) || null;
   const starts = dayStarts(Date.now() / 1000, undefined, await coinCreatedAt());
   const [delivered, botDays] = await Promise.all([deliveredTimes(), BOT_LIVE ? getDays(starts) : null]);
   return {
@@ -389,7 +392,7 @@ export async function getSnapshot(): Promise<TreasurySnapshot> {
       earnedSol: claimed + bot.unclaimed,
       claimedSol: claimed,
       unclaimedSol: bot.unclaimed,
-      lastClaimAt: bot.totals?.lastClaimAt ?? null,
+      lastClaimAt: Math.max(bot.totals?.lastClaimAt ?? 0, lastFeeAt ?? 0) || null,
       lastRunAt: bot.totals?.lastRunAt ?? null,
     },
     daily: dailySeries(starts, ledger.entries, buybackSummary.history, buybackSummary.burn, delivered, botDays),
